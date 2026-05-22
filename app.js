@@ -1,10 +1,36 @@
 // === Configuración ===
-const STATION_ID = 1638; // Los Majojos - Cenes de la Vega
+const DEFAULT_STATION = {
+  id: 1638,
+  provider: "pioupiou",
+  name: "Despegue Cerro de los Majojos",
+  shortName: "Cenes de la Vega",
+  lat: 37.1406,
+  lon: -3.5124,
+};
+let currentStation = loadSavedStation() || { ...DEFAULT_STATION };
+// Compat: alias mutables usados en el resto del código
+let currentStationId = currentStation.id;
+let currentTakeoff = { lat: currentStation.lat, lon: currentStation.lon, name: currentStation.name };
+
+// Despegues con criterios de volabilidad ya definidos.
+// Hasta definir el resto, sólo estos serán seleccionables en el buscador.
+const ENABLED_STATION_IDS = new Set([1638]);
+
 const API_BASE = "https://api.pioupiou.fr/v1";
 const CORS_PROXY = "https://corsproxy.io/?";
 
-// Coordenadas del despegue: Cerro de los Majojos (pico, IGN). 1359 m
-const TAKEOFF = { lat: 37.1406, lon: -3.5124, name: "Despegue Cerro de los Majojos" };
+function loadSavedStation() {
+  try {
+    const raw = localStorage.getItem("selectedStation");
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s && s.id && s.lat != null && s.lon != null) return s;
+  } catch {}
+  return null;
+}
+function saveSelectedStation(s) {
+  try { localStorage.setItem("selectedStation", JSON.stringify(s)); } catch {}
+}
 
 const REFRESH_MS = 60_000;
 const NOTIFY_COOLDOWN_MS = 30 * 60 * 1000; // no avisar más de 1 vez cada 30 min
@@ -21,7 +47,7 @@ const I18N = {
     "status.title": "Estado actual",
     "card.n": "N", "card.e": "E", "card.s": "S", "card.w": "O",
     "read.avg": "Velocidad media",
-    "read.max": "Ráfaga máx.",
+    "read.max": "Racha máx.",
     "read.min": "Mínima",
     "read.last": "Última lectura",
     "verdict.loading": "Cargando…",
@@ -32,16 +58,16 @@ const I18N = {
     "verdict.bad.title": "Dirección desfavorable ❌",
     "verdict.bad.detail": "Componente este: viento entrando por detrás o cruzado.",
     "verdict.warn.title": "Viento demasiado fuerte 🚫",
-    "verdict.warn.detail": "Velocidad o ráfagas por encima del límite seguro.",
+    "verdict.warn.detail": "Velocidad o rachas por encima del límite seguro.",
     "verdict.unknown.title": "Sin datos",
     "verdict.unknown.detail": "No se pueden valorar las condiciones.",
-    "verdict.suffix": "Dirección: {name}. Media {avg} km/h, ráfaga {max} km/h.",
+    "verdict.suffix": "Dirección: {name}. Media {avg} km/h, racha {max} km/h.",
     "dirLabel.from": "Viene del {name} ({deg}°)",
     "dirLabel.dash": "—",
     "hist.title": "Evolución observada",
-    "hist.legend": "Línea azul: velocidad media · Línea roja: ráfaga máx · Puntos: dirección (color = aptitud)",
+    "hist.legend": "Línea azul: velocidad media · Línea roja: racha máx · Flechas: dirección (color = aptitud)",
     "chart.avg": "Velocidad media (km/h)",
-    "chart.gust": "Ráfaga máx (km/h)",
+    "chart.gust": "Racha máx (km/h)",
     "chart.dir": "Dirección",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronóstico (Open-Meteo)",
@@ -52,7 +78,7 @@ const I18N = {
     "cmp.days_ago": "Hace {n} días",
     "cmp.no_data": "Sin datos",
     "cmp.row.avg": "Media",
-    "cmp.row.max": "Ráfaga máx",
+    "cmp.row.max": "Racha máx",
     "cmp.row.dir": "Dirección dom.",
     "cmp.row.state": "Estado",
     "cmp.legend": "Misma franja horaria actual (±2 h) en los últimos 3 días.",
@@ -67,10 +93,10 @@ const I18N = {
     "near.popup_view": "Ver estación",
     "map.title": "Ubicación del despegue",
     "guide.title": "Guía rápida",
-    "guide.ideal": "<strong>Ideal:</strong> Oeste (O) o Noroeste (NO), 5–15 km/h (ráfagas ≤ 25).",
+    "guide.ideal": "<strong>Ideal:</strong> Oeste (O) o Noroeste (NO), 5–15 km/h (rachas ≤ 25).",
     "guide.ok": "<strong>Volable:</strong> Norte (N) o Suroeste (SO), o vientos fuera del rango ideal pero por debajo del límite.",
     "guide.bad": "<strong>Malo:</strong> componentes Este (NE, E, SE) — empeora cuanto más al Este.",
-    "guide.warn": "<strong>Demasiado fuerte:</strong> media ≥ 20 km/h o ráfagas ≥ 30 km/h.",
+    "guide.warn": "<strong>Demasiado fuerte:</strong> media ≥ 20 km/h o rachas ≥ 30 km/h.",
     "loading": "Cargando…",
     "footer": 'Datos en tiempo real: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Pronóstico: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Mapa: © OpenStreetMap. No oficial. Valora siempre las condiciones in situ.',
     "notify.title": "🪂 ¡Condiciones ideales en Cenes!",
@@ -94,12 +120,24 @@ const I18N = {
     "near.airport_label": "Aeropuerto de Granada (LEGR)",
     "near.airport_src": "Open-Meteo (METAR aprox.)",
     "banner.title": "Despegue de parapente de Cenes de la Vega",
+    "ts.placeholder": "Buscar despegue / estación…",
+    "ts.current": "Despegue:",
+    "ts.radius": "Radio",
+    "ts.locate": "Usar mi ubicación",
+    "ts.hint": "Pulsa 📍 para usar tu ubicación o escribe para filtrar.",
+    "ts.loading": "Cargando estaciones…",
+    "ts.empty": "No hay estaciones activas en este radio.",
+    "ts.geo_denied": "No se pudo obtener tu ubicación. Permiso denegado.",
+    "ts.geo_unavailable": "Geolocalización no disponible en este dispositivo.",
+    "wh.title": "Últimas 6 h (km/h)",
+    "wh.legend": "flecha = hacia dónde sopla · altura = velocidad",
+    "ts.coming_soon": "próximamente",
     "verdict.rain_suffix": "Probabilidad de precipitación significativa.",
     "verdict.speed.calm": "Viento muy flojo, prácticamente en calma.",
     "verdict.speed.low": "Viento por debajo del rango ideal (<5 km/h).",
     "verdict.speed.high": "Viento por encima del rango ideal (>15 km/h).",
     "verdict.speed.too_high_avg": "Velocidad media demasiado alta (≥20 km/h).",
-    "verdict.speed.too_high_gust": "Ráfagas demasiado fuertes (≥30 km/h).",
+    "verdict.speed.too_high_gust": "Rachas demasiado fuertes (≥30 km/h).",
     "verdict.storm_suffix": "Hay riesgo de tormenta: no volar.",
     "wx.code.clear": "Despejado",
     "wx.code.mostly_clear": "Casi despejado",
@@ -200,6 +238,18 @@ const I18N = {
     "near.airport_label": "Granada Airport (LEGR)",
     "near.airport_src": "Open-Meteo (approx. METAR)",
     "banner.title": "Paragliding takeoff of Cenes de la Vega",
+    "ts.placeholder": "Search takeoff / station…",
+    "ts.current": "Takeoff:",
+    "ts.radius": "Radius",
+    "ts.locate": "Use my location",
+    "ts.hint": "Tap 📍 to use your location or type to filter.",
+    "ts.loading": "Loading stations…",
+    "ts.empty": "No active stations within this radius.",
+    "ts.geo_denied": "Could not get your location. Permission denied.",
+    "ts.geo_unavailable": "Geolocation not available on this device.",
+    "wh.title": "Last 6 h (km/h)",
+    "wh.legend": "arrow = where the wind blows to · height = speed",
+    "ts.coming_soon": "coming soon",
     "verdict.rain_suffix": "Significant precipitation probability.",
     "verdict.speed.calm": "Wind is very light, almost calm.",
     "verdict.speed.low": "Wind below the ideal range (<5 km/h).",
@@ -306,6 +356,18 @@ const I18N = {
     "near.airport_label": "Flughafen Granada (LEGR)",
     "near.airport_src": "Open-Meteo (ca. METAR)",
     "banner.title": "Gleitschirm-Startplatz von Cenes de la Vega",
+    "ts.placeholder": "Startplatz / Station suchen…",
+    "ts.current": "Startplatz:",
+    "ts.radius": "Radius",
+    "ts.locate": "Meinen Standort verwenden",
+    "ts.hint": "📍 tippen, um deinen Standort zu nutzen, oder filtern.",
+    "ts.loading": "Stationen werden geladen…",
+    "ts.empty": "Keine aktiven Stationen in diesem Radius.",
+    "ts.geo_denied": "Standort nicht verfügbar. Berechtigung verweigert.",
+    "ts.geo_unavailable": "Geolokalisierung auf diesem Gerät nicht verfügbar.",
+    "wh.title": "Letzte 6 h (km/h)",
+    "wh.legend": "Pfeil = Windrichtung (wohin) · Höhe = Geschwindigkeit",
+    "ts.coming_soon": "in Kürze",
     "verdict.rain_suffix": "Erhebliche Niederschlagswahrscheinlichkeit.",
     "verdict.speed.calm": "Wind sehr schwach, fast Windstille.",
     "verdict.speed.low": "Wind unter dem Idealbereich (<5 km/h).",
@@ -412,6 +474,18 @@ const I18N = {
     "near.airport_label": "Aéroport de Grenade (LEGR)",
     "near.airport_src": "Open-Meteo (METAR approx.)",
     "banner.title": "Décollage parapente de Cenes de la Vega",
+    "ts.placeholder": "Rechercher décollage / station…",
+    "ts.current": "Décollage :",
+    "ts.radius": "Rayon",
+    "ts.locate": "Utiliser ma position",
+    "ts.hint": "Appuyez sur 📍 pour utiliser votre position ou filtrez.",
+    "ts.loading": "Chargement des stations…",
+    "ts.empty": "Aucune station active dans ce rayon.",
+    "ts.geo_denied": "Impossible d'obtenir votre position. Permission refusée.",
+    "ts.geo_unavailable": "Géolocalisation non disponible sur cet appareil.",
+    "wh.title": "6 dernières heures (km/h)",
+    "wh.legend": "flèche = vers où souffle le vent · hauteur = vitesse",
+    "ts.coming_soon": "bientôt",
     "verdict.rain_suffix": "Probabilité significative de précipitations.",
     "verdict.speed.calm": "Vent très faible, presque calme.",
     "verdict.speed.low": "Vent en dessous de la plage idéale (<5 km/h).",
@@ -467,6 +541,12 @@ function applyStaticI18n() {
     const key = el.getAttribute("data-i18n");
     el.innerHTML = t(key);
   });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+  });
+  document.querySelectorAll("[data-i18n-title]").forEach(el => {
+    el.setAttribute("title", t(el.getAttribute("data-i18n-title")));
+  });
 }
 
 // === Reglas de aptitud ===
@@ -496,9 +576,9 @@ function classifyDirection(deg) {
 
 function classifySpeed(avg, max) {
   if (avg == null) return "unknown";
-  // Demasiado fuerte: media ≥ 20 km/h o ráfagas ≥ 30 km/h.
+  // Demasiado fuerte: media ≥ 20 km/h o rachas ≥ 30 km/h.
   if (avg >= 20 || (max != null && max >= 30)) return "warn";
-  // Ideal: media entre 5 y 15 km/h con ráfagas hasta 25 km/h.
+  // Ideal: media entre 5 y 15 km/h con rachas hasta 25 km/h.
   if (avg >= 5 && avg <= 15 && (max == null || max <= 25)) return "ideal";
   // Resto: volable.
   return "ok";
@@ -546,15 +626,36 @@ async function fetchJson(url) {
 }
 
 async function getLive() {
-  const data = await fetchJson(`${API_BASE}/live/${STATION_ID}`);
+  const data = await fetchJson(`${API_BASE}/live/${currentStationId}`);
   return data?.data;
 }
 
 async function getArchive(startDate, stopDate) {
   const fmt = (d) => d.toISOString().replace(/\.\d{3}Z$/, "Z");
-  const url = `${API_BASE}/archive/${STATION_ID}?start=${fmt(startDate)}&stop=${fmt(stopDate)}`;
+  const url = `${API_BASE}/archive/${currentStationId}?start=${fmt(startDate)}&stop=${fmt(stopDate)}`;
   const data = await fetchJson(url);
-  return data?.data;
+  return normalizeArchive(data?.data);
+}
+
+// La API de Pioupiou devuelve `data` como array de arrays:
+// [time, latitude, longitude, wind_speed_min, wind_speed_avg, wind_speed_max, wind_heading, pressure]
+// Lo convertimos a un objeto con columnas para que el resto del código pueda iterar fácilmente.
+function normalizeArchive(raw) {
+  const empty = { date: [], wind_speed_min: [], wind_speed_avg: [], wind_speed_max: [], wind_heading: [] };
+  if (!raw) return empty;
+  // Si ya viene en formato objeto (compatibilidad), úsalo tal cual
+  if (!Array.isArray(raw) && raw.date) return raw;
+  if (!Array.isArray(raw) || !raw.length) return empty;
+  const out = { date: [], wind_speed_min: [], wind_speed_avg: [], wind_speed_max: [], wind_heading: [] };
+  for (const row of raw) {
+    if (!Array.isArray(row) || row.length < 7) continue;
+    out.date.push(row[0]);
+    out.wind_speed_min.push(row[3]);
+    out.wind_speed_avg.push(row[4]);
+    out.wind_speed_max.push(row[5]);
+    out.wind_heading.push(row[6]);
+  }
+  return out;
 }
 
 async function getArchiveLastHours(hours) {
@@ -564,7 +665,7 @@ async function getArchiveLastHours(hours) {
 }
 
 async function getForecast(days = 2) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${TAKEOFF.lat}&longitude=${TAKEOFF.lon}` +
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentTakeoff.lat}&longitude=${currentTakeoff.lon}` +
               `&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,precipitation_probability,weather_code,cape,temperature_2m,apparent_temperature` +
               `&daily=sunrise,sunset` +
               `&wind_speed_unit=kmh&timezone=auto&forecast_days=${days}`;
@@ -891,6 +992,35 @@ function dirColor(deg) {
   return "#888";
 }
 
+// Genera un canvas con una flecha rellena apuntando hacia donde va el viento,
+// para usarlo como pointStyle de Chart.js. `deg` = dirección DE DONDE viene el viento.
+function makeArrowPoint(deg, color, size = 12) {
+  const dpr = window.devicePixelRatio || 1;
+  const cv = document.createElement("canvas");
+  const px = Math.max(8, size);
+  cv.width = px * dpr;
+  cv.height = px * dpr;
+  cv.style.width = px + "px";
+  cv.style.height = px + "px";
+  const ctx = cv.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.translate(px / 2, px / 2);
+  // wind_direction = DE donde viene; flecha apunta HACIA donde va = +180
+  const rot = ((deg || 0) + 180) * Math.PI / 180;
+  ctx.rotate(rot);
+  ctx.fillStyle = color || "#888";
+  // Triángulo apuntando hacia arriba (norte) en la base, con cola en V
+  const s = px / 2;
+  ctx.beginPath();
+  ctx.moveTo(0, -s);            // punta arriba
+  ctx.lineTo(s * 0.7, s * 0.6); // esquina inferior derecha
+  ctx.lineTo(0, s * 0.25);      // muesca interna
+  ctx.lineTo(-s * 0.7, s * 0.6);// esquina inferior izquierda
+  ctx.closePath();
+  ctx.fill();
+  return cv;
+}
+
 function chartCommonOptions() {
   return {
     responsive: true, maintainAspectRatio: false,
@@ -947,6 +1077,7 @@ function renderForecast(fc) {
   const gustPts = times.slice(i0).map((t, i) => ({ x: t, y: gust[i + i0] }));
   const dirPts = times.slice(i0).map((t, i) => ({ x: t, y: spd[i + i0], dir: dir[i + i0] }));
   const dirColors = dirPts.map(p => dirColor(p.dir));
+  const dirArrows = dirPts.map(p => makeArrowPoint(p.dir, dirColor(p.dir), 18));
 
   const data = {
     datasets: [
@@ -957,8 +1088,8 @@ function renderForecast(fc) {
         borderColor: "rgba(78,161,255,1)", backgroundColor: "rgba(78,161,255,0.2)",
         borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true },
       { label: t("chart.dir"), data: dirPts, type: "scatter",
-        pointBackgroundColor: dirColors, pointBorderColor: dirColors,
-        pointRadius: 3, showLine: false, parsing: false },
+        pointStyle: dirArrows,
+        pointRadius: 9, showLine: false, parsing: false },
     ],
   };
   const options = chartCommonOptions();
@@ -1055,12 +1186,15 @@ async function renderCompare() {
     const dirInfo = classifyDirection(dirAvg);
     const spdQ = classifySpeed(avg, max);
     const verdict = combineVerdict(dirInfo.quality, spdQ);
+    const arrowQ = verdict === "warn" ? "warn" : dirInfo.quality;
+    const arrowRot = ((dirAvg || 0) + 180) % 360;
+    const arrowSvg = `<span class="cmp-arrow q-${arrowQ}"><svg viewBox="0 0 10 10" style="transform: rotate(${arrowRot}deg);"><path d="M5 1 L8 7 L5 5.5 L2 7 Z" fill="currentColor"/></svg></span>`;
     card.className = "compare-card " + verdict;
     card.innerHTML = `
       <h3>${dayLabel} <small style="color:var(--muted);font-weight:400">${r.start.toLocaleDateString(t("locale"),{day:"2-digit",month:"short"})}</small></h3>
       <div class="row"><span>${t("cmp.row.avg")}</span><b>${fmtNum(avg)} km/h</b></div>
       <div class="row"><span>${t("cmp.row.max")}</span><b>${fmtNum(max)} km/h</b></div>
-      <div class="row"><span>${t("cmp.row.dir")}</span><b>${dirInfo.name} (${Math.round(dirAvg)}°)</b></div>
+      <div class="row"><span>${t("cmp.row.dir")}</span><b>${arrowSvg} ${dirInfo.name} (${Math.round(dirAvg)}°)</b></div>
       <div class="row"><span>${t("cmp.row.state")}</span><b>${verdictText(verdict).title.split(" ")[0]}</b></div>
     `;
     grid.appendChild(card);
@@ -1091,20 +1225,33 @@ function meanAngle(degArr) {
 let map = null;
 function renderMap() {
   if (map) return;
-  map = L.map("map").setView([TAKEOFF.lat, TAKEOFF.lon], 10);
+  map = L.map("map").setView([currentTakeoff.lat, currentTakeoff.lon], 10);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap", maxZoom: 18,
   }).addTo(map);
-  L.marker([TAKEOFF.lat, TAKEOFF.lon]).addTo(map)
-    .bindPopup(`<b>${TAKEOFF.name}</b><br/>${t("popup.takeoff_sub")}`)
-    .bindTooltip(TAKEOFF.name.replace(/^Despegue\s+/i, ""), {
+  drawTakeoffOnMap();
+}
+
+let takeoffMapLayers = [];
+function clearTakeoffMapLayers() {
+  if (!map) return;
+  for (const l of takeoffMapLayers) map.removeLayer(l);
+  takeoffMapLayers = [];
+}
+function drawTakeoffOnMap() {
+  if (!map) return;
+  clearTakeoffMapLayers();
+  const marker = L.marker([currentTakeoff.lat, currentTakeoff.lon]).addTo(map)
+    .bindPopup(`<b>${currentTakeoff.name}</b><br/>${t("popup.takeoff_sub")}`)
+    .bindTooltip(currentTakeoff.name.replace(/^Despegue\s+/i, ""), {
       permanent: true, direction: "top", offset: [0, -8], className: "station-label takeoff"
     })
     .openPopup();
-  // Radio 50 km
-  L.circle([TAKEOFF.lat, TAKEOFF.lon], {
+  const circle = L.circle([currentTakeoff.lat, currentTakeoff.lon], {
     radius: 50000, color: "#4ea1ff", weight: 1, fillOpacity: 0.05, dashArray: "4,4",
   }).addTo(map);
+  takeoffMapLayers.push(marker, circle);
+  map.setView([currentTakeoff.lat, currentTakeoff.lon], 10);
 }
 
 // === Estaciones cercanas ===
@@ -1115,7 +1262,7 @@ let nearbyLatLngs = [];
 
 function fitMapToNearby() {
   if (!map || !nearbyLatLngs.length) return;
-  const pts = [[TAKEOFF.lat, TAKEOFF.lon], ...nearbyLatLngs];
+  const pts = [[currentTakeoff.lat, currentTakeoff.lon], ...nearbyLatLngs];
   const bounds = L.latLngBounds(pts);
   map.fitBounds(bounds, { padding: [40, 40], maxZoom: 11 });
 }
@@ -1131,10 +1278,10 @@ async function renderNearby() {
       .map(s => {
         const lat = s.location?.latitude, lon = s.location?.longitude;
         if (lat == null || lon == null) return null;
-        const dist = haversineKm(TAKEOFF.lat, TAKEOFF.lon, lat, lon);
+        const dist = haversineKm(currentTakeoff.lat, currentTakeoff.lon, lat, lon);
         return { s, dist, lat, lon };
       })
-      .filter(x => x && x.dist <= 50 && x.s.id !== STATION_ID)
+      .filter(x => x && x.dist <= 50 && x.s.id !== currentStationId)
       .filter(x => {
         const d = x.s.measurements?.date;
         if (!d) return false;
@@ -1208,7 +1355,7 @@ async function renderNearby() {
       try {
         const url = `${API_BASE}/archive/${s.id}?start=${fmt(start)}&stop=${fmt(stop)}`;
         const data = await fetchJson(url);
-        const arch = data?.data;
+        const arch = normalizeArchive(data?.data);
         let avgSpd = null, meanDir = null;
         if (arch?.date?.length) {
           avgSpd = avgOf(arch.wind_speed_avg);
@@ -1250,7 +1397,9 @@ async function renderAirportStation() {
   const grid = document.getElementById("nearbyGrid");
   if (!grid) return;
   const lat = 37.1887, lon = -3.7775; // LEGR
-  const dist = haversineKm(TAKEOFF.lat, TAKEOFF.lon, lat, lon);
+  const dist = haversineKm(currentTakeoff.lat, currentTakeoff.lon, lat, lon);
+  // Solo mostrar el aeropuerto de Granada si el despegue está razonablemente cerca
+  if (dist > 50) return;
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
                 `&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kmh&timezone=auto`;
@@ -1391,6 +1540,8 @@ async function refreshObservations() {
     setText("verdictTitle", t("error.fetch"));
     setText("verdictDetail", e.message);
   }
+  // Histórico 6h se refresca en paralelo (no bloquea el live)
+  refreshWindHistory();
 }
 
 async function refreshForecast() {
@@ -1404,6 +1555,148 @@ async function refreshForecast() {
 
 async function refreshLiveOnly() {
   try { renderLive(await getLive()); } catch (e) { console.error(e); }
+}
+
+// === Wind history bar (últimas 6 h) ===
+const WH_HOURS = 6;
+const WH_BUCKET_MIN = 15;
+
+async function refreshWindHistory() {
+  const wrap = document.getElementById("windHistory");
+  if (!wrap) return;
+  try {
+    const arch = await getArchiveLastHours(WH_HOURS);
+    renderWindHistory(arch);
+  } catch (e) {
+    console.warn("wind history:", e);
+    wrap.hidden = true;
+  }
+}
+
+function renderWindHistory(arch) {
+  const wrap   = document.getElementById("windHistory");
+  const arrows = document.getElementById("whArrows");
+  const bar    = document.getElementById("whBar");
+  const values = document.getElementById("whValues");
+  const hours  = document.getElementById("whHours");
+  if (!wrap || !bar || !arrows || !hours || !values) return;
+  if (!arch?.date?.length) { wrap.hidden = true; return; }
+
+  const now = Date.now();
+  const startMs = now - WH_HOURS * 3600 * 1000;
+  const bucketMs = WH_BUCKET_MIN * 60 * 1000;
+  const nBuckets = Math.ceil((WH_HOURS * 60) / WH_BUCKET_MIN);
+
+  // Inicializar buckets
+  const buckets = Array.from({ length: nBuckets }, () => ({
+    avgSum: 0, maxSum: 0, sx: 0, sy: 0, n: 0
+  }));
+
+  for (let i = 0; i < arch.date.length; i++) {
+    const tMs = new Date(arch.date[i]).getTime();
+    if (isNaN(tMs) || tMs < startMs || tMs > now) continue;
+    const idx = Math.min(nBuckets - 1, Math.floor((tMs - startMs) / bucketMs));
+    const a = arch.wind_speed_avg?.[i];
+    const m = arch.wind_speed_max?.[i];
+    const d = arch.wind_heading?.[i];
+    const b = buckets[idx];
+    if (a != null && !isNaN(a)) b.avgSum += a;
+    if (m != null && !isNaN(m)) b.maxSum += m;
+    if (d != null && !isNaN(d)) {
+      const r = d * Math.PI / 180;
+      b.sx += Math.cos(r); b.sy += Math.sin(r);
+    }
+    b.n++;
+  }
+
+  // Calcular max velocidad para escalar altura
+  let maxAvg = 0;
+  const computed = buckets.map(b => {
+    if (!b.n) return null;
+    const avg = b.avgSum / b.n;
+    const max = b.maxSum / b.n;
+    let dir = null;
+    if (b.sx !== 0 || b.sy !== 0) {
+      dir = Math.atan2(b.sy / b.n, b.sx / b.n) * 180 / Math.PI;
+      if (dir < 0) dir += 360;
+    }
+    if (avg > maxAvg) maxAvg = avg;
+    return { avg, max, dir };
+  });
+  if (maxAvg <= 0) { wrap.hidden = true; return; }
+
+  // Pintar
+  arrows.innerHTML = "";
+  bar.innerHTML = "";
+  values.innerHTML = "";
+  hours.innerHTML = "";
+
+  for (let i = 0; i < computed.length; i++) {
+    const c = computed[i];
+    const tBucket = new Date(startMs + i * bucketMs);
+    const tLabel = tBucket.toLocaleTimeString(t("locale"), { hour: "2-digit", minute: "2-digit" });
+
+    // --- Flecha ---
+    const arrowEl = document.createElement("div");
+    arrowEl.className = "wh-arrow";
+    if (!c || c.dir == null) {
+      arrowEl.classList.add("q-unknown");
+      arrowEl.innerHTML = "·";
+    } else {
+      const dirInfo = classifyDirection(c.dir);
+      const spdQ = classifySpeed(c.avg, c.max);
+      const quality = spdQ === "warn" ? "warn" : dirInfo.quality;
+      arrowEl.classList.add("q-" + quality);
+      // wind_heading = de DÓNDE viene el viento.
+      // La flecha debe apuntar HACIA DÓNDE va = heading + 180.
+      // SVG con flecha apuntando hacia arriba (norte) por defecto → rotamos.
+      const rot = (c.dir + 180) % 360;
+      arrowEl.innerHTML = `<svg viewBox="0 0 10 10" style="transform: rotate(${rot}deg);">
+        <path d="M5 1 L8 7 L5 5.5 L2 7 Z" fill="currentColor"/>
+      </svg>`;
+    }
+    arrows.appendChild(arrowEl);
+
+    // --- Barra ---
+    const seg = document.createElement("div");
+    seg.className = "wh-seg";
+    if (!c) {
+      seg.classList.add("q-unknown");
+      seg.style.height = "8%";
+      seg.title = "—";
+    } else {
+      const dirInfo = classifyDirection(c.dir);
+      const spdQ = classifySpeed(c.avg, c.max);
+      const quality = spdQ === "warn" ? "warn" : dirInfo.quality;
+      seg.classList.add("q-" + quality);
+      const h = Math.max(8, Math.round((c.avg / Math.max(maxAvg, 10)) * 100));
+      seg.style.height = h + "%";
+      seg.title = `${tLabel} · ${dirInfo.name} · ${c.avg.toFixed(1)} km/h (rachas ${c.max.toFixed(1)})`;
+    }
+    bar.appendChild(seg);
+
+    // --- Valor numérico de velocidad ---
+    const valEl = document.createElement("div");
+    valEl.className = "wh-value";
+    valEl.textContent = c ? Math.round(c.avg) : "";
+    values.appendChild(valEl);
+
+    // --- Etiqueta de hora (solo cuando el bucket cruza una hora exacta) ---
+    const hourEl = document.createElement("div");
+    hourEl.className = "wh-hour";
+    const bucketStart = tBucket;
+    const bucketEnd = new Date(tBucket.getTime() + bucketMs);
+    // Si entre el inicio y el fin del bucket cae una hora exacta, mostramos esa hora
+    const hourBoundary = new Date(bucketEnd.getFullYear(), bucketEnd.getMonth(), bucketEnd.getDate(), bucketEnd.getHours(), 0, 0);
+    if (hourBoundary.getTime() >= bucketStart.getTime() && hourBoundary.getTime() < bucketEnd.getTime()) {
+      hourEl.textContent = String(hourBoundary.getHours()).padStart(2, "0") + "h";
+    } else {
+      hourEl.innerHTML = "&nbsp;";
+    }
+    hours.appendChild(hourEl);
+  }
+
+  wrap.hidden = false;
 }
 
 // Eventos
@@ -1442,9 +1735,201 @@ if (langSel) {
   });
 }
 
+// === Takeoff selector ===
+let allStationsCache = null;
+let userLocation = null; // {lat, lon} si el usuario lo ha activado
+let tsRadius = parseInt(localStorage.getItem("tsRadius") || "50", 10);
+
+function refreshAllForCurrentTakeoff() {
+  // Limpia el mapa de marcadores Pioupiou y vuelve a pintar el despegue
+  if (map) {
+    map.eachLayer(l => {
+      if (l instanceof L.CircleMarker) map.removeLayer(l);
+    });
+    drawTakeoffOnMap();
+  }
+  // Reset estado en memoria
+  previousAvg = null;
+  latestLive = null;
+  setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—"); setText("lastUpdate", "—");
+  refreshObservations();
+  refreshForecast();
+  renderCompare();
+  renderNearby();
+}
+
+function applyCurrentTakeoffLabel() {
+  const el = document.getElementById("tsCurrentName");
+  if (el) el.textContent = currentStation.shortName || currentStation.name;
+}
+
+function selectStation(station) {
+  currentStation = station;
+  currentStationId = station.id;
+  currentTakeoff = { lat: station.lat, lon: station.lon, name: station.name };
+  saveSelectedStation(station);
+  applyCurrentTakeoffLabel();
+  refreshAllForCurrentTakeoff();
+}
+
+async function ensureAllStations() {
+  if (allStationsCache) return allStationsCache;
+  try {
+    allStationsCache = await getAllStations();
+  } catch (e) {
+    console.warn("getAllStations:", e);
+    allStationsCache = [];
+  }
+  return allStationsCache;
+}
+
+function stationFromPioupiou(s) {
+  const lat = s.location?.latitude, lon = s.location?.longitude;
+  if (lat == null || lon == null) return null;
+  return {
+    id: s.id,
+    provider: "pioupiou",
+    name: s.meta?.name || ("Pioupiou " + s.id),
+    shortName: s.meta?.name || ("Pioupiou " + s.id),
+    lat, lon,
+    lastDate: s.measurements?.date || null,
+  };
+}
+
+function isStationRecent(s, hours = 24) {
+  if (!s.lastDate) return false;
+  return (Date.now() - new Date(s.lastDate).getTime()) < hours * 3600 * 1000;
+}
+
+async function tsRunSearch() {
+  const resultsEl = document.getElementById("tsResults");
+  if (!resultsEl) return;
+  const query = (document.getElementById("tsSearch")?.value || "").trim().toLowerCase();
+  const center = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
+
+  resultsEl.innerHTML = `<div class="ts-loading">${t("ts.loading")}</div>`;
+  const all = await ensureAllStations();
+
+  let items = all
+    .map(stationFromPioupiou)
+    .filter(Boolean)
+    .filter(s => isStationRecent(s, 24))
+    .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
+    .filter(s => s.dist <= tsRadius);
+
+  if (query) {
+    items = items.filter(s => s.name.toLowerCase().includes(query));
+  }
+  items.sort((a, b) => a.dist - b.dist);
+  items = items.slice(0, 50);
+
+  if (!items.length) {
+    resultsEl.innerHTML = `<div class="ts-empty">${t("ts.empty")}</div>`;
+    return;
+  }
+  resultsEl.innerHTML = "";
+  for (const s of items) {
+    const enabled = ENABLED_STATION_IDS.has(s.id);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ts-result"
+      + (s.id === currentStationId ? " selected" : "")
+      + (enabled ? "" : " disabled");
+    if (!enabled) btn.disabled = true;
+    const tail = enabled
+      ? `<span class="ts-result-provider">${s.provider}</span>`
+      : `<span class="ts-result-soon">${t("ts.coming_soon")}</span>`;
+    btn.innerHTML = `
+      <span class="ts-result-name">${escapeHtml(s.name)}</span>
+      <span class="ts-result-dist">${s.dist.toFixed(1)} km</span>
+      ${tail}
+    `;
+    if (enabled) {
+      btn.addEventListener("click", () => {
+        selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon });
+        document.getElementById("tsPanel").hidden = true;
+        document.getElementById("tsToggleBtn").setAttribute("aria-expanded", "false");
+      });
+    }
+    resultsEl.appendChild(btn);
+  }
+}
+
+function initTakeoffSelector() {
+  applyCurrentTakeoffLabel();
+  const searchEl = document.getElementById("tsSearch");
+  const radiusEl = document.getElementById("tsRadius");
+  const radiusValEl = document.getElementById("tsRadiusValue");
+  const panel = document.getElementById("tsPanel");
+  const toggleBtn = document.getElementById("tsToggleBtn");
+  const locateBtn = document.getElementById("tsLocateBtn");
+
+  if (radiusEl) {
+    radiusEl.value = String(tsRadius);
+    if (radiusValEl) radiusValEl.textContent = String(tsRadius);
+    radiusEl.addEventListener("input", () => {
+      tsRadius = parseInt(radiusEl.value, 10);
+      if (radiusValEl) radiusValEl.textContent = String(tsRadius);
+      localStorage.setItem("tsRadius", String(tsRadius));
+      tsRunSearch();
+    });
+  }
+
+  let searchTimer = null;
+  if (searchEl) {
+    searchEl.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(tsRunSearch, 200);
+      // Abrir panel automáticamente al escribir
+      if (panel?.hidden) {
+        panel.hidden = false;
+        toggleBtn?.setAttribute("aria-expanded", "true");
+        tsRunSearch();
+      }
+    });
+  }
+
+  if (toggleBtn && panel) {
+    toggleBtn.addEventListener("click", () => {
+      panel.hidden = !panel.hidden;
+      toggleBtn.setAttribute("aria-expanded", panel.hidden ? "false" : "true");
+      if (!panel.hidden) tsRunSearch();
+    });
+  }
+
+  if (locateBtn) {
+    locateBtn.addEventListener("click", () => {
+      if (!("geolocation" in navigator)) {
+        alert(t("ts.geo_unavailable"));
+        return;
+      }
+      locateBtn.disabled = true;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          locateBtn.classList.add("active");
+          locateBtn.disabled = false;
+          if (panel) {
+            panel.hidden = false;
+            toggleBtn?.setAttribute("aria-expanded", "true");
+          }
+          tsRunSearch();
+        },
+        (err) => {
+          console.warn("geolocation:", err);
+          alert(t("ts.geo_denied"));
+          locateBtn.disabled = false;
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+  }
+}
+
 // Inicialización
 applyStaticI18n();
 syncNotifyButtonInitial();
+initTakeoffSelector();
 renderMap();
 refreshObservations();
 refreshForecast();

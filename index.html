@@ -34,9 +34,31 @@
   <main>
     <!-- Estado actual -->
     <section class="card status-card" id="statusCard">
-      <div class="banner status-banner">
-        <h2 class="banner-title" data-i18n="banner.title">Despegue de parapente de Cenes de la Vega</h2>
-        <button id="refreshBtn" title="Actualizar">⟳</button>
+      <div class="takeoff-selector" id="takeoffSelector">
+        <div class="ts-row">
+          <button id="tsLocateBtn" class="ts-locate" title="Usar mi ubicación" data-i18n-title="ts.locate">📍</button>
+          <input type="text" id="tsSearch" class="ts-search" autocomplete="off"
+                 data-i18n-placeholder="ts.placeholder"
+                 placeholder="Buscar despegue / estación…" />
+          <button id="tsToggleBtn" class="ts-toggle" title="Mostrar opciones" aria-expanded="false">▾</button>
+          <button id="refreshBtn" class="ts-refresh" title="Actualizar">⟳</button>
+        </div>
+        <div class="ts-current">
+          <span class="ts-current-label" data-i18n="ts.current">Despegue:</span>
+          <strong id="tsCurrentName">Cenes de la Vega</strong>
+        </div>
+        <div class="ts-panel" id="tsPanel" hidden>
+          <div class="ts-radius">
+            <label for="tsRadius">
+              <span data-i18n="ts.radius">Radio</span>
+              <span id="tsRadiusValue">50</span> km
+            </label>
+            <input type="range" id="tsRadius" min="10" max="300" step="5" value="50" />
+          </div>
+          <div class="ts-results" id="tsResults">
+            <div class="ts-hint" data-i18n="ts.hint">Pulsa 📍 para usar tu ubicación o escribe para filtrar.</div>
+          </div>
+        </div>
       </div>
       <div class="status-grid">
         <div class="compass-wrap">
@@ -64,7 +86,7 @@
             <span class="trend" id="windAvgTrend" hidden></span>
           </div>
           <div class="reading">
-            <span class="label" data-i18n="read.max">Ráfaga máx.</span>
+            <span class="label" data-i18n="read.max">Racha máx.</span>
             <span class="value" id="windMax">—</span>
             <span class="unit">km/h</span>
           </div>
@@ -78,6 +100,16 @@
             <span class="value" id="lastUpdate">—</span>
           </div>
         </div>
+      </div>
+
+      <div class="wind-history" id="windHistory" hidden>
+        <div class="wh-header">
+          <span class="wh-title" data-i18n="wh.title">Últimas 6 h</span>
+        </div>
+        <div class="wh-arrows" id="whArrows"></div>
+        <div class="wh-bar" id="whBar"></div>
+        <div class="wh-values" id="whValues"></div>
+        <div class="wh-hours" id="whHours"></div>
       </div>
 
       <div class="verdict" id="verdict">
@@ -170,7 +202,7 @@
         <li><span class="dot ideal"></span> <span data-i18n="guide.ideal"><strong>Ideal:</strong> Oeste (O) o Noroeste (NO), 5–12 km/h.</span></li>
         <li><span class="dot ok"></span> <span data-i18n="guide.ok"><strong>Volable:</strong> Norte (N) o Suroeste (SO), hasta 15 km/h.</span></li>
         <li><span class="dot bad"></span> <span data-i18n="guide.bad"><strong>Malo:</strong> componentes Este (NE, E, SE) — empeora cuanto más al Este.</span></li>
-        <li><span class="dot warn"></span> <span data-i18n="guide.warn"><strong>Demasiado fuerte:</strong> media &gt; 15 km/h o ráfagas &gt; 25 km/h.</span></li>
+        <li><span class="dot warn"></span> <span data-i18n="guide.warn"><strong>Demasiado fuerte:</strong> media &gt; 15 km/h o rachas &gt; 25 km/h.</span></li>
       </ul>
     </section>
 

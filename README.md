@@ -13,9 +13,9 @@ Web/PWA estática para consultar las condiciones de viento en el despegue de **C
 
 ## Criterios de volabilidad
 
-- **Ideal**: dirección W–NNW, media 5–15 km/h, ráfagas ≤ 25 km/h
+- **Ideal**: dirección W–NNW, media 5–15 km/h, rachas ≤ 25 km/h
 - **Volable**: N o SW, o viento fuera del rango ideal pero bajo el límite
-- **Demasiado fuerte**: media ≥ 20 km/h o ráfagas ≥ 30 km/h
+- **Demasiado fuerte**: media ≥ 20 km/h o rachas ≥ 30 km/h
 - **Malo**: componentes Este (NE, E, SE)
 - Degradado si hay lluvia o riesgo de tormenta
 
