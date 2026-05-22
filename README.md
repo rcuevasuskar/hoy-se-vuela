@@ -2,7 +2,7 @@
 
 Web/PWA estática para consultar las condiciones de viento en el despegue de **Cerro de los Majojos** (Cenes de la Vega, Granada).
 
-🌐 **Demo**: https://rubencuevas-unit4.github.io/parapente-cenes/
+🌐 **Demo**: https://rcuevasuskar.github.io/parapente-cenes/
 
 ## Datos
 
