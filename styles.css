@@ -301,7 +301,7 @@ main {
 }
 
 /* Compass */
-.compass-wrap { text-align: center; }
+.compass-wrap { text-align: center; padding: 22px 18px 22px 18px; }
 .compass {
   position: relative;
   width: 180px;
@@ -316,25 +316,25 @@ main {
   color: var(--muted);
   font-size: 0.9rem;
 }
-.cardinal.n { top: 4px;    left: 50%; transform: translateX(-50%); }
-.cardinal.s { bottom: 4px; left: 50%; transform: translateX(-50%); }
-.cardinal.e { right: 6px;  top: 50%;  transform: translateY(-50%); }
-.cardinal.w { left: 6px;   top: 50%;  transform: translateY(-50%); }
+.cardinal.n { top: -20px;    left: 50%; transform: translateX(-50%); }
+.cardinal.s { bottom: -20px; left: 50%; transform: translateX(-50%); }
+.cardinal.e { right: -16px;  top: 50%;  transform: translateY(-50%); }
+.cardinal.w { left: -16px;   top: 50%;  transform: translateY(-50%); }
 
 .sector {
   position: absolute;
   inset: 8px;
   border-radius: 50%;
   background: conic-gradient(from var(--start), currentColor 0deg, currentColor calc(var(--end) - var(--start)), transparent 0);
-  -webkit-mask: radial-gradient(circle, transparent 52%, #000 53%, #000 96%, transparent 97%);
-          mask: radial-gradient(circle, transparent 52%, #000 53%, #000 96%, transparent 97%);
-  opacity: 0.85;
+  -webkit-mask: radial-gradient(circle, transparent 34%, #000 35%, #000 58%, transparent 59%);
+          mask: radial-gradient(circle, transparent 34%, #000 35%, #000 58%, transparent 59%);
+  opacity: 1;
   pointer-events: none;
-  filter: saturate(180%);
+  filter: saturate(160%) brightness(1.05);
 }
-.sector.ideal { color: #00e676; }
-.sector.ok    { color: #ffd54f; }
-.sector.bad   { color: #ff5252; opacity: 0.55; }
+.sector.ideal { color: #00ff7f; }
+.sector.ok    { color: #ffeb3b; }
+.sector.bad   { color: var(--bad); opacity: 0.85; }
 
 .sector[style*="--start:337.5deg"] {
   background: conic-gradient(from -22.5deg, currentColor 0deg, currentColor 45deg, transparent 0);
@@ -357,10 +357,10 @@ main {
   left: 50%;
   transform: translateX(-50%);
   width: 0; height: 0;
-  border-left: 16px solid transparent;
-  border-right: 16px solid transparent;
-  border-top: 34px solid var(--accent-dark);
-  filter: drop-shadow(0 0 6px rgba(31,95,176,0.7));
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 44px solid var(--accent-dark);
+  filter: drop-shadow(0 0 7px rgba(45,122,217,0.85));
 }
 .wedge-wrap[data-quality="ideal"] .wedge { border-top-color: var(--accent-dark); filter: drop-shadow(0 0 8px var(--accent-dark)); }
 .wedge-wrap[data-quality="ok"]    .wedge { border-top-color: var(--accent-dark); filter: drop-shadow(0 0 8px var(--accent-dark)); }
@@ -369,15 +369,7 @@ main {
 
 /* (Marca antigua eliminada: ahora se usa .wedge dentro de la brújula.) */
 
-.center-dot {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 12px; height: 12px;
-  background: var(--accent);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 10px rgba(78,161,255,0.6);
-}
+.center-dot { display: none; }
 
 .dir-label {
   margin-top: 10px;
