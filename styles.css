@@ -74,7 +74,7 @@ header h1 { margin: 0; font-size: 1.6rem; }
   min-width: 0;
 }
 .ts-search::placeholder { color: var(--muted); }
-.ts-locate, .ts-toggle, .ts-refresh {
+.ts-locate, .ts-toggle, .ts-refresh, .ts-notify, .ts-install {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.12);
   color: var(--muted);
@@ -85,10 +85,25 @@ header h1 { margin: 0; font-size: 1.6rem; }
   line-height: 1;
   flex-shrink: 0;
 }
-.ts-locate:hover, .ts-toggle:hover, .ts-refresh:hover {
+.ts-locate:hover, .ts-toggle:hover, .ts-refresh:hover,
+.ts-notify:hover, .ts-install:hover {
   background: rgba(255,255,255,0.08); color: #fff;
 }
 .ts-locate.active { color: var(--accent); border-color: var(--accent); }
+.ts-notify.active { color: var(--ideal); border-color: var(--ideal); }
+.ts-lang {
+  background: rgba(0,0,0,0.25);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 4px 4px;
+  font-size: 0.95rem;
+  line-height: 1;
+  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
 .ts-current {
   margin-top: 6px;
   font-size: 0.8rem;

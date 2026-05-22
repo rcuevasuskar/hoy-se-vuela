@@ -18,17 +18,6 @@
 </head>
 <body>
   <header>
-
-    <div class="toolbar">
-      <select id="langSel" title="Idioma / Language">
-        <option value="es">🇪🇸 Español</option>
-        <option value="en">🇬🇧 English</option>
-        <option value="de">🇩🇪 Deutsch</option>
-        <option value="fr">🇫🇷 Français</option>
-      </select>
-      <button id="installBtn" hidden data-i18n="btn.install">📲 Instalar app</button>
-      <button id="notifyBtn" data-i18n="btn.notify_off">🔔 Avisarme si hay condiciones ideales</button>
-    </div>
   </header>
 
   <main>
@@ -41,6 +30,14 @@
                  data-i18n-placeholder="ts.placeholder"
                  placeholder="Buscar despegue / estación…" />
           <button id="tsToggleBtn" class="ts-toggle" title="Mostrar opciones" aria-expanded="false">▾</button>
+          <select id="langSel" class="ts-lang" title="Idioma / Language">
+            <option value="es">🇪🇸</option>
+            <option value="en">🇬🇧</option>
+            <option value="de">🇩🇪</option>
+            <option value="fr">🇫🇷</option>
+          </select>
+          <button id="notifyBtn" class="ts-notify" title="Avisarme si hay condiciones ideales" data-i18n-title="btn.notify_off">🔔</button>
+          <button id="installBtn" class="ts-install" hidden title="Instalar app" data-i18n-title="btn.install">📲</button>
           <button id="refreshBtn" class="ts-refresh" title="Actualizar">⟳</button>
         </div>
         <div class="ts-current">
