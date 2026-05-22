@@ -132,6 +132,7 @@ const I18N = {
     "ts.geo_denied": "No se pudo obtener tu ubicación. Permiso denegado.",
     "ts.geo_unavailable": "Geolocalización no disponible en este dispositivo.",
     "wh.title": "Últimas 2 h (km/h)",
+    "wh.titleFmt": "Últimas {h} h (km/h)",
     "wh.legend": "flecha = hacia dónde sopla · altura = velocidad",
     "ts.coming_soon": "próximamente",
     "verdict.rain_suffix": "Probabilidad de precipitación significativa.",
@@ -252,6 +253,7 @@ const I18N = {
     "ts.geo_denied": "Could not get your location. Permission denied.",
     "ts.geo_unavailable": "Geolocation not available on this device.",
     "wh.title": "Last 2 h (km/h)",
+    "wh.titleFmt": "Last {h} h (km/h)",
     "wh.legend": "arrow = where the wind blows to · height = speed",
     "ts.coming_soon": "coming soon",
     "verdict.rain_suffix": "Significant precipitation probability.",
@@ -372,6 +374,7 @@ const I18N = {
     "ts.geo_denied": "Standort nicht verfügbar. Berechtigung verweigert.",
     "ts.geo_unavailable": "Geolokalisierung auf diesem Gerät nicht verfügbar.",
     "wh.title": "Letzte 2 h (km/h)",
+    "wh.titleFmt": "Letzte {h} h (km/h)",
     "wh.legend": "Pfeil = Windrichtung (wohin) · Höhe = Geschwindigkeit",
     "ts.coming_soon": "in Kürze",
     "verdict.rain_suffix": "Erhebliche Niederschlagswahrscheinlichkeit.",
@@ -492,6 +495,7 @@ const I18N = {
     "ts.geo_denied": "Impossible d'obtenir votre position. Permission refusée.",
     "ts.geo_unavailable": "Géolocalisation non disponible sur cet appareil.",
     "wh.title": "2 dernières heures (km/h)",
+    "wh.titleFmt": "{h} dernières heures (km/h)",
     "wh.legend": "flèche = vers où souffle le vent · hauteur = vitesse",
     "ts.coming_soon": "bientôt",
     "verdict.rain_suffix": "Probabilité significative de précipitations.",
@@ -1582,9 +1586,24 @@ async function refreshLiveOnly() {
   try { renderLive(await getLive()); } catch (e) { console.error(e); }
 }
 
-// === Wind history bar (últimas 6 h) ===
-const WH_HOURS = 2;
-const WH_BUCKET_MIN = 15;
+// === Wind history bar ===
+const WH_BUCKETS = 8;
+let WH_HOURS = parseInt(localStorage.getItem("whHours"), 10);
+if (![2, 4, 6].includes(WH_HOURS)) WH_HOURS = 2;
+let WH_BUCKET_MIN = (WH_HOURS * 60) / WH_BUCKETS;
+
+function setWindHistoryHours(h) {
+  if (![2, 4, 6].includes(h)) return;
+  WH_HOURS = h;
+  WH_BUCKET_MIN = (WH_HOURS * 60) / WH_BUCKETS;
+  localStorage.setItem("whHours", String(h));
+  document.querySelectorAll("#whRange button").forEach(b => {
+    b.classList.toggle("active", parseInt(b.dataset.h, 10) === h);
+  });
+  const title = document.getElementById("whTitle");
+  if (title) title.textContent = t("wh.titleFmt").replace("{h}", h);
+  refreshWindHistory();
+}
 
 async function refreshWindHistory() {
   const wrap = document.getElementById("windHistory");
@@ -1740,6 +1759,10 @@ document.querySelectorAll("#forecastButtons button").forEach(btn => {
 
 document.getElementById("notifyBtn").addEventListener("click", toggleNotifications);
 
+document.querySelectorAll("#whRange button").forEach(btn => {
+  btn.addEventListener("click", () => setWindHistoryHours(parseInt(btn.dataset.h, 10)));
+});
+
 // Idioma
 const langSel = document.getElementById("langSel");
 if (langSel) {
@@ -1749,6 +1772,8 @@ if (langSel) {
     localStorage.setItem("lang", currentLang);
     applyStaticI18n();
     syncNotifyButtonInitial();
+    const whTitleEl = document.getElementById("whTitle");
+    if (whTitleEl) whTitleEl.textContent = t("wh.titleFmt").replace("{h}", WH_HOURS);
     // Re-renderiza todo para refrescar etiquetas dinámicas
     if (map) {
       map.eachLayer(l => { if (l instanceof L.CircleMarker) map.removeLayer(l); });
@@ -1958,6 +1983,12 @@ applyStaticI18n();
 syncNotifyButtonInitial();
 initTakeoffSelector();
 renderMap();
+// Sincroniza UI del selector de horas con el valor cargado
+document.querySelectorAll("#whRange button").forEach(b => {
+  b.classList.toggle("active", parseInt(b.dataset.h, 10) === WH_HOURS);
+});
+const _whTitleInit = document.getElementById("whTitle");
+if (_whTitleInit) _whTitleInit.textContent = t("wh.titleFmt").replace("{h}", WH_HOURS);
 refreshObservations();
 refreshForecast();
 renderCompare();

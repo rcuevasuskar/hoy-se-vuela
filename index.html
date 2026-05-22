@@ -100,7 +100,12 @@
 
       <div class="wind-history" id="windHistory" hidden>
         <div class="wh-header">
-          <span class="wh-title" data-i18n="wh.title">Últimas 6 h</span>
+          <span class="wh-title" id="whTitle">Últimas 2 h (km/h)</span>
+          <div class="wh-range" id="whRange">
+            <button data-h="2" class="active">2 h</button>
+            <button data-h="4">4 h</button>
+            <button data-h="6">6 h</button>
+          </div>
         </div>
         <div class="wh-arrows" id="whArrows"></div>
         <div class="wh-bar" id="whBar"></div>
