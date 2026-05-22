@@ -337,9 +337,7 @@ main {
 .sector.bad   { color: #ff5252; opacity: 0.55; }
 
 .sector[style*="--start:337.5deg"] {
-  background:
-    conic-gradient(from 337.5deg, currentColor 0deg, currentColor 22.5deg, transparent 0),
-    conic-gradient(from 0deg, currentColor 0deg, currentColor 22.5deg, transparent 0);
+  background: conic-gradient(from -22.5deg, currentColor 0deg, currentColor 45deg, transparent 0);
 }
 
 /* === Brújula: wedge en el borde apuntando hacia el centro === */

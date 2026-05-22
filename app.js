@@ -94,6 +94,7 @@ const I18N = {
     "near.popup_view": "Ver estación",
     "map.title": "Ubicación del despegue",
     "guide.title": "Guía rápida",
+    "guide.for": "Criterios para",
     "guide.ideal": "<strong>Ideal:</strong> Oeste (O) o Noroeste (NO), 5–15 km/h (rachas ≤ 25).",
     "guide.ok": "<strong>Volable:</strong> Norte (N) o Suroeste (SO), o vientos fuera del rango ideal pero por debajo del límite.",
     "guide.bad": "<strong>Malo:</strong> componentes Este (NE, E, SE) — empeora cuanto más al Este.",
@@ -213,6 +214,7 @@ const I18N = {
     "near.popup_view": "View station",
     "map.title": "Takeoff location",
     "guide.title": "Quick guide",
+    "guide.for": "Criteria for",
     "guide.ideal": "<strong>Ideal:</strong> West (W) or Northwest (NW), 5–15 km/h (gusts ≤ 25).",
     "guide.ok": "<strong>Flyable:</strong> North (N) or Southwest (SW), or winds outside the ideal range but below the limit.",
     "guide.bad": "<strong>Bad:</strong> Easterly components (NE, E, SE) — worse the further east.",
@@ -332,6 +334,7 @@ const I18N = {
     "near.popup_view": "Station ansehen",
     "map.title": "Standort des Startplatzes",
     "guide.title": "Kurzanleitung",
+    "guide.for": "Kriterien für",
     "guide.ideal": "<strong>Ideal:</strong> West (W) oder Nordwest (NW), 5–15 km/h (Böen ≤ 25).",
     "guide.ok": "<strong>Fliegbar:</strong> Nord (N) oder Südwest (SW), oder Wind außerhalb des Idealbereichs aber unter dem Limit.",
     "guide.bad": "<strong>Schlecht:</strong> Ostkomponenten (NO, O, SO) — schlechter je östlicher.",
@@ -451,6 +454,7 @@ const I18N = {
     "near.popup_view": "Voir la station",
     "map.title": "Emplacement du décollage",
     "guide.title": "Guide rapide",
+    "guide.for": "Critères pour",
     "guide.ideal": "<strong>Idéal :</strong> Ouest (O) ou Nord-Ouest (NO), 5–15 km/h (rafales ≤ 25).",
     "guide.ok": "<strong>Volable :</strong> Nord (N) ou Sud-Ouest (SO), ou vents hors plage idéale mais sous la limite.",
     "guide.bad": "<strong>Mauvais :</strong> composantes Est (NE, E, SE) — pire vers l'est.",
@@ -1782,6 +1786,8 @@ function refreshAllForCurrentTakeoff() {
 function applyCurrentTakeoffLabel() {
   const el = document.getElementById("tsCurrentName");
   if (el) el.textContent = currentStation.shortName || currentStation.name;
+  const guideEl = document.getElementById("guideTakeoffName");
+  if (guideEl) guideEl.textContent = currentStation.shortName || currentStation.name;
 }
 
 function selectStation(station) {
