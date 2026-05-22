@@ -50,6 +50,7 @@ const I18N = {
     "read.max": "Racha máx.",
     "read.min": "Mínima",
     "read.last": "Última lectura",
+    "read.dir": "Dirección",
     "verdict.loading": "Cargando…",
     "verdict.ideal.title": "Condiciones ideales ✅",
     "verdict.ideal.detail": "Buena dirección y velocidad en el rango óptimo.",
@@ -168,6 +169,7 @@ const I18N = {
     "read.max": "Max gust",
     "read.min": "Min",
     "read.last": "Last reading",
+    "read.dir": "Direction",
     "verdict.loading": "Loading…",
     "verdict.ideal.title": "Ideal conditions ✅",
     "verdict.ideal.detail": "Good direction and speed within the optimal range.",
@@ -286,6 +288,7 @@ const I18N = {
     "read.max": "Max. Böe",
     "read.min": "Minimum",
     "read.last": "Letzte Messung",
+    "read.dir": "Richtung",
     "verdict.loading": "Lädt…",
     "verdict.ideal.title": "Ideale Bedingungen ✅",
     "verdict.ideal.detail": "Gute Richtung und Geschwindigkeit im optimalen Bereich.",
@@ -404,6 +407,7 @@ const I18N = {
     "read.max": "Rafale max.",
     "read.min": "Minimum",
     "read.last": "Dernière mesure",
+    "read.dir": "Direction",
     "verdict.loading": "Chargement…",
     "verdict.ideal.title": "Conditions idéales ✅",
     "verdict.ideal.detail": "Bonne direction et vitesse dans la plage optimale.",
@@ -839,7 +843,7 @@ function renderLive(live) {
 
   const dirInfo = classifyDirection(dir);
   setText("dirLabel", dir != null
-    ? t("dirLabel.from", { name: dirInfo.name, deg: Math.round(dir) })
+    ? `${dirInfo.name} (${Math.round(dir)}°)`
     : t("dirLabel.dash"));
 
   // El wedge en el borde apunta hacia el centro desde la posición de origen del viento.

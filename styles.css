@@ -5,6 +5,7 @@
   --text: #e8eef7;
   --muted: #8aa0bb;
   --accent: #4ea1ff;
+  --accent-dark: #2d7ad9;
   --ideal: #2ecc71;
   --ok: #f1c40f;
   --bad: #e74c3c;
@@ -360,12 +361,12 @@ main {
   width: 0; height: 0;
   border-left: 16px solid transparent;
   border-right: 16px solid transparent;
-  border-top: 34px solid var(--accent);
-  filter: drop-shadow(0 0 6px rgba(78,161,255,0.7));
+  border-top: 34px solid var(--accent-dark);
+  filter: drop-shadow(0 0 6px rgba(31,95,176,0.7));
 }
-.wedge-wrap[data-quality="ideal"] .wedge { border-top-color: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
-.wedge-wrap[data-quality="ok"]    .wedge { border-top-color: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
-.wedge-wrap[data-quality="bad"]   .wedge { border-top-color: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
+.wedge-wrap[data-quality="ideal"] .wedge { border-top-color: var(--accent-dark); filter: drop-shadow(0 0 8px var(--accent-dark)); }
+.wedge-wrap[data-quality="ok"]    .wedge { border-top-color: var(--accent-dark); filter: drop-shadow(0 0 8px var(--accent-dark)); }
+.wedge-wrap[data-quality="bad"]   .wedge { border-top-color: var(--accent-dark); filter: drop-shadow(0 0 8px var(--accent-dark)); }
 
 
 /* (Marca antigua eliminada: ahora se usa .wedge dentro de la brújula.) */
@@ -386,6 +387,12 @@ main {
   letter-spacing: 0.03em;
   font-size: 1.05rem;
   color: var(--text);
+}
+.last-update {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
 }
 
 /* Readings */
