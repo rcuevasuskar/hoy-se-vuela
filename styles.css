@@ -327,15 +327,15 @@ main {
   inset: 8px;
   border-radius: 50%;
   background: conic-gradient(from var(--start), currentColor 0deg, currentColor calc(var(--end) - var(--start)), transparent 0);
-  -webkit-mask: radial-gradient(circle, transparent 29%, #000 30%, #000 78%, transparent 79%);
-          mask: radial-gradient(circle, transparent 29%, #000 30%, #000 78%, transparent 79%);
+  -webkit-mask: radial-gradient(circle, transparent 29%, #000 30%, #000 66%, transparent 67%);
+          mask: radial-gradient(circle, transparent 29%, #000 30%, #000 66%, transparent 67%);
   opacity: 1;
   pointer-events: none;
   filter: saturate(160%) brightness(1.05);
 }
-.sector.ideal { color: #00ff7f; }
-.sector.ok    { color: #ffeb3b; }
-.sector.bad   { color: var(--bad); opacity: 0.85; }
+.sector.ideal { color: var(--ideal); }
+.sector.ok    { color: var(--ok); }
+.sector.bad   { color: var(--bad); opacity: 0.9; }
 
 .sector[style*="--start:337.5deg"] {
   background: conic-gradient(from -22.5deg, currentColor 0deg, currentColor 45deg, transparent 0);
