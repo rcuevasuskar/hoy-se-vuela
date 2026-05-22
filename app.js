@@ -131,7 +131,7 @@ const I18N = {
     "ts.empty": "No hay estaciones activas en este radio.",
     "ts.geo_denied": "No se pudo obtener tu ubicación. Permiso denegado.",
     "ts.geo_unavailable": "Geolocalización no disponible en este dispositivo.",
-    "wh.title": "Últimas 4 h (km/h)",
+    "wh.title": "Últimas 2 h (km/h)",
     "wh.legend": "flecha = hacia dónde sopla · altura = velocidad",
     "ts.coming_soon": "próximamente",
     "verdict.rain_suffix": "Probabilidad de precipitación significativa.",
@@ -251,7 +251,7 @@ const I18N = {
     "ts.empty": "No active stations within this radius.",
     "ts.geo_denied": "Could not get your location. Permission denied.",
     "ts.geo_unavailable": "Geolocation not available on this device.",
-    "wh.title": "Last 4 h (km/h)",
+    "wh.title": "Last 2 h (km/h)",
     "wh.legend": "arrow = where the wind blows to · height = speed",
     "ts.coming_soon": "coming soon",
     "verdict.rain_suffix": "Significant precipitation probability.",
@@ -371,7 +371,7 @@ const I18N = {
     "ts.empty": "Keine aktiven Stationen in diesem Radius.",
     "ts.geo_denied": "Standort nicht verfügbar. Berechtigung verweigert.",
     "ts.geo_unavailable": "Geolokalisierung auf diesem Gerät nicht verfügbar.",
-    "wh.title": "Letzte 4 h (km/h)",
+    "wh.title": "Letzte 2 h (km/h)",
     "wh.legend": "Pfeil = Windrichtung (wohin) · Höhe = Geschwindigkeit",
     "ts.coming_soon": "in Kürze",
     "verdict.rain_suffix": "Erhebliche Niederschlagswahrscheinlichkeit.",
@@ -491,7 +491,7 @@ const I18N = {
     "ts.empty": "Aucune station active dans ce rayon.",
     "ts.geo_denied": "Impossible d'obtenir votre position. Permission refusée.",
     "ts.geo_unavailable": "Géolocalisation non disponible sur cet appareil.",
-    "wh.title": "4 dernières heures (km/h)",
+    "wh.title": "2 dernières heures (km/h)",
     "wh.legend": "flèche = vers où souffle le vent · hauteur = vitesse",
     "ts.coming_soon": "bientôt",
     "verdict.rain_suffix": "Probabilité significative de précipitations.",
@@ -1583,7 +1583,7 @@ async function refreshLiveOnly() {
 }
 
 // === Wind history bar (últimas 6 h) ===
-const WH_HOURS = 4;
+const WH_HOURS = 2;
 const WH_BUCKET_MIN = 15;
 
 async function refreshWindHistory() {
