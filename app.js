@@ -95,6 +95,11 @@ const I18N = {
     "near.airport_src": "Open-Meteo (METAR aprox.)",
     "banner.title": "Despegue de parapente de Cenes de la Vega",
     "verdict.rain_suffix": "Probabilidad de precipitación significativa.",
+    "verdict.speed.calm": "Viento muy flojo, prácticamente en calma.",
+    "verdict.speed.low": "Viento por debajo del rango ideal (<5 km/h).",
+    "verdict.speed.high": "Viento por encima del rango ideal (>15 km/h).",
+    "verdict.speed.too_high_avg": "Velocidad media demasiado alta (≥20 km/h).",
+    "verdict.speed.too_high_gust": "Ráfagas demasiado fuertes (≥30 km/h).",
     "verdict.storm_suffix": "Hay riesgo de tormenta: no volar.",
     "wx.code.clear": "Despejado",
     "wx.code.mostly_clear": "Casi despejado",
@@ -196,6 +201,11 @@ const I18N = {
     "near.airport_src": "Open-Meteo (approx. METAR)",
     "banner.title": "Paragliding takeoff of Cenes de la Vega",
     "verdict.rain_suffix": "Significant precipitation probability.",
+    "verdict.speed.calm": "Wind is very light, almost calm.",
+    "verdict.speed.low": "Wind below the ideal range (<5 km/h).",
+    "verdict.speed.high": "Wind above the ideal range (>15 km/h).",
+    "verdict.speed.too_high_avg": "Average wind too high (≥20 km/h).",
+    "verdict.speed.too_high_gust": "Gusts too strong (≥30 km/h).",
     "verdict.storm_suffix": "Thunderstorm risk: do not fly.",
     "wx.code.clear": "Clear",
     "wx.code.mostly_clear": "Mostly clear",
@@ -297,6 +307,11 @@ const I18N = {
     "near.airport_src": "Open-Meteo (ca. METAR)",
     "banner.title": "Gleitschirm-Startplatz von Cenes de la Vega",
     "verdict.rain_suffix": "Erhebliche Niederschlagswahrscheinlichkeit.",
+    "verdict.speed.calm": "Wind sehr schwach, fast Windstille.",
+    "verdict.speed.low": "Wind unter dem Idealbereich (<5 km/h).",
+    "verdict.speed.high": "Wind über dem Idealbereich (>15 km/h).",
+    "verdict.speed.too_high_avg": "Durchschnittswind zu hoch (≥20 km/h).",
+    "verdict.speed.too_high_gust": "Böen zu stark (≥30 km/h).",
     "verdict.storm_suffix": "Gewittergefahr: nicht fliegen.",
     "wx.code.clear": "Klar",
     "wx.code.mostly_clear": "Überwiegend klar",
@@ -398,6 +413,11 @@ const I18N = {
     "near.airport_src": "Open-Meteo (METAR approx.)",
     "banner.title": "Décollage parapente de Cenes de la Vega",
     "verdict.rain_suffix": "Probabilité significative de précipitations.",
+    "verdict.speed.calm": "Vent très faible, presque calme.",
+    "verdict.speed.low": "Vent en dessous de la plage idéale (<5 km/h).",
+    "verdict.speed.high": "Vent au-dessus de la plage idéale (>15 km/h).",
+    "verdict.speed.too_high_avg": "Vent moyen trop fort (≥20 km/h).",
+    "verdict.speed.too_high_gust": "Rafales trop fortes (≥30 km/h).",
     "verdict.storm_suffix": "Risque d'orage : ne pas voler.",
     "wx.code.clear": "Dégagé",
     "wx.code.mostly_clear": "Plutôt dégagé",
@@ -482,6 +502,17 @@ function classifySpeed(avg, max) {
   if (avg >= 5 && avg <= 15 && (max == null || max <= 25)) return "ideal";
   // Resto: volable.
   return "ok";
+}
+
+// Devuelve una clave i18n explicando el motivo de velocidad, o null si no aplica.
+function speedReasonKey(avg, max) {
+  if (avg == null) return null;
+  if (max != null && max >= 30) return "verdict.speed.too_high_gust";
+  if (avg >= 20) return "verdict.speed.too_high_avg";
+  if (avg < 3)   return "verdict.speed.calm";
+  if (avg < 5)   return "verdict.speed.low";
+  if (avg > 15)  return "verdict.speed.high";
+  return null;
 }
 
 function combineVerdict(dirQ, spdQ) {
@@ -733,6 +764,8 @@ function renderLive(live) {
   let detail = vt.detail;
   if (verdict !== "unknown") {
     detail += " " + t("verdict.suffix", { name: dirInfo.name, avg: fmtNum(avg), max: fmtNum(max) });
+    const reasonKey = speedReasonKey(avg, max);
+    if (reasonKey) detail += " " + t(reasonKey);
   }
   if (risk === "storm") detail += " " + t("verdict.storm_suffix");
   else if (risk === "rain") detail += " " + t("verdict.rain_suffix");
