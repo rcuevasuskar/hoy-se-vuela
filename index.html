@@ -71,31 +71,23 @@
             <div class="wedge-wrap" id="windWedge">
               <div class="wedge"></div>
             </div>
-            <div class="center-dot"></div>
+            <div class="compass-readings">
+              <div class="cr-row">
+                <span class="cr-label" data-i18n="read.avg">Velocidad media</span>
+                <span class="cr-val"><span id="windAvg">—</span><span class="cr-unit">km/h</span><span class="trend" id="windAvgTrend" hidden></span></span>
+              </div>
+              <div class="cr-row">
+                <span class="cr-label" data-i18n="read.max">Racha máx.</span>
+                <span class="cr-val"><span id="windMax">—</span><span class="cr-unit">km/h</span></span>
+              </div>
+              <div class="cr-row">
+                <span class="cr-label" data-i18n="read.min">Mínima</span>
+                <span class="cr-val"><span id="windMin">—</span><span class="cr-unit">km/h</span></span>
+              </div>
+            </div>
           </div>
           <div class="dir-label" id="dirLabel">—</div>
-        </div>
-        <div class="readings">
-          <div class="reading">
-            <span class="label" data-i18n="read.avg">Velocidad media</span>
-            <span class="value" id="windAvg">—</span>
-            <span class="unit">km/h</span>
-            <span class="trend" id="windAvgTrend" hidden></span>
-          </div>
-          <div class="reading">
-            <span class="label" data-i18n="read.max">Racha máx.</span>
-            <span class="value" id="windMax">—</span>
-            <span class="unit">km/h</span>
-          </div>
-          <div class="reading">
-            <span class="label" data-i18n="read.min">Mínima</span>
-            <span class="value" id="windMin">—</span>
-            <span class="unit">km/h</span>
-          </div>
-          <div class="reading">
-            <span class="label" data-i18n="read.last">Última lectura</span>
-            <span class="value" id="lastUpdate">—</span>
-          </div>
+          <div class="last-update"><span data-i18n="read.last">Última lectura</span>: <span id="lastUpdate">—</span></div>
         </div>
       </div>
 

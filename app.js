@@ -992,6 +992,19 @@ function dirColor(deg) {
   return "#888";
 }
 
+// Tamaño de las flechas en el chart de pronóstico (más pequeñas en móvil).
+function forecastArrowSize() {
+  return (window.matchMedia && window.matchMedia("(max-width: 540px)").matches) ? 11 : 18;
+}
+
+// Re-renderizar el pronóstico al cruzar el breakpoint para ajustar tamaño de flechas.
+if (window.matchMedia) {
+  const mq = window.matchMedia("(max-width: 540px)");
+  const handler = () => { if (latestForecast) renderForecast(latestForecast); };
+  if (mq.addEventListener) mq.addEventListener("change", handler);
+  else if (mq.addListener) mq.addListener(handler);
+}
+
 // Genera un canvas con una flecha rellena apuntando hacia donde va el viento,
 // para usarlo como pointStyle de Chart.js. `deg` = dirección DE DONDE viene el viento.
 function makeArrowPoint(deg, color, size = 12) {
@@ -1077,7 +1090,7 @@ function renderForecast(fc) {
   const gustPts = times.slice(i0).map((t, i) => ({ x: t, y: gust[i + i0] }));
   const dirPts = times.slice(i0).map((t, i) => ({ x: t, y: spd[i + i0], dir: dir[i + i0] }));
   const dirColors = dirPts.map(p => dirColor(p.dir));
-  const dirArrows = dirPts.map(p => makeArrowPoint(p.dir, dirColor(p.dir), 18));
+  const dirArrows = dirPts.map(p => makeArrowPoint(p.dir, dirColor(p.dir), forecastArrowSize()));
 
   const data = {
     datasets: [
@@ -1089,7 +1102,7 @@ function renderForecast(fc) {
         borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true },
       { label: t("chart.dir"), data: dirPts, type: "scatter",
         pointStyle: dirArrows,
-        pointRadius: 9, showLine: false, parsing: false },
+        pointRadius: forecastArrowSize() / 2, showLine: false, parsing: false },
     ],
   };
   const options = chartCommonOptions();
