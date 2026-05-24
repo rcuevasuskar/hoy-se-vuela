@@ -76,6 +76,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronóstico (Open-Meteo)",
     "fc.today": "Hoy",
+    "fc.night": "Noche (omitida)",
     "fc.show": "Mostrar en el gráfico:",
     "auth.title": "Cuenta",
     "auth.guest": "Invitado",
@@ -209,6 +210,7 @@ const I18N = {
     "wx.storm_level.low":  "bajo",
     "wx.storm_level.med":  "medio",
     "wx.storm_level.high": "alto",
+    "wx.storm_level.none": "ninguno",
     "wx.temp": "Temp.",
     "wx.feels": "sens. {v}°",
     "best.label": "Mejor ventana hoy:",
@@ -324,6 +326,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Forecast (Open-Meteo)",
     "fc.today": "Today",
+    "fc.night": "Night (skipped)",
     "fc.show": "Show on chart:",
     "auth.title": "Account",
     "auth.guest": "Guest",
@@ -442,6 +445,7 @@ const I18N = {
     "wx.storm_level.low":  "low",
     "wx.storm_level.med":  "medium",
     "wx.storm_level.high": "high",
+    "wx.storm_level.none": "none",
     "wx.temp": "Temp.",
     "wx.feels": "feels {v}°",
     "best.label": "Best window today:",
@@ -557,6 +561,7 @@ const I18N = {
     "chart.dir_tooltip": "Richt.: {name} ({deg}°)",
     "fc.title": "Vorhersage (Open-Meteo)",
     "fc.today": "Heute",
+    "fc.night": "Nacht (übersprungen)",
     "fc.show": "Im Diagramm anzeigen:",
     "auth.title": "Konto",
     "auth.guest": "Gast",
@@ -675,6 +680,7 @@ const I18N = {
     "wx.storm_level.low":  "gering",
     "wx.storm_level.med":  "mittel",
     "wx.storm_level.high": "hoch",
+    "wx.storm_level.none": "keine",
     "wx.temp": "Temp.",
     "wx.feels": "gefühlt {v}°",
     "best.label": "Beste Zeit heute:",
@@ -790,6 +796,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir : {name} ({deg}°)",
     "fc.title": "Prévision (Open-Meteo)",
     "fc.today": "Aujourd'hui",
+    "fc.night": "Nuit (ignorée)",
     "fc.show": "Afficher sur le graphique :",
     "auth.title": "Compte",
     "auth.guest": "Invité",
@@ -908,6 +915,7 @@ const I18N = {
     "wx.storm_level.low":  "faible",
     "wx.storm_level.med":  "moyen",
     "wx.storm_level.high": "élevé",
+    "wx.storm_level.none": "aucun",
     "wx.temp": "Temp.",
     "wx.feels": "ressenti {v}°",
     "best.label": "Meilleur créneau aujourd'hui :",
@@ -1023,6 +1031,7 @@ const I18N = {
     "chart.dir_tooltip": "Norab.: {name} ({deg}°)",
     "fc.title": "Iragarpena (Open-Meteo)",
     "fc.today": "Gaur",
+    "fc.night": "Gaua (alde batera)",
     "fc.show": "Erakutsi grafikoan:",
     "auth.title": "Kontua",
     "auth.guest": "Gonbidatua",
@@ -1141,6 +1150,7 @@ const I18N = {
     "wx.storm_level.low":  "baxua",
     "wx.storm_level.med":  "ertaina",
     "wx.storm_level.high": "altua",
+    "wx.storm_level.none": "bat ere ez",
     "wx.temp": "Tenp.",
     "wx.feels": "sent. {v}°",
     "best.label": "Gaurko tarte onena:",
@@ -1210,6 +1220,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronòstic (Open-Meteo)",
     "fc.today": "Avui",
+    "fc.night": "Nit (omèsa)",
     "fc.show": "Mostra al gràfic:",
     "auth.title": "Compte",
     "auth.guest": "Convidat",
@@ -1328,6 +1339,7 @@ const I18N = {
     "wx.storm_level.low":  "baix",
     "wx.storm_level.med":  "mitjà",
     "wx.storm_level.high": "alt",
+    "wx.storm_level.none": "cap",
     "wx.temp": "Temp.",
     "wx.feels": "sens. {v}°",
     "best.label": "Millor franja avui:",
@@ -1948,15 +1960,11 @@ function renderWeatherStrip(cw, risk) {
   const stormBar = document.getElementById("wsStormFill");
   const stormPct = document.getElementById("wsStormPct");
   const stormLbl = document.getElementById("wsStormLevel");
-  if (level === "none") {
-    stormBox.hidden = true;
-  } else {
-    stormBox.hidden = false;
-    stormBox.dataset.level = level;
-    stormBar.style.width = `${pct}%`;
-    stormPct.textContent = `${pct}%`;
-    stormLbl.textContent = t(`wx.storm_level.${level}`);
-  }
+  stormBox.hidden = false;
+  stormBox.dataset.level = level;
+  stormBar.style.width = `${pct}%`;
+  stormPct.textContent = `${pct}%`;
+  stormLbl.textContent = t(`wx.storm_level.${level}`);
 }
 
 // === Mejor ventana del día ===
@@ -2169,9 +2177,25 @@ function renderForecast(fc) {
   }
 
   const slicedTimes = times.slice(i0, iEnd);
-  const spdPts = slicedTimes.map((t, i) => ({ x: t, y: spd[i + i0] }));
-  const gustPts = slicedTimes.map((t, i) => ({ x: t, y: gust[i + i0] }));
-  const dirPts = slicedTimes.map((t, i) => ({ x: t, y: spd[i + i0], dir: dir[i + i0] }));
+  // Helper: ¿es de noche este timestamp? (entre puesta y salida del día correspondiente).
+  const daily = fc.daily || {};
+  const dailyTimes = (daily.time || []).map(s => String(s));
+  const sunrises = (daily.sunrise || []).map(s => s ? new Date(s).getTime() : null);
+  const sunsets  = (daily.sunset  || []).map(s => s ? new Date(s).getTime() : null);
+  const ymdOf = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const isNightAt = (date) => {
+    const idx = dailyTimes.findIndex(s => s.startsWith(ymdOf(date)));
+    if (idx < 0) return false;
+    const sr = sunrises[idx], ss = sunsets[idx];
+    if (sr == null || ss == null) return false;
+    const ts = date.getTime();
+    return ts < sr || ts > ss;
+  };
+  const spdPts = slicedTimes.map((t, i) => ({ x: t, y: isNightAt(t) ? null : spd[i + i0] }));
+  const gustPts = slicedTimes.map((t, i) => ({ x: t, y: isNightAt(t) ? null : gust[i + i0] }));
+  const dirPts = slicedTimes
+    .map((t, i) => isNightAt(t) ? null : ({ x: t, y: spd[i + i0], dir: dir[i + i0] }))
+    .filter(Boolean);
   const dirColors = dirPts.map(p => dirColor(p.dir));
   const dirArrows = dirPts.map(p => makeArrowPoint(p.dir, dirColor(p.dir), forecastArrowSize()));
 
@@ -2204,16 +2228,28 @@ function renderForecast(fc) {
   const scanFromTs = ref.scanFrom.getTime();
   const scanToTs   = ref.scanTo.getTime();
   let added = 0;
+  let lastWasNight = false;
+  let nightSeparatorAdded = false;
   for (let i = i0; i < times.length && added < maxSlots; i++) {
     const ts = times[i].getTime();
-    // Sólo dentro de la ventana solar del día de referencia (sunrise → sunset).
-    if (ts < scanFromTs || ts > scanToTs) {
-      // Si ya pasamos del fin de día de referencia, seguimos para slots de días posteriores
-      // sólo si el selector pide >1 día.
+    // Omite siempre las horas nocturnas (entre puesta y salida del sol).
+    if (isNightAt(times[i])) {
+      if (!nightSeparatorAdded) {
+        const sep = document.createElement("div");
+        sep.className = "forecast-night-sep";
+        sep.textContent = `🌙 ${t("fc.night")}`;
+        summary.appendChild(sep);
+        nightSeparatorAdded = true;
+      }
+      lastWasNight = true;
       if (currentForecastDays === 1 && ts > scanToTs) break;
-      if (currentForecastDays === 1) continue;
-      const hh = times[i].getHours();
-      if (hh < 8 || hh > 20) continue;
+      continue;
+    }
+    if (lastWasNight) { nightSeparatorAdded = false; lastWasNight = false; }
+    // Sólo dentro de la ventana solar del día de referencia (sunrise → sunset) para "Hoy".
+    if (currentForecastDays === 1 && (ts < scanFromTs || ts > scanToTs)) {
+      if (ts > scanToTs) break;
+      continue;
     }
     const h = times[i].getHours();
     const s = spd[i], g = gust[i], d = dir[i];
