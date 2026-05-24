@@ -73,6 +73,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronóstico (Open-Meteo)",
     "fc.today": "Hoy",
+    "fc.show": "Mostrar en el gráfico:",
     "cmp.title": "Comparativa últimos días",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(amanecer +3 h → ocaso −1 h)",
@@ -229,6 +230,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Forecast (Open-Meteo)",
     "fc.today": "Today",
+    "fc.show": "Show on chart:",
     "cmp.title": "Last days comparison",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(sunrise +3 h → sunset −1 h)",
@@ -385,6 +387,7 @@ const I18N = {
     "chart.dir_tooltip": "Richt.: {name} ({deg}°)",
     "fc.title": "Vorhersage (Open-Meteo)",
     "fc.today": "Heute",
+    "fc.show": "Im Diagramm anzeigen:",
     "cmp.title": "Vergleich letzter Tage",
     "cmp.window": "({h1}:00–{h2}:00 Ortszeit)",
     "cmp.window_solar": "(Sonnenaufgang +3 h → Sonnenuntergang −1 h)",
@@ -541,6 +544,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir : {name} ({deg}°)",
     "fc.title": "Prévision (Open-Meteo)",
     "fc.today": "Aujourd'hui",
+    "fc.show": "Afficher sur le graphique :",
     "cmp.title": "Comparatif derniers jours",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(lever +3 h → coucher −1 h)",
@@ -1403,12 +1407,21 @@ function renderForecast(fc) {
   const ref = referenceDayInfo(fc);
   const now = Date.now();
   const fromTs = ref.dayOffset === 1 ? ref.scanFrom.getTime() : (now - 3600 * 1000);
+  // Si el usuario pide solo "Hoy", recortamos también el extremo superior del gráfico
+  // al ocaso del día de referencia para no mostrar curvas que entran ya en mañana.
+  const toTs = currentForecastDays === 1 ? ref.scanTo.getTime() : Infinity;
   const idxStart = times.findIndex(t => t.getTime() >= fromTs);
   const i0 = Math.max(0, idxStart);
+  let iEnd = times.length;
+  if (toTs !== Infinity) {
+    const idxEnd = times.findIndex(t => t.getTime() > toTs);
+    if (idxEnd !== -1) iEnd = idxEnd;
+  }
 
-  const spdPts = times.slice(i0).map((t, i) => ({ x: t, y: spd[i + i0] }));
-  const gustPts = times.slice(i0).map((t, i) => ({ x: t, y: gust[i + i0] }));
-  const dirPts = times.slice(i0).map((t, i) => ({ x: t, y: spd[i + i0], dir: dir[i + i0] }));
+  const slicedTimes = times.slice(i0, iEnd);
+  const spdPts = slicedTimes.map((t, i) => ({ x: t, y: spd[i + i0] }));
+  const gustPts = slicedTimes.map((t, i) => ({ x: t, y: gust[i + i0] }));
+  const dirPts = slicedTimes.map((t, i) => ({ x: t, y: spd[i + i0], dir: dir[i + i0] }));
   const dirColors = dirPts.map(p => dirColor(p.dir));
   const dirArrows = dirPts.map(p => makeArrowPoint(p.dir, dirColor(p.dir), forecastArrowSize()));
 
@@ -1426,17 +1439,13 @@ function renderForecast(fc) {
     ],
   };
   const options = chartCommonOptions();
-  // Ocultar la entrada "Dirección" de la leyenda (la flecha ya indica color/dir).
-  const dirLabel = t("chart.dir");
+  // Leyenda nativa desactivada: usamos una HTML con checkboxes más clara.
   options.plugins = options.plugins || {};
-  options.plugins.legend = options.plugins.legend || {};
-  options.plugins.legend.labels = {
-    ...(options.plugins.legend.labels || {}),
-    filter: (item) => item.text !== dirLabel,
-  };
+  options.plugins.legend = { display: false };
 
   if (forecastChart) { forecastChart.data = data; forecastChart.options = options; forecastChart.update(); }
   else forecastChart = new Chart(ctx, { type: "line", data, options });
+  renderForecastLegend();
 
   // Resumen: próximas horas en franja diurna del día de referencia.
   const summary = document.getElementById("forecastSummary");
@@ -1494,6 +1503,31 @@ function renderForecast(fc) {
   // Re-evaluar veredicto en vivo ahora que tenemos meteo actualizada
   if (latestLive) renderLive(latestLive);
   renderBestWindow(fc);
+}
+
+// Leyenda HTML personalizada del gráfico de pronóstico (checkboxes).
+function renderForecastLegend() {
+  const host = document.getElementById("forecastLegend");
+  if (!host || !forecastChart) return;
+  const datasets = forecastChart.data.datasets;
+  host.innerHTML = `<div class="fc-legend-title">${t("fc.show")}</div>`;
+  datasets.forEach((ds, i) => {
+    const visible = forecastChart.isDatasetVisible(i);
+    const color = ds.borderColor || ds.backgroundColor || "#888";
+    const item = document.createElement("label");
+    item.className = "fc-legend-item" + (visible ? "" : " off");
+    item.innerHTML = `
+      <input type="checkbox" ${visible ? "checked" : ""} />
+      <span class="fc-legend-swatch" style="background:${color}"></span>
+      <span class="fc-legend-text">${escapeHtml(ds.label)}</span>
+    `;
+    item.querySelector("input").addEventListener("change", (e) => {
+      forecastChart.setDatasetVisibility(i, e.target.checked);
+      forecastChart.update();
+      item.classList.toggle("off", !e.target.checked);
+    });
+    host.appendChild(item);
+  });
 }
 
 // === Comparativa últimos días ===
