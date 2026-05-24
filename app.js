@@ -3643,24 +3643,49 @@ setInterval(refreshLiveOnly, REFRESH_MS);
 
 // === Despegues comunitarios: submit + admin ===
 const DIR16 = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+// 8 sectores principales para el selector (N, NE, E, SE, S, SO, O, NO)
+const DIR8_INDICES = [0, 2, 4, 6, 8, 10, 12, 14]; // posiciones equivalentes en el array de 16
+const QPRIO = { ideal: 1, ok: 2, bad: 3 };
+function _worseQ(a, b) {
+  const pa = a ? QPRIO[a] : 0;
+  const pb = b ? QPRIO[b] : 0;
+  return pa >= pb ? a : b;
+}
+function _expand8To16(q8) {
+  const out = new Array(16).fill(null);
+  for (let k = 0; k < 8; k++) {
+    out[k * 2] = q8[k] || null;
+  }
+  for (let k = 0; k < 8; k++) {
+    out[k * 2 + 1] = _worseQ(q8[k] || null, q8[(k + 1) % 8] || null);
+  }
+  return out;
+}
+function _collapse16To8(q16) {
+  const out = new Array(8).fill(null);
+  for (let k = 0; k < 8; k++) out[k] = (q16 && q16[k * 2]) || null;
+  return out;
+}
 
 function renderDirRose(currentQualities) {
   const host = document.getElementById("toDirRose");
   if (!host) return;
   host.innerHTML = "";
   host.classList.add("compass-rose-picker");
-  // Marca cardinales más grandes para guiar.
-  const CARDINAL = new Set(["N","E","S","W"]);
-  DIR16.forEach((name, idx) => {
+  const labels = DIR_16_BY_LANG[currentLang] || DIR_16_BY_LANG.es;
+  const q8 = _collapse16To8(currentQualities);
+  const CARDINAL_K = new Set([0, 2, 4, 6]); // N, E, S, O (en el array de 8)
+  for (let k = 0; k < 8; k++) {
+    const i16 = DIR8_INDICES[k];
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "to-dir-btn" + (CARDINAL.has(name) ? " is-cardinal" : "");
-    b.textContent = name;
-    b.dataset.idx = String(idx);
-    // Posicionado en círculo: 0=N (arriba), 4=E (derecha), 8=S (abajo), 12=W (izq)
-    const angle = idx * 22.5; // grados desde N en sentido horario
+    b.className = "to-dir-btn" + (CARDINAL_K.has(k) ? " is-cardinal" : "");
+    b.textContent = labels[i16];
+    b.dataset.idx = String(k);    // índice 0..7 sobre las 8 direcciones
+    b.dataset.i16 = String(i16);  // equivalente en el array de 16
+    const angle = k * 45;          // grados desde N en sentido horario
     b.style.setProperty("--angle", `${angle}deg`);
-    const q = currentQualities[idx] || "";
+    const q = q8[k] || "";
     if (q) b.dataset.q = q;
     b.addEventListener("click", () => {
       const cur = b.dataset.q || "";
@@ -3668,17 +3693,16 @@ function renderDirRose(currentQualities) {
       if (next) b.dataset.q = next; else delete b.dataset.q;
     });
     host.appendChild(b);
-  });
+  }
 }
 
 function collectDirRose() {
-  const arr = new Array(16).fill(null);
+  const q8 = new Array(8).fill(null);
   document.querySelectorAll("#toDirRose .to-dir-btn").forEach(b => {
-    const i = parseInt(b.dataset.idx, 10);
-    const q = b.dataset.q || null;
-    if (Number.isFinite(i)) arr[i] = q;
+    const k = parseInt(b.dataset.idx, 10);
+    if (Number.isFinite(k) && k >= 0 && k < 8) q8[k] = b.dataset.q || null;
   });
-  return arr;
+  return _expand8To16(q8);
 }
 
 function openTakeoffSubmit(prefill) {

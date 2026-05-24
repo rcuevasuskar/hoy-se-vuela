@@ -284,37 +284,52 @@ header.topbar .ts-current {
   position: relative;
   width: 240px;
   height: 240px;
-  margin: 6px auto;
+  margin: 10px auto 6px;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at center, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.0) 65%),
-    repeating-conic-gradient(from -11.25deg, rgba(255,255,255,0.04) 0deg 22.5deg, transparent 22.5deg 45deg);
-  border: 1px solid var(--border);
+  background: radial-gradient(circle at center, #1c283a 0%, #131c2a 70%);
+  border: 2px solid var(--border);
+  box-shadow: inset 0 0 18px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35);
 }
+/* Cruces guía N-S y E-O */
 .to-dir-rose.compass-rose-picker::before,
 .to-dir-rose.compass-rose-picker::after {
   content: "";
   position: absolute; left: 50%; top: 50%;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
+  pointer-events: none;
 }
-.to-dir-rose.compass-rose-picker::before { width: 1px; height: 100%; transform: translate(-50%, -50%); }
-.to-dir-rose.compass-rose-picker::after  { width: 100%; height: 1px; transform: translate(-50%, -50%); }
+.to-dir-rose.compass-rose-picker::before { width: 1px; height: 78%; transform: translate(-50%, -50%); }
+.to-dir-rose.compass-rose-picker::after  { width: 78%; height: 1px; transform: translate(-50%, -50%); }
 .to-dir-rose.compass-rose-picker .to-dir-btn {
   position: absolute;
   left: 50%; top: 50%;
-  width: 38px; height: 28px;
+  width: 40px; height: 40px;
   margin: 0;
   padding: 0;
-  font-size: .68rem;
-  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-92px) rotate(calc(-1 * var(--angle)));
+  border-radius: 50%;
+  font-size: .72rem;
+  font-weight: 600;
+  background: var(--panel-2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  cursor: pointer;
+  /* Coloca el chip a 96px del centro en el ángulo dado, manteniendo el texto horizontal */
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-96px) rotate(calc(-1 * var(--angle)));
+  transition: transform .15s ease, background-color .15s ease, color .15s ease;
 }
 .to-dir-rose.compass-rose-picker .to-dir-btn.is-cardinal {
-  width: 44px; height: 32px;
-  font-size: .82rem;
+  width: 46px; height: 46px;
+  font-size: .95rem;
+  color: var(--fg);
+  background: linear-gradient(180deg, #243349 0%, #1a2638 100%);
 }
 .to-dir-rose.compass-rose-picker .to-dir-btn:hover {
-  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-92px) rotate(calc(-1 * var(--angle))) scale(1.1);
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-96px) rotate(calc(-1 * var(--angle))) scale(1.1);
 }
+.to-dir-rose.compass-rose-picker .to-dir-btn[data-q="ideal"] { background: var(--ideal); color: #00210b; border-color: rgba(0,0,0,0.25); }
+.to-dir-rose.compass-rose-picker .to-dir-btn[data-q="ok"]    { background: var(--ok);    color: #2a1d00; border-color: rgba(0,0,0,0.25); }
+.to-dir-rose.compass-rose-picker .to-dir-btn[data-q="bad"]   { background: var(--bad);   color: #fff;    border-color: rgba(0,0,0,0.25); }
 .to-dir-btn {
   background: var(--panel-2); color: var(--fg);
   border: 1px solid var(--border);
