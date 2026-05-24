@@ -589,12 +589,18 @@ header.topbar .ts-current {
 .ts-radius input[type="range"]:disabled { opacity: 0.4; }
 
 /* Switch "Sin límite" embebido en la línea de Radio */
+/* v125: pegado al valor de radio (sin margin-left auto que lo alejaba) y
+   con fondo discreto para que sea legible tambien en tema claro. */
 .ts-no-radius {
   display: inline-flex !important;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
-  color: var(--muted);
+  margin-left: 0;
+  padding: 2px 8px;
+  background: rgba(127,127,127,0.18);
+  border: 1px solid rgba(127,127,127,0.25);
+  border-radius: 999px;
+  color: var(--text);
   font-size: 0.75rem;
   cursor: pointer;
   user-select: none;
@@ -621,7 +627,7 @@ header.topbar .ts-current {
 .ts-no-radius input:checked + .ts-switch::after { transform: translateX(12px); }
 .ts-no-radius input:focus-visible + .ts-switch { box-shadow: 0 0 0 2px rgba(78,161,255,0.4); }
 .ts-no-radius:hover .ts-switch { background: rgba(255,255,255,0.2); }
-.ts-no-radius input:checked ~ .ts-no-radius-text { color: #fff; }
+.ts-no-radius input:checked ~ .ts-no-radius-text { color: var(--text); font-weight: 600; }
 .ts-results {
   max-height: 240px;
   overflow-y: auto;
@@ -651,7 +657,7 @@ header.topbar .ts-current {
   width: 100%;
 }
 .ts-result:hover { background: rgba(78,161,255,0.15); border-color: rgba(78,161,255,0.3); }
-.ts-result.selected { border-color: var(--accent); background: rgba(78,161,255,0.18); }
+.ts-result.selected { background: rgba(78,161,255,0.18); box-shadow: 0 0 0 1px var(--accent) inset; }
 .ts-result.disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -660,13 +666,15 @@ header.topbar .ts-current {
 .ts-result.disabled:hover { background: rgba(0,0,0,0.15); border-color: transparent; }
 .ts-result-row { display: flex; gap: 4px; align-items: stretch; }
 .ts-result-row .ts-result { flex: 1; min-width: 0; }
-/* v125: borde izquierdo coloreado segun verdict actual para favoritos. */
-.ts-result.ts-fav { border-left: 4px solid transparent; padding-left: 6px; }
-.ts-result.ts-fav[data-verdict="ideal"]   { border-left-color: var(--ideal); }
-.ts-result.ts-fav[data-verdict="ok"]      { border-left-color: var(--warn); }
-.ts-result.ts-fav[data-verdict="warn"]    { border-left-color: var(--bad); }
-.ts-result.ts-fav[data-verdict="bad"]     { border-left-color: var(--bad); }
-.ts-result.ts-fav[data-verdict="unknown"] { border-left-color: rgba(255,255,255,0.15); }
+/* v125: borde izquierdo coloreado segun verdict actual.
+   Aplica a TODOS los items selectables que tengan data-verdict,
+   no solo favoritos. */
+.ts-result[data-verdict] { border-left: 4px solid transparent; padding-left: 6px; }
+.ts-result[data-verdict="ideal"]   { border-left-color: var(--ideal); }
+.ts-result[data-verdict="ok"]      { border-left-color: var(--warn); }
+.ts-result[data-verdict="warn"]    { border-left-color: var(--bad); }
+.ts-result[data-verdict="bad"]     { border-left-color: var(--bad); }
+.ts-result[data-verdict="unknown"] { border-left-color: rgba(255,255,255,0.15); }
 .ts-result-propose {
   flex-shrink: 0;
   background: rgba(78,161,255,0.12);
@@ -1938,6 +1946,7 @@ footer {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .station-header .station-name {
   display: block;

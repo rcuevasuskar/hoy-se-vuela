@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.125";
+const APP_VERSION = "v0.126";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -126,6 +126,8 @@ const I18N = {
     "chart.dir": "Dirección",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronóstico (Open-Meteo)",
+    "fc.title_for": "Pronóstico para {name}",
+
     "fc.today": "Hoy",
     "fc.night": "Noche",
     "fc.show": "Mostrar en el gráfico:",
@@ -413,6 +415,8 @@ const I18N = {
     "chart.dir": "Direction",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Forecast (Open-Meteo)",
+    "fc.title_for": "Forecast for {name}",
+
     "fc.today": "Today",
     "fc.night": "Night",
     "fc.show": "Show on chart:",
@@ -685,6 +689,8 @@ const I18N = {
     "chart.dir": "Richtung",
     "chart.dir_tooltip": "Richt.: {name} ({deg}°)",
     "fc.title": "Vorhersage (Open-Meteo)",
+    "fc.title_for": "Vorhersage für {name}",
+
     "fc.today": "Heute",
     "fc.night": "Nacht",
     "fc.show": "Im Diagramm anzeigen:",
@@ -957,6 +963,8 @@ const I18N = {
     "chart.dir": "Direction",
     "chart.dir_tooltip": "Dir : {name} ({deg}°)",
     "fc.title": "Prévision (Open-Meteo)",
+    "fc.title_for": "Prévision pour {name}",
+
     "fc.today": "Aujourd'hui",
     "fc.night": "Nuit",
     "fc.show": "Afficher sur le graphique :",
@@ -1229,6 +1237,8 @@ const I18N = {
     "chart.dir": "Norabidea",
     "chart.dir_tooltip": "Norab.: {name} ({deg}°)",
     "fc.title": "Iragarpena (Open-Meteo)",
+    "fc.title_for": "{name} iragarpena",
+
     "fc.today": "Gaur",
     "fc.night": "Gaua",
     "fc.show": "Erakutsi grafikoan:",
@@ -1455,6 +1465,8 @@ const I18N = {
     "chart.dir": "Direcció",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronòstic (Open-Meteo)",
+    "fc.title_for": "Pronòstic per a {name}",
+
     "fc.today": "Avui",
     "fc.night": "Nit",
     "fc.show": "Mostra al gràfic:",
@@ -3014,7 +3026,7 @@ function drawTakeoffOnMap() {
   const lon = Number(currentTakeoff.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
   const marker = L.marker([lat, lon]).addTo(map)
-    .bindPopup(`<b>${currentTakeoff.name}</b><br/>${currentStation?.shortName || currentStation?.name || ""}`)
+    .bindPopup(`<b>${escapeHtml(currentTakeoff.name || "")}</b>`)
     .bindTooltip(String(currentTakeoff.name || "").replace(/^Despegue\s+/i, ""), {
       permanent: true, direction: "top", offset: [0, -8], className: "station-label takeoff"
     })
@@ -3798,6 +3810,8 @@ function applyLangChange(newLang) {
   renderLangPicker();
   applyStaticI18n();
   if (typeof renderTakeoffPanel === "function") renderTakeoffPanel();
+  // v125: recomputa el titulo "Pronostico para <nombre>" tras cambiar idioma.
+  if (typeof applyCurrentTakeoffLabel === "function") applyCurrentTakeoffLabel();
   syncNotifyButtonInitial();
   const whTitleEl = document.getElementById("whTitle");
   if (whTitleEl) whTitleEl.textContent = t("wh.titleFmt").replace("{h}", WH_HOURS);
@@ -3922,6 +3936,9 @@ function applyCurrentTakeoffLabel() {
   if (el) el.textContent = baseName + altLabel;
   const guideEl = document.getElementById("guideTakeoffName");
   if (guideEl) guideEl.textContent = baseName + altLabel;
+  // v125: el titulo del pronostico incluye el nombre del despegue.
+  const fcTitleEl = document.getElementById("forecastTitle");
+  if (fcTitleEl && baseName) fcTitleEl.textContent = t("fc.title_for", { name: baseName });
   renderCurrentTakeoffActions();
   renderTakeoffPanel();
   updatePanelForLabels();
@@ -4600,27 +4617,37 @@ function renderSearchRow(s, ctx) {
     <span class="ts-result-dist">${s.dist.toFixed(1)} km</span>
     ${tail}
   `;
-  // v125: borde izquierdo coloreado para favoritos segun verdict actual.
-  // Solo aplica a favoritos comunitarios (que llevan criterios propios) y cuyo
-  // _linkedStation tenga datos meteorologicos recientes.
+  // v125: borde izquierdo coloreado segun verdict actual.
+  // Aplica a TODOS los items selectables cuando hay criterios y datos meteo.
   try {
-    const isFav = !!(ctx?.favByKey && ctx.favKey && ctx.favByKey.get(ctx.favKey(s)));
-    if (isFav) {
-      btn.classList.add("ts-fav");
-      let verdict = "unknown";
-      if (isCommunity && s._linkedStation && s.raw?.criteria) {
-        const link = s._linkedStation;
-        const snap = {
-          avg: link.wind_speed_avg ?? null,
-          max: link.wind_speed_max ?? null,
-          dir: link.wind_heading ?? null,
-        };
-        if (snap.avg != null || snap.dir != null) {
-          verdict = takeoffVerdictFromSnapshot(s.raw.criteria, snap);
-        }
+    let verdict = "unknown";
+    // 1) Despegue comunitario: criterios propios + estacion vinculada.
+    if (isCommunity && s._linkedStation && s.raw?.criteria) {
+      const link = s._linkedStation;
+      const snap = {
+        avg: link.wind_speed_avg ?? null,
+        max: link.wind_speed_max ?? null,
+        dir: link.wind_heading ?? null,
+      };
+      if (snap.avg != null || snap.dir != null) {
+        verdict = takeoffVerdictFromSnapshot(s.raw.criteria, snap);
       }
-      btn.dataset.verdict = verdict;
     }
+    // 2) Pioupiou habilitada: sin criterios propios, usamos los del despegue
+    //    actual para dar una referencia (mismo que hace la comparativa).
+    else if (s.provider === "pioupiou" && enabled) {
+      const snap = {
+        avg: (s.wind_speed_avg ?? null),
+        max: (s.wind_speed_max ?? null),
+        dir: (s.wind_heading ?? null),
+      };
+      if (snap.avg != null || snap.dir != null) {
+        verdict = takeoffVerdictFromSnapshot(currentTakeoffCriteria, snap);
+      }
+    }
+    btn.dataset.verdict = verdict;
+    const isFav = !!(ctx?.favByKey && ctx.favKey && ctx.favByKey.get(ctx.favKey(s)));
+    if (isFav) btn.classList.add("ts-fav");
   } catch {}
   if (enabled) {
     btn.addEventListener("click", () => {
