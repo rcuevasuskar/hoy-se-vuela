@@ -1791,10 +1791,15 @@ footer {
 .user-menu-btn[aria-expanded="true"] { border-color: var(--accent); }
 .user-menu-btn { position: relative; }
 .user-menu-btn .um-dot {
-  position: absolute; top: 2px; right: 2px;
-  width: 9px; height: 9px; border-radius: 50%;
-  background: #e74c3c; border: 1.5px solid var(--panel);
+  position: absolute; top: -4px; right: -4px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9px;
+  background: #e74c3c; color: #fff;
+  font-size: 0.65rem; font-weight: 700; line-height: 1;
+  border: 1.5px solid var(--panel);
   box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+  box-sizing: border-box;
 }
 .um-badge {
   display: inline-flex; align-items: center; justify-content: center;

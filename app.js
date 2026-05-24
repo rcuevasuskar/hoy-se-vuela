@@ -5163,7 +5163,13 @@ function updateAdminPendingBadge() {
   const count = (window.PCAuth?.pendingTakeoffs || []).length;
   const dot = document.getElementById("userMenuDot");
   const badge = document.getElementById("adminReviewBadge");
-  if (dot) dot.hidden = !(isAdmin && count > 0);
+  // v116: el indicador del boton de menu ahora muestra el numero de pendientes
+  // (no solo un punto) para que se vea desde la pagina principal.
+  if (dot) {
+    dot.hidden = !(isAdmin && count > 0);
+    dot.textContent = count > 99 ? "99+" : String(count);
+    dot.setAttribute("aria-label", `${count} pendientes de revisar`);
+  }
   if (badge) {
     badge.hidden = !(isAdmin && count > 0);
     badge.textContent = String(count);
