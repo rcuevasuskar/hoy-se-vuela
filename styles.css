@@ -1265,6 +1265,8 @@ main {
 .verdict-text { display: flex; flex-direction: column; }
 .verdict-text strong { font-size: 1rem; }
 .verdict-text span   { color: var(--muted); font-size: 0.85rem; }
+.panel-for { color: var(--muted); font-size: 0.72rem; font-style: italic; margin-top: 4px; }
+.panel-for-block { display: block; text-align: center; padding: 6px 8px 0; }
 
 /* Chart */
 .chart-wrap {
@@ -1813,6 +1815,7 @@ footer {
   font-size: 0.9rem; line-height: 1.2;
   cursor: pointer; text-align: left;
 }
+.um-item[hidden] { display: none !important; }
 .um-item:hover { background: rgba(255,255,255,0.06); }
 :root[data-theme="light"] .um-item:hover,
 :root[data-theme="auto"] .um-item:hover { background: rgba(0,0,0,0.05); }

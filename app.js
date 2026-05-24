@@ -265,6 +265,8 @@ const I18N = {
     "menu.install": "Instalar app",
     "menu.help": "Ayuda",
     "menu.admin_review": "Revisar despegues",
+    "panel.for_to_st": "Mostrando: {to} · datos de la estación {st}",
+    "panel.for_st": "Mostrando datos de la estación {st}",
     "menu.account": "Cuenta",
     "ts.locate": "Usar mi ubicación",
     "ts.hint": "Pulsa 📍 para usar tu ubicación o escribe para filtrar.",
@@ -511,6 +513,8 @@ const I18N = {
     "menu.install": "Install app",
     "menu.help": "Help",
     "menu.admin_review": "Review takeoffs",
+    "panel.for_to_st": "Showing: {to} · data from station {st}",
+    "panel.for_st": "Showing data from station {st}",
     "menu.account": "Account",
     "theme.auto": "Theme: automatic",
     "theme.dark": "Theme: dark",
@@ -760,6 +764,8 @@ const I18N = {
     "menu.install": "App installieren",
     "menu.help": "Hilfe",
     "menu.admin_review": "Startplätze prüfen",
+    "panel.for_to_st": "Anzeige: {to} · Daten von Station {st}",
+    "panel.for_st": "Daten von Station {st}",
     "menu.account": "Konto",
     "theme.auto": "Design: automatisch",
     "theme.dark": "Design: dunkel",
@@ -1009,6 +1015,8 @@ const I18N = {
     "menu.install": "Installer l'app",
     "menu.help": "Aide",
     "menu.admin_review": "Examiner décos",
+    "panel.for_to_st": "Affichage : {to} · données de la station {st}",
+    "panel.for_st": "Données de la station {st}",
     "menu.account": "Compte",
     "theme.auto": "Thème : automatique",
     "theme.dark": "Thème : sombre",
@@ -1258,6 +1266,8 @@ const I18N = {
     "menu.install": "App-a instalatu",
     "menu.help": "Laguntza",
     "menu.admin_review": "Berrikusi proposamenak",
+    "panel.for_to_st": "Erakusten: {to} · {st} estaziotik",
+    "panel.for_st": "{st} estazioaren datuak",
     "menu.account": "Kontua",
     "theme.auto": "Gaia: automatikoa",
     "theme.dark": "Gaia: iluna",
@@ -1461,6 +1471,8 @@ const I18N = {
     "menu.install": "Instal·la l'app",
     "menu.help": "Ajuda",
     "menu.admin_review": "Revisar enlairaments",
+    "panel.for_to_st": "Mostrant: {to} · dades de l'estació {st}",
+    "panel.for_st": "Mostrant dades de l'estació {st}",
     "menu.account": "Compte",
     "theme.auto": "Tema: automàtic",
     "theme.dark": "Tema: fosc",
@@ -3630,6 +3642,24 @@ function applyCurrentTakeoffLabel() {
   if (guideEl) guideEl.textContent = currentStation.shortName || currentStation.name;
   renderCurrentTakeoffActions();
   renderTakeoffPanel();
+  updatePanelForLabels();
+}
+
+// v102: muestra en cada panel qué despegue / estación se está usando
+function updatePanelForLabels() {
+  // getCurrentTakeoffDoc llama a resolveCurrentTakeoffOrigin internamente.
+  const doc = (typeof getCurrentTakeoffDoc === "function") ? getCurrentTakeoffDoc() : null;
+  const stName = currentStation?.shortName || currentStation?.name || "";
+  const toName = doc?.name || null;
+  const text = toName && toName !== stName
+    ? t("panel.for_to_st", { to: toName, st: stName })
+    : t("panel.for_st", { st: stName });
+  ["panelFor", "panelForBlock"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.hidden = !stName;
+  });
 }
 
 // Devuelve el documento del despegue comunitario correspondiente al despegue actual, si existe.
@@ -4698,6 +4728,7 @@ function _hookTakeoffStreams() {
     currentTakeoffCriteria = null;
     renderCurrentTakeoffActions();
     renderTakeoffPanel();
+    updatePanelForLabels();
     // Recalcula los indicadores con los nuevos criterios (sin recargar pronóstico/histórico).
     if (typeof refreshObservations === "function") refreshObservations();
   };
