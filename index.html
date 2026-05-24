@@ -309,19 +309,9 @@
   <div id="takeoffSubmitModal" class="auth-modal" hidden>
     <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="toTitle">
       <button id="toSubmitClose" class="auth-close" title="Cerrar">✕</button>
-      <h2 id="toTitle" data-i18n="to.submit_title">Proponer despegue</h2>
+      <h2 id="toTitle" data-i18n="to.submit_title">Añadir datos de despegue</h2>
       <p class="auth-account-info" data-i18n="to.submit_hint">Tu propuesta será revisada por un administrador antes de publicarse.</p>
       <input id="toName" type="text" placeholder="Nombre del despegue" data-i18n-placeholder="to.name_ph" />
-      <div class="to-row">
-        <input id="toLat" type="number" step="0.00001" placeholder="Latitud" data-i18n-placeholder="to.lat_ph" />
-        <input id="toLon" type="number" step="0.00001" placeholder="Longitud" data-i18n-placeholder="to.lon_ph" />
-      </div>
-      <div class="to-row">
-        <input id="toAlt" type="number" step="1" placeholder="Altitud (m)" data-i18n-placeholder="to.alt_ph" />
-        <input id="toOrient" type="text" placeholder="Orientaciones (N, NO, O…)" data-i18n-placeholder="to.orient_ph" />
-      </div>
-      <input id="toStation" type="number" step="1" placeholder="ID estación Pioupiou (opcional)" data-i18n-placeholder="to.station_ph" />
-      <textarea id="toNotes" rows="5" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
 
       <fieldset class="to-criteria">
         <legend data-i18n="to.criteria_title">Criterios de vuelo</legend>
@@ -339,6 +329,16 @@
           </label>
         </div>
       </fieldset>
+
+      <input id="toAlt" type="number" step="1" placeholder="Altitud (m)" data-i18n-placeholder="to.alt_ph" />
+      <div class="to-row">
+        <input id="toLat" type="number" step="0.00001" placeholder="Latitud" data-i18n-placeholder="to.lat_ph" />
+        <input id="toLon" type="number" step="0.00001" placeholder="Longitud" data-i18n-placeholder="to.lon_ph" />
+      </div>
+      <input id="toOrient" type="hidden" />
+      <input id="toStation" type="hidden" />
+
+      <textarea id="toNotes" rows="3" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
 
       <button id="toPickOnMapBtn" class="auth-link" type="button" data-i18n="to.pick_map">📍 Usar coordenadas actuales del mapa</button>
       <div class="to-actions">

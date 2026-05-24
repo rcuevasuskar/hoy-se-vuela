@@ -105,7 +105,7 @@ const I18N = {
     "auth.err_pwd_short": "La contraseña debe tener al menos 6 caracteres.",
     "auth.err_popup_blocked": "El navegador bloqueó la ventana. Intenta de nuevo.",
     "to.propose": "Dar de alta datos de despegue",
-    "to.submit_title": "Proponer nuevo despegue",
+    "to.submit_title": "Añadir datos de despegue",
     "to.submit_hint": "Tu propuesta será revisada por un administrador antes de publicarse.",
     "to.name_ph": "Nombre del despegue",
     "to.lat_ph": "Latitud",
@@ -335,7 +335,7 @@ const I18N = {
     "auth.err_pwd_short": "Password must be at least 6 characters.",
     "auth.err_popup_blocked": "Popup blocked. Try again.",
     "to.propose": "Register takeoff details",
-    "to.submit_title": "Propose a new takeoff",
+    "to.submit_title": "Add takeoff data",
     "to.submit_hint": "Your proposal will be reviewed by an admin before publishing.",
     "to.name_ph": "Takeoff name",
     "to.lat_ph": "Latitude",
@@ -565,7 +565,7 @@ const I18N = {
     "auth.err_pwd_short": "Passwort muss mind. 6 Zeichen haben.",
     "auth.err_popup_blocked": "Popup blockiert. Erneut versuchen.",
     "to.propose": "Startplatzdaten eintragen",
-    "to.submit_title": "Neuen Startplatz vorschlagen",
+    "to.submit_title": "Startplatzdaten hinzufügen",
     "to.submit_hint": "Dein Vorschlag wird von einem Admin geprüft.",
     "to.name_ph": "Name des Startplatzes",
     "to.lat_ph": "Breitengrad",
@@ -795,7 +795,7 @@ const I18N = {
     "auth.err_pwd_short": "Le mot de passe doit avoir au moins 6 caractères.",
     "auth.err_popup_blocked": "Fenêtre bloquée. Réessaie.",
     "to.propose": "Enregistrer les données d'un déco",
-    "to.submit_title": "Proposer un nouveau déco",
+    "to.submit_title": "Ajouter les données d’un déco",
     "to.submit_hint": "Ta proposition sera examinée par un administrateur.",
     "to.name_ph": "Nom du déco",
     "to.lat_ph": "Latitude",
@@ -3382,11 +3382,10 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
   msg.textContent = "";
   try {
     const qualityByIndex = collectDirRose();
-    // Derivamos la lista textual "ideal: N, NNE…" para compatibilidad.
+    // Derivamos la lista textual "ideal: N, NNE…" desde la rosa (fuente única de verdad).
     const ideals = DIR16.filter((_, i) => qualityByIndex[i] === "ideal");
     const oks = DIR16.filter((_, i) => qualityByIndex[i] === "ok");
-    const orientationsText = (document.getElementById("toOrient").value || "").trim()
-      || ideals.concat(oks).join(",");
+    const orientationsText = ideals.concat(oks).join(",");
     const windMinV = parseFloat(document.getElementById("toWindMin").value);
     const windMaxV = parseFloat(document.getElementById("toWindMax").value);
     const gustMaxV = parseFloat(document.getElementById("toGustMax").value);
