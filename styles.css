@@ -261,6 +261,17 @@ header.topbar .ts-current {
   display: flex; flex-direction: column; gap: 8px;
 }
 .to-criteria legend { padding: 0 6px; color: var(--muted); font-size: .85rem; }
+.to-criteria .to-row { align-items: flex-end; }
+.to-criteria .to-field { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+.to-criteria .to-field > span {
+  display: block;
+  font-size: .75rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+  line-height: 1.2;
+  min-height: 2.6em; /* reserva 2 líneas para alinear los 3 inputs aunque alguna etiqueta envuelva */
+}
+.to-criteria .to-field > input { width: 100%; box-sizing: border-box; }
 .to-hint { font-size: .75rem; color: var(--muted); margin: 0; }
 .to-dir-rose {
   display: grid;
