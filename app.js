@@ -3954,15 +3954,20 @@ async function tsRunSearch() {
 
   // Filtra de items los que ya están en favoritos para no duplicar.
   const favKeys = new Set(favItems.map(f => favKey(f)));
-  const others = items.filter(s => !favKeys.has(favKey(s))).slice(0, 50);
+  let others = items.filter(s => !favKeys.has(favKey(s)));
+  const u = window.PCAuth?.user;
+  const loggedIn = u && !u.isAnonymous;
+  // Cuando el usuario está logueado, sólo mostramos despegues comunitarios en la lista (no estaciones sueltas).
+  if (loggedIn) {
+    others = others.filter(s => s.community);
+  }
+  others = others.slice(0, 50);
 
   if (!favItems.length && !others.length) {
     resultsEl.innerHTML = `<div class="ts-empty">${t("ts.empty")}</div>`;
     return;
   }
   resultsEl.innerHTML = "";
-  const u = window.PCAuth?.user;
-  const loggedIn = u && !u.isAnonymous;
 
   if (favItems.length) {
     const h = document.createElement("div");
