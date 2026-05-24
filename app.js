@@ -1,4 +1,6 @@
 // === Configuración ===
+// v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
+const APP_VERSION = "v118";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -4415,6 +4417,11 @@ async function tsRunSearch() {
       _fav: f,
       _isHome: f.id === homeId,
     };
+    // v117: favoritos comunitarios necesitan _linkedStation para quedar habilitados
+    // (el click resuelve la estacion de viento por proximidad, igual que en la lista normal).
+    if (f.source === "community") {
+      fakeItem._linkedStation = findLinkedStation(f.lat, f.lon);
+    }
     return fakeItem;
   }).filter(f => !query || f.name.toLowerCase().includes(query));
   // Home siempre primero; resto alfabético.
@@ -5394,3 +5401,9 @@ function startFavoriteAlertsPolling() {
   // Primera comprobación tras 30s
   setTimeout(pollFavoriteAlerts, 30 * 1000);
 }
+
+// v118: pinta la version actual en el footer al cargar la app.
+(function _renderAppVersion() {
+  const el = document.getElementById("appVersion");
+  if (el) el.textContent = APP_VERSION;
+})();
