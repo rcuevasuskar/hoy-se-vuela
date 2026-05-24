@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v119";
+const APP_VERSION = "v120";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -4525,7 +4525,12 @@ function renderSearchRow(s, ctx) {
       } else {
         selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon }, { userPicked: true });
       }
-      document.getElementById("tsPanel").hidden = true;
+      // v119: limpia el input y cierra el panel al seleccionar un resultado.
+      if (typeof window.closeTsPanel === "function") {
+        window.closeTsPanel({ clearInput: true });
+      } else {
+        document.getElementById("tsPanel").hidden = true;
+      }
     });
   }
 
@@ -4682,11 +4687,24 @@ function initTakeoffSelector() {
   }
 
   let searchTimer = null;
+  // v119: helper para cerrar el panel y limpiar el input. Usado al seleccionar
+  // un resultado y por los listeners de Esc / click fuera / boton atras (popstate).
+  const closeTsPanel = ({ clearInput = false } = {}) => {
+    if (panel && !panel.hidden) panel.hidden = true;
+    if (clearInput && searchEl) searchEl.value = "";
+    // Si abrimos el panel con pushState, hacemos pop para limpiar el historial.
+    if (window.history.state && window.history.state.tsPanel) {
+      window.history.back();
+    }
+  };
+  window.closeTsPanel = closeTsPanel;
   if (searchEl) {
     const openPanel = () => {
       if (panel?.hidden) {
         panel.hidden = false;
         tsRunSearch();
+        // v119: empuja un estado en la pila para que el boton "atras" del movil cierre el panel.
+        try { window.history.pushState({ tsPanel: true }, ""); } catch (_e) {}
       }
     };
     searchEl.addEventListener("focus", openPanel);
@@ -4697,6 +4715,27 @@ function initTakeoffSelector() {
       openPanel();
     });
   }
+
+  // v119: cierra el panel con Esc.
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && panel && !panel.hidden) {
+      closeTsPanel({ clearInput: true });
+      searchEl?.blur();
+    }
+  });
+  // v119: cierra al hacer click fuera del panel y del input.
+  document.addEventListener("pointerdown", (e) => {
+    if (!panel || panel.hidden) return;
+    if (panel.contains(e.target)) return;
+    if (searchEl && searchEl.contains(e.target)) return;
+    closeTsPanel();
+  });
+  // v119: boton atras del movil cierra el panel (sin navegar).
+  window.addEventListener("popstate", () => {
+    if (panel && !panel.hidden) {
+      panel.hidden = true;
+    }
+  });
 
   // (Botón de toggle eliminado: el panel se abre al enfocar el buscador)
 
