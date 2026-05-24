@@ -1671,7 +1671,23 @@ async function renderNearby() {
       return { s, dist, card };
     });
 
-    // Marcadores del mapa: ahora el mapa muestra sólo el despegue (sin estaciones).
+    // Marcadores en el mapa (un color neutral; sin veredicto)
+    if (map) {
+      for (const { s, dist } of within) {
+        const stName = s.meta?.name || ('Pioupiou ' + s.id);
+        L.circleMarker([s.location.latitude, s.location.longitude], {
+          radius: 6, color: "#fff", weight: 1, fillColor: "#4ea1ff", fillOpacity: 0.85,
+        }).addTo(map)
+          .bindPopup(
+            `<b>${escapeHtml(stName)}</b><br/>` +
+            `${dist.toFixed(1)} km · ${t("near.popup_last")}: ${fmtTime(s.measurements?.date)}<br/>` +
+            `<a href="https://www.openwindmap.org/windbird-${s.id}" target="_blank">${t("near.popup_view")}</a>`
+          )
+          .bindTooltip(stName, {
+            permanent: true, direction: "right", offset: [8, 0], className: "station-label"
+          });
+      }
+    }
 
     // Cargar archivo de últimas N horas en paralelo y rellenar cada tarjeta
     const stop = new Date();
@@ -1769,7 +1785,15 @@ async function renderAirportStation() {
       </div>
     `;
     grid.appendChild(card);
-    // Mapa: no añadimos marcador para la estación del aeropuerto.
+    if (map) {
+      L.circleMarker([lat, lon], {
+        radius: 7, color: "#fff", weight: 1, fillColor: "#f1c40f", fillOpacity: 0.9,
+      }).addTo(map)
+        .bindPopup(`<b>${escapeHtml(label)}</b><br/>${dist.toFixed(1)} km`)
+        .bindTooltip(label, {
+          permanent: true, direction: "right", offset: [8, 0], className: "station-label airport"
+        });
+    }
   } catch (e) { console.warn("airport station:", e); }
 }
 
