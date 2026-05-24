@@ -75,6 +75,7 @@ const I18N = {
     "fc.today": "Hoy",
     "cmp.title": "Comparativa últimos días",
     "cmp.window": "({h1}:00–{h2}:00 local)",
+    "cmp.window_solar": "(amanecer +3 h → ocaso −1 h)",
     "cmp.yesterday": "Ayer",
     "cmp.days_ago": "Hace {n} días",
     "cmp.no_data": "Sin datos",
@@ -116,6 +117,7 @@ const I18N = {
     "wx.temp": "Temp.",
     "wx.feels": "sens. {v}°",
     "best.label": "Mejor ventana hoy:",
+    "best.label_tomorrow": "Mejor ventana mañana:",
     "best.none": "Sin ventanas óptimas en las próximas 12 h.",
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Volable",
@@ -228,6 +230,7 @@ const I18N = {
     "fc.today": "Today",
     "cmp.title": "Last days comparison",
     "cmp.window": "({h1}:00–{h2}:00 local)",
+    "cmp.window_solar": "(sunrise +3 h → sunset −1 h)",
     "cmp.yesterday": "Yesterday",
     "cmp.days_ago": "{n} days ago",
     "cmp.no_data": "No data",
@@ -269,6 +272,7 @@ const I18N = {
     "wx.temp": "Temp.",
     "wx.feels": "feels {v}°",
     "best.label": "Best window today:",
+    "best.label_tomorrow": "Best window tomorrow:",
     "best.none": "No optimal windows in the next 12 h.",
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Flyable",
@@ -381,6 +385,7 @@ const I18N = {
     "fc.today": "Heute",
     "cmp.title": "Vergleich letzter Tage",
     "cmp.window": "({h1}:00–{h2}:00 Ortszeit)",
+    "cmp.window_solar": "(Sonnenaufgang +3 h → Sonnenuntergang −1 h)",
     "cmp.yesterday": "Gestern",
     "cmp.days_ago": "Vor {n} Tagen",
     "cmp.no_data": "Keine Daten",
@@ -422,6 +427,7 @@ const I18N = {
     "wx.temp": "Temp.",
     "wx.feels": "gefühlt {v}°",
     "best.label": "Beste Zeit heute:",
+    "best.label_tomorrow": "Beste Zeit morgen:",
     "best.none": "Keine optimalen Fenster in den nächsten 12 h.",
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Fliegbar",
@@ -534,6 +540,7 @@ const I18N = {
     "fc.today": "Aujourd'hui",
     "cmp.title": "Comparatif derniers jours",
     "cmp.window": "({h1}:00–{h2}:00 local)",
+    "cmp.window_solar": "(lever +3 h → coucher −1 h)",
     "cmp.yesterday": "Hier",
     "cmp.days_ago": "Il y a {n} jours",
     "cmp.no_data": "Pas de données",
@@ -575,6 +582,7 @@ const I18N = {
     "wx.temp": "Temp.",
     "wx.feels": "ressenti {v}°",
     "best.label": "Meilleur créneau aujourd'hui :",
+    "best.label_tomorrow": "Meilleur créneau demain :",
     "best.none": "Pas de créneau optimal dans les 12 h.",
     "best.ideal": "✅ Idéal",
     "best.ok": "⚠️ Volable",
@@ -805,9 +813,11 @@ async function getArchiveLastHours(hours) {
 }
 
 async function getForecast(days = 2) {
+  // past_days=3 trae sunrise/sunset de los últimos 3 días (para la comparativa solar).
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentTakeoff.lat}&longitude=${currentTakeoff.lon}` +
               `&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,precipitation_probability,weather_code,cape,lifted_index,temperature_2m,dew_point_2m,apparent_temperature` +
               `&daily=sunrise,sunset` +
+              `&past_days=3` +
               `&wind_speed_unit=kmh&timezone=auto&forecast_days=${days}`;
   return fetchJson(url);
 }
@@ -1192,20 +1202,63 @@ function renderWeatherStrip(cw, risk) {
 }
 
 // === Mejor ventana del día ===
+// === Helpers solares (sunrise/sunset por desplazamiento de día) ===
+// Devuelve el índice en daily.time correspondiente a `offsetFromToday`
+// (0 = hoy, -1 = ayer, 1 = mañana). Requiere past_days en la petición para offsets negativos.
+function dayIndexFromOffset(fc, offsetFromToday) {
+  const d = fc?.daily;
+  if (!d?.time?.length) return -1;
+  const target = new Date();
+  target.setDate(target.getDate() + offsetFromToday);
+  const ymd = `${target.getFullYear()}-${String(target.getMonth()+1).padStart(2,"0")}-${String(target.getDate()).padStart(2,"0")}`;
+  return d.time.findIndex(s => String(s).startsWith(ymd));
+}
+function sunriseSunsetForOffset(fc, offsetFromToday) {
+  const i = dayIndexFromOffset(fc, offsetFromToday);
+  if (i < 0) return null;
+  const sr = fc.daily.sunrise?.[i];
+  const ss = fc.daily.sunset?.[i];
+  if (!sr || !ss) return null;
+  return { sunrise: new Date(sr), sunset: new Date(ss) };
+}
+// Determina si la previsión debe referirse a hoy o a mañana.
+// A partir de SUNSET_SHIFT_H antes del ocaso (o tras él) → mañana.
+const SUNSET_SHIFT_H = 2;
+function referenceDayInfo(fc) {
+  const today = sunriseSunsetForOffset(fc, 0);
+  const tomorrow = sunriseSunsetForOffset(fc, 1);
+  const now = Date.now();
+  const useTomorrow = today && (now >= today.sunset.getTime() - SUNSET_SHIFT_H * 3600 * 1000);
+  if (useTomorrow && tomorrow) {
+    return { dayOffset: 1, sunrise: tomorrow.sunrise, sunset: tomorrow.sunset,
+             scanFrom: tomorrow.sunrise, scanTo: tomorrow.sunset };
+  }
+  if (today) {
+    return { dayOffset: 0, sunrise: today.sunrise, sunset: today.sunset,
+             scanFrom: today.sunrise, scanTo: today.sunset };
+  }
+  // Fallback sin daily disponible: ventana 8–20 h del día actual.
+  const a = new Date(); a.setHours(8,0,0,0);
+  const b = new Date(); b.setHours(20,0,0,0);
+  return { dayOffset: 0, sunrise: a, sunset: b, scanFrom: a, scanTo: b };
+}
+
 function renderBestWindow(fc) {
   const box = document.getElementById("bestWindow");
   if (!box || !fc?.hourly) return;
   const h = fc.hourly;
+  const ref = referenceDayInfo(fc);
+  const dayStart = ref.scanFrom.getTime();
+  const dayEnd   = ref.scanTo.getTime();
   const now = Date.now();
-  const horizonMs = now + 12 * 3600 * 1000;
   const runs = []; // {start,end,quality}
   let cur = null;
   for (let i = 0; i < h.time.length; i++) {
     const ts = new Date(h.time[i]).getTime();
-    if (ts < now - 30 * 60 * 1000) continue;
-    if (ts > horizonMs) break;
-    const hour = new Date(h.time[i]).getHours();
-    if (hour < 8 || hour > 20) { if (cur) { runs.push(cur); cur = null; } continue; }
+    if (ts < dayStart) continue;
+    if (ts > dayEnd) break;
+    // En el día actual no consideramos horas pasadas.
+    if (ref.dayOffset === 0 && ts < now - 30 * 60 * 1000) continue;
     const dirInfo = classifyDirection(h.wind_direction_10m[i]);
     const spdQ = classifySpeed(h.wind_speed_10m[i], h.wind_gusts_10m[i]);
     let v = combineVerdict(dirInfo.quality, spdQ);
@@ -1227,11 +1280,12 @@ function renderBestWindow(fc) {
     if (lenA !== lenB) return lenB - lenA;
     return a.start - b.start;
   });
+  const labelKey = ref.dayOffset === 1 ? "best.label_tomorrow" : "best.label";
   const best = runs[0];
   if (!best) {
     box.hidden = false;
     box.className = "best-window none";
-    box.querySelector(".bw-label").textContent = t("best.label");
+    box.querySelector(".bw-label").textContent = t(labelKey);
     box.querySelector("#bestWindowText").textContent = t("best.none");
     return;
   }
@@ -1239,7 +1293,7 @@ function renderBestWindow(fc) {
   box.className = "best-window " + (best.quality === "ideal" ? "" : "ok");
   const fmtHM = (ms) => new Date(ms).toLocaleTimeString(t("locale"), { hour: "2-digit", minute: "2-digit" });
   const tag = best.quality === "ideal" ? t("best.ideal") : t("best.ok");
-  box.querySelector(".bw-label").textContent = t("best.label");
+  box.querySelector(".bw-label").textContent = t(labelKey);
   box.querySelector("#bestWindowText").textContent = `${fmtHM(best.start)}–${fmtHM(best.end)} · ${tag}`;
 }
 
@@ -1341,9 +1395,11 @@ function renderForecast(fc) {
   const pprob = fc.hourly.precipitation_probability || [];
   const cape  = fc.hourly.cape || [];
 
-  // Filtrar a partir de la hora actual
+  // Filtrar a partir de la hora actual (o desde el amanecer de mañana si estamos cerca del ocaso)
+  const ref = referenceDayInfo(fc);
   const now = Date.now();
-  const idxStart = times.findIndex(t => t.getTime() >= now - 3600 * 1000);
+  const fromTs = ref.dayOffset === 1 ? ref.scanFrom.getTime() : (now - 3600 * 1000);
+  const idxStart = times.findIndex(t => t.getTime() >= fromTs);
   const i0 = Math.max(0, idxStart);
 
   const spdPts = times.slice(i0).map((t, i) => ({ x: t, y: spd[i + i0] }));
@@ -1370,15 +1426,25 @@ function renderForecast(fc) {
   if (forecastChart) { forecastChart.data = data; forecastChart.options = options; forecastChart.update(); }
   else forecastChart = new Chart(ctx, { type: "line", data, options });
 
-  // Resumen: próximas horas en franja diurna
+  // Resumen: próximas horas en franja diurna del día de referencia.
   const summary = document.getElementById("forecastSummary");
   summary.innerHTML = "";
   const maxSlots = currentForecastDays === 1 ? 12 : 16;
+  const scanFromTs = ref.scanFrom.getTime();
+  const scanToTs   = ref.scanTo.getTime();
   let added = 0;
   for (let i = i0; i < times.length && added < maxSlots; i++) {
+    const ts = times[i].getTime();
+    // Sólo dentro de la ventana solar del día de referencia (sunrise → sunset).
+    if (ts < scanFromTs || ts > scanToTs) {
+      // Si ya pasamos del fin de día de referencia, seguimos para slots de días posteriores
+      // sólo si el selector pide >1 día.
+      if (currentForecastDays === 1 && ts > scanToTs) break;
+      if (currentForecastDays === 1) continue;
+      const hh = times[i].getHours();
+      if (hh < 8 || hh > 20) continue;
+    }
     const h = times[i].getHours();
-    // Sólo horas diurnas razonables para volar
-    if (h < 8 || h > 20) continue;
     const s = spd[i], g = gust[i], d = dir[i];
     const dirInfo = classifyDirection(d);
     const spdQ = classifySpeed(s, g);
@@ -1421,20 +1487,25 @@ function renderForecast(fc) {
 // === Comparativa últimos días ===
 async function renderCompare() {
   const grid = document.getElementById("compareGrid");
-  const now = new Date();
-  const hour = now.getHours();
-  const winLabel = t("cmp.window", {
-    h1: String(Math.max(0, hour - 2)).padStart(2,"0"),
-    h2: String(Math.min(23, hour + 2)).padStart(2,"0"),
-  });
-  setText("compareWindowLabel", winLabel);
+  setText("compareWindowLabel", t("cmp.window_solar"));
 
   grid.innerHTML = "";
   const days = [1, 2, 3];
+  const fc = latestForecast;
   const results = await Promise.all(days.map(async (offset) => {
-    const center = new Date(now.getTime() - offset * 24 * 3600 * 1000);
-    const start = new Date(center); start.setHours(hour - 2, 0, 0, 0);
-    const stop  = new Date(center); stop.setHours(hour + 2, 0, 0, 0);
+    // Ventana solar de ese día: amanecer+3h → ocaso-1h.
+    const ss = fc ? sunriseSunsetForOffset(fc, -offset) : null;
+    let start, stop;
+    if (ss) {
+      start = new Date(ss.sunrise.getTime() + 3 * 3600 * 1000);
+      stop  = new Date(ss.sunset.getTime()  - 1 * 3600 * 1000);
+    } else {
+      // Fallback aproximado si no hay daily disponible
+      const now = new Date();
+      const center = new Date(now.getTime() - offset * 24 * 3600 * 1000);
+      start = new Date(center); start.setHours(10, 0, 0, 0);
+      stop  = new Date(center); stop.setHours(19, 0, 0, 0);
+    }
     try {
       const arch = await getArchive(start, stop);
       return { offset, arch, start, stop };
@@ -1600,24 +1671,7 @@ async function renderNearby() {
       return { s, dist, card };
     });
 
-    // Marcadores en el mapa (un color neutral; sin veredicto)
-    if (map) {
-      for (const { s, dist } of within) {
-        const stName = s.meta?.name || ('Pioupiou ' + s.id);
-        L.circleMarker([s.location.latitude, s.location.longitude], {
-          radius: 6, color: "#fff", weight: 1, fillColor: "#4ea1ff", fillOpacity: 0.85,
-        }).addTo(map)
-          .bindPopup(
-            `<b>${escapeHtml(stName)}</b><br/>` +
-            `${dist.toFixed(1)} km · ${t("near.popup_last")}: ${fmtTime(s.measurements?.date)}<br/>` +
-            `<a href="https://www.openwindmap.org/windbird-${s.id}" target="_blank">${t("near.popup_view")}</a>`
-          )
-          .bindTooltip(stName, {
-            permanent: true, direction: "right", offset: [8, 0], className: "station-label"
-          });
-        nearbyLatLngs.push([s.location.latitude, s.location.longitude]);
-      }
-    }
+    // Marcadores del mapa: ahora el mapa muestra sólo el despegue (sin estaciones).
 
     // Cargar archivo de últimas N horas en paralelo y rellenar cada tarjeta
     const stop = new Date();
@@ -1668,7 +1722,7 @@ async function renderNearby() {
 
   // Añadir la estación del Aeropuerto de Granada (Open-Meteo en sus coordenadas)
   await renderAirportStation();
-  fitMapToNearby();
+  // Mapa centrado en el despegue (sin estaciones).
 }
 
 async function renderAirportStation() {
@@ -1715,16 +1769,7 @@ async function renderAirportStation() {
       </div>
     `;
     grid.appendChild(card);
-    if (map) {
-      L.circleMarker([lat, lon], {
-        radius: 7, color: "#fff", weight: 1, fillColor: "#f1c40f", fillOpacity: 0.9,
-      }).addTo(map)
-        .bindPopup(`<b>${escapeHtml(label)}</b><br/>${dist.toFixed(1)} km`)
-        .bindTooltip(label, {
-          permanent: true, direction: "right", offset: [8, 0], className: "station-label airport"
-        });
-      nearbyLatLngs.push([lat, lon]);
-    }
+    // Mapa: no añadimos marcador para la estación del aeropuerto.
   } catch (e) { console.warn("airport station:", e); }
 }
 
@@ -1849,8 +1894,10 @@ async function refreshObservations() {
 
 async function refreshForecast() {
   try {
-    const fc = await getForecast(currentForecastDays);
+    const fc = await getForecast(Math.max(2, currentForecastDays));
     renderForecast(fc);
+    // La comparativa usa daily.sunrise/sunset de los últimos días (past_days=3).
+    renderCompare();
   } catch (e) {
     console.error("forecast:", e);
   }
