@@ -291,6 +291,8 @@ const I18N = {
     "menu.install": "Instalar app",
     "menu.help": "Ayuda",
     "menu.admin_review": "Revisar despegues",
+    "menu.firebase_console": "Firebase (admin)",
+    "menu.firebase_console_tip": "Abrir consola de Firebase: usuarios, tráfico, Firestore…",
     "panel.for_to_st": "Mostrando: {to} · datos de la estación {st}",
     "panel.for_st": "Mostrando datos de la estación {st}",
     "menu.account": "Cuenta",
@@ -549,6 +551,8 @@ const I18N = {
     "menu.install": "Install app",
     "menu.help": "Help",
     "menu.admin_review": "Review takeoffs",
+    "menu.firebase_console": "Firebase (admin)",
+    "menu.firebase_console_tip": "Open Firebase console: users, traffic, Firestore…",
     "panel.for_to_st": "Showing: {to} · data from station {st}",
     "panel.for_st": "Showing data from station {st}",
     "menu.account": "Account",
@@ -810,6 +814,8 @@ const I18N = {
     "menu.install": "App installieren",
     "menu.help": "Hilfe",
     "menu.admin_review": "Startplätze prüfen",
+    "menu.firebase_console": "Firebase (Admin)",
+    "menu.firebase_console_tip": "Firebase-Konsole öffnen: Nutzer, Traffic, Firestore…",
     "panel.for_to_st": "Anzeige: {to} · Daten von Station {st}",
     "panel.for_st": "Daten von Station {st}",
     "menu.account": "Konto",
@@ -1071,6 +1077,8 @@ const I18N = {
     "menu.install": "Installer l'app",
     "menu.help": "Aide",
     "menu.admin_review": "Examiner décos",
+    "menu.firebase_console": "Firebase (admin)",
+    "menu.firebase_console_tip": "Ouvrir la console Firebase : utilisateurs, trafic, Firestore…",
     "panel.for_to_st": "Affichage : {to} · données de la station {st}",
     "panel.for_st": "Données de la station {st}",
     "menu.account": "Compte",
@@ -1332,6 +1340,8 @@ const I18N = {
     "menu.install": "App-a instalatu",
     "menu.help": "Laguntza",
     "menu.admin_review": "Berrikusi proposamenak",
+    "menu.firebase_console": "Firebase (admin)",
+    "menu.firebase_console_tip": "Ireki Firebase kontsola: erabiltzaileak, trafikoa, Firestore…",
     "panel.for_to_st": "Erakusten: {to} · {st} estaziotik",
     "panel.for_st": "{st} estazioaren datuak",
     "menu.account": "Kontua",
@@ -1547,6 +1557,8 @@ const I18N = {
     "menu.install": "Instal·la l'app",
     "menu.help": "Ajuda",
     "menu.admin_review": "Revisar enlairaments",
+    "menu.firebase_console": "Firebase (admin)",
+    "menu.firebase_console_tip": "Obrir consola de Firebase: usuaris, trànsit, Firestore…",
     "panel.for_to_st": "Mostrant: {to} · dades de l'estació {st}",
     "panel.for_st": "Mostrant dades de l'estació {st}",
     "menu.account": "Compte",
@@ -4612,6 +4624,8 @@ window.addEventListener("pcuserchange", (e) => {
   if (adminBtn) adminBtn.hidden = !isAdmin;
   const adminReviewBtn = document.getElementById("adminReviewBtn");
   if (adminReviewBtn) adminReviewBtn.hidden = !isAdmin;
+  const fbConsoleBtn = document.getElementById("firebaseConsoleBtn");
+  if (fbConsoleBtn) fbConsoleBtn.hidden = !isAdmin;
   updateAdminPendingBadge();
   if (!prefs) return;
   let changed = false;
@@ -4988,6 +5002,13 @@ document.getElementById("authAdminBtn")?.addEventListener("click", () => {
 document.getElementById("adminReviewBtn")?.addEventListener("click", () => {
   document.getElementById("takeoffAdminModal").hidden = false;
   renderAdminList();
+});
+document.getElementById("firebaseConsoleBtn")?.addEventListener("click", () => {
+  if (!window.PCAuth?.isAdmin) return;
+  // Project ID importado de firebase-config.js → URL fija del proyecto.
+  window.open("https://console.firebase.google.com/project/parapente-cenes/overview", "_blank", "noopener,noreferrer");
+  document.getElementById("userMenuPanel")?.setAttribute("hidden", "");
+  document.getElementById("userMenuBtn")?.setAttribute("aria-expanded", "false");
 });
 function updateAdminPendingBadge() {
   const isAdmin = !!(window.PCAuth && window.PCAuth.isAdmin);
