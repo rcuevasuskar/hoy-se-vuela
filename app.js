@@ -177,6 +177,21 @@ const I18N = {
     "guide.ok": "<strong>Volable:</strong> Norte (N) o Suroeste (SO), o vientos fuera del rango ideal pero por debajo del límite.",
     "guide.bad": "<strong>Malo:</strong> componentes Este (NE, E, SE) — empeora cuanto más al Este.",
     "guide.warn": "<strong>Demasiado fuerte:</strong> media ≥ 20 km/h o rachas ≥ 30 km/h.",
+    "guide.label_ideal": "Ideal",
+    "guide.label_ok": "Volable",
+    "guide.label_bad": "Malo",
+    "guide.label_warn": "Demasiado fuerte",
+    "guide.no_dirs": "ninguna",
+    "guide.rest": "resto",
+    "guide.no_orient": "sin orientaciones definidas",
+    "guide.fmt_ideal": "<strong>{label}:</strong> {dirs}{range}.",
+    "guide.fmt_ok": "<strong>{label}:</strong> {dirs}.",
+    "guide.fmt_bad": "<strong>{label}:</strong> {dirs}.",
+    "guide.fmt_warn": "<strong>{label}:</strong> media ≥ {avg} km/h o rachas ≥ {gust} km/h.",
+    "guide.range_fmt": ", {min}–{max} km/h",
+    "guide.range_min": ", desde {min} km/h",
+    "guide.range_max": ", hasta {max} km/h",
+    "guide.notes_title": "Notas del despegue",
     "loading": "Cargando…",
     "footer": 'Datos en tiempo real: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Pronóstico: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Mapa: © OpenStreetMap. No oficial. Valora siempre las condiciones in situ.',
     "notify.title": "🪂 ¡Condiciones ideales en Cenes!",
@@ -3035,6 +3050,7 @@ function applyLangChange(newLang) {
   window.PCAuth?.savePref?.("lang", currentLang);
   renderLangPicker();
   applyStaticI18n();
+  if (typeof renderTakeoffPanel === "function") renderTakeoffPanel();
   syncNotifyButtonInitial();
   const whTitleEl = document.getElementById("whTitle");
   if (whTitleEl) whTitleEl.textContent = t("wh.titleFmt").replace("{h}", WH_HOURS);
@@ -3121,6 +3137,106 @@ function applyCurrentTakeoffLabel() {
   const guideEl = document.getElementById("guideTakeoffName");
   if (guideEl) guideEl.textContent = currentStation.shortName || currentStation.name;
   renderCurrentTakeoffActions();
+  renderTakeoffPanel();
+}
+
+// Devuelve el documento del despegue comunitario correspondiente al despegue actual, si existe.
+function getCurrentTakeoffDoc() {
+  resolveCurrentTakeoffOrigin();
+  if (!currentTakeoffOriginId) return null;
+  const list = window.PCAuth?.approvedTakeoffs || [];
+  return list.find(t => t.id === currentTakeoffOriginId) || null;
+}
+
+// Renderiza la brújula principal (sectores), la guía rápida y las notas
+// con la información del despegue actualmente seleccionado.
+function renderTakeoffPanel() {
+  const labels = DIR_16_BY_LANG[currentLang] || DIR_16_BY_LANG.es;
+  const doc = getCurrentTakeoffDoc();
+  const crit = currentTakeoffCriteria
+    || (doc && doc.criteria)
+    || null;
+  // Calidades efectivas por índice (16). Si el despegue tiene criterios definidos, los usamos.
+  const q16 = (crit && Array.isArray(crit.qualityByIndex) && crit.qualityByIndex.some(Boolean))
+    ? crit.qualityByIndex.map(q => q || "bad")
+    : QUALITY_BY_INDEX.slice();
+
+  // --- 1) Sectores de la brújula principal ---
+  const host = document.getElementById("sectorsHost");
+  if (host) {
+    host.innerHTML = "";
+    for (let i = 0; i < 16; i++) {
+      const q = q16[i] || "bad";
+      const startDeg = i * 22.5 - 11.25;       // permite valores negativos para el sector N (wrap)
+      const endDeg = startDeg + 22.5;
+      const div = document.createElement("div");
+      div.className = "sector " + q;
+      // Para sectores que cruzan el 0 (N), iniciamos desde startDeg (negativo) y pintamos 22.5°
+      div.style.background = `conic-gradient(from ${startDeg}deg, currentColor 0deg, currentColor 22.5deg, transparent 0)`;
+      div.style.setProperty("--start", `${((startDeg % 360) + 360) % 360}deg`);
+      div.style.setProperty("--end", `${((endDeg % 360) + 360) % 360}deg`);
+      host.appendChild(div);
+    }
+  }
+
+  // --- 2) Guía rápida ---
+  const guideList = document.getElementById("guideList");
+  if (guideList) {
+    const dirsIdeal = [], dirsOk = [], dirsBad = [];
+    for (let i = 0; i < 16; i++) {
+      const q = q16[i];
+      if (q === "ideal") dirsIdeal.push(labels[i]);
+      else if (q === "ok") dirsOk.push(labels[i]);
+      else if (q === "bad") dirsBad.push(labels[i]);
+    }
+    const fmtList = (arr, fallback) => arr.length ? arr.join(", ") : fallback;
+    const wmin = (crit && Number.isFinite(crit.windMin)) ? crit.windMin : null;
+    const wmax = (crit && Number.isFinite(crit.windMax)) ? crit.windMax : null;
+    const gmax = (crit && Number.isFinite(crit.gustMax)) ? crit.gustMax : 30;
+    let rangeStr = "";
+    if (wmin != null && wmax != null) rangeStr = t("guide.range_fmt", { min: wmin, max: wmax });
+    else if (wmin != null) rangeStr = t("guide.range_min", { min: wmin });
+    else if (wmax != null) rangeStr = t("guide.range_max", { max: wmax });
+    // Si no hay ningún sector marcado como "bad", mostramos "resto" para evitar lista vacía cuando hay ideales/ok.
+    const badText = dirsBad.length
+      ? dirsBad.join(", ")
+      : (dirsIdeal.length || dirsOk.length ? t("guide.rest") : t("guide.no_orient"));
+    const avgWarn = Math.round(gmax * 0.66);
+    guideList.innerHTML = `
+      <li><span class="dot ideal"></span> <span>${t("guide.fmt_ideal", {
+        label: t("guide.label_ideal"),
+        dirs: fmtList(dirsIdeal, t("guide.no_dirs")),
+        range: rangeStr,
+      })}</span></li>
+      <li><span class="dot ok"></span> <span>${t("guide.fmt_ok", {
+        label: t("guide.label_ok"),
+        dirs: fmtList(dirsOk, t("guide.no_dirs")),
+      })}</span></li>
+      <li><span class="dot bad"></span> <span>${t("guide.fmt_bad", {
+        label: t("guide.label_bad"),
+        dirs: badText,
+      })}</span></li>
+      <li><span class="dot warn"></span> <span>${t("guide.fmt_warn", {
+        label: t("guide.label_warn"),
+        avg: avgWarn,
+        gust: gmax,
+      })}</span></li>
+    `;
+  }
+
+  // --- 3) Notas del despegue ---
+  const notesBlock = document.getElementById("guideNotes");
+  const notesText = document.getElementById("guideNotesText");
+  const notesStr = doc?.notes ? String(doc.notes).trim() : "";
+  if (notesBlock && notesText) {
+    if (notesStr) {
+      notesText.textContent = notesStr;
+      notesBlock.hidden = false;
+    } else {
+      notesText.textContent = "";
+      notesBlock.hidden = true;
+    }
+  }
 }
 
 function renderCurrentTakeoffActions() {
@@ -3663,6 +3779,7 @@ window.addEventListener("pcuserchange", (e) => {
     currentLang = prefs.lang;
     if (typeof renderLangPicker === "function") renderLangPicker();
     applyStaticI18n();
+    if (typeof renderTakeoffPanel === "function") renderTakeoffPanel();
     changed = true;
   }
   if (prefs.whHours && prefs.whHours !== WH_HOURS) {
@@ -3972,6 +4089,9 @@ function _hookTakeoffStreams() {
     // Cuando lleguen los aprobados, reintenta resolver el origen del despegue actual.
     currentTakeoffOriginId = null;
     renderCurrentTakeoffActions();
+    renderTakeoffPanel();
+    // Recalcula los indicadores con los nuevos criterios (sin recargar pronóstico/histórico).
+    if (typeof refreshObservations === "function") refreshObservations();
   };
   window.PCAuth.onPendingTakeoffsChange = () => {
     const modal = document.getElementById("takeoffAdminModal");
