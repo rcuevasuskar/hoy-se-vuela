@@ -4043,7 +4043,6 @@ function openTakeoffSuggest(originId) {
   openTakeoffSubmit({
     _suggesting: true,
     name: to.name, lat: to.lat, lon: to.lon, alt: to.alt,
-    stationId: to.stationId,
     orientations: to.orientations || "",
     notes: to.notes || "",
     criteria: to.criteria || null,
@@ -4269,16 +4268,41 @@ async function tsRunSearch() {
   items = items.concat(holfuyItems);
 
   // Mezcla despegues comunitarios aprobados
-  const community = !provOn("community") ? [] : (window.PCAuth?.approvedTakeoffs || []).map(to => ({
-    id: "to_" + to.id,
-    provider: "community",
-    name: to.name,
-    lat: to.lat, lon: to.lon,
-    community: true,
-    stationId: to.stationId,
-    raw: to,
-    dist: haversineKm(center.lat, center.lon, to.lat, to.lon),
-  })).filter(s => s.dist <= maxDist);
+  // v113: en lugar de exigir stationId guardado, autovincula con la estacion mas
+  // cercana (cualquier proveedor) dentro de LINK_KM. Asi el creador no necesita
+  // especificar el id de la estacion; la fuente de viento se elige por proximidad.
+  const LINK_KM = 10;
+  const findLinkedStation = (lat, lon) => {
+    let best = null, bestKm = LINK_KM + 1;
+    const pools = [
+      (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
+      (all.aemet || []),
+      (all.holfuy || []),
+    ];
+    for (const pool of pools) {
+      for (const st of pool) {
+        if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
+        if (!isStationRecent(st, 24)) continue;
+        const km = haversineKm(lat, lon, st.lat, st.lon);
+        if (km < bestKm) { bestKm = km; best = st; }
+      }
+    }
+    return best;
+  };
+  const community = !provOn("community") ? [] : (window.PCAuth?.approvedTakeoffs || []).map(to => {
+    const link = findLinkedStation(to.lat, to.lon);
+    return {
+      id: "to_" + to.id,
+      provider: "community",
+      name: to.name,
+      lat: to.lat, lon: to.lon,
+      community: true,
+      stationId: link?.id ?? to.stationId ?? null,
+      _linkedStation: link,
+      raw: to,
+      dist: haversineKm(center.lat, center.lon, to.lat, to.lon),
+    };
+  }).filter(s => s.dist <= maxDist);
   items = items.concat(community);
 
   // Evita duplicados: si una estación Pioupiou/FFVL ya está registrada como despegue comunitario
@@ -4402,7 +4426,7 @@ function renderSearchRow(s, ctx) {
   const isFfvl = s.provider === "ffvl";
   const isAemet = s.provider === "aemet";
   const isHolfuy = s.provider === "holfuy";
-  const enabled = isCommunity ? (s.stationId != null)
+  const enabled = isCommunity ? !!s._linkedStation
                   : isFfvl ? false
                   // v112: AEMET/Holfuy aparecen "proximamente" igual que Pioupiou hasta
                   // que un admin cree/edite un despegue comunitario que las referencie.
@@ -4441,14 +4465,22 @@ function renderSearchRow(s, ctx) {
   if (enabled) {
     btn.addEventListener("click", () => {
       if (isCommunity) {
-        selectStation({
-          id: s.stationId, provider: "pioupiou",
-          name: s.name, shortName: s.name,
-          lat: s.lat, lon: s.lon,
-        }, { criteria: s.raw?.criteria || null, originId: s.raw?.id || null, userPicked: true });
+        // v113: usa la estacion mas cercana autovinculada (cualquier proveedor)
+        // en lugar del stationId guardado en el doc.
+        const link = s._linkedStation;
+        if (link) {
+          selectStation({
+            id: link.id, provider: link.provider,
+            name: s.name, shortName: s.name,
+            lat: s.lat, lon: s.lon,
+          }, { criteria: s.raw?.criteria || null, originId: s.raw?.id || null, userPicked: true });
+        }
       } else {
         selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon }, { userPicked: true });
       }
+      // v113: limpia el campo de busqueda al seleccionar (libera el filtro).
+      const searchEl = document.getElementById("tsSearch");
+      if (searchEl) searchEl.value = "";
       document.getElementById("tsPanel").hidden = true;
     });
   }
@@ -4480,7 +4512,9 @@ function renderSearchRow(s, ctx) {
           await window.PCAuth.addFavorite({
             source: isCommunity ? "community" : (isFfvl ? "ffvl" : "pioupiou"),
             refId: isCommunity ? (s.raw?.id || "") : (isFfvl ? s.rawId : s.id),
-            stationId: isCommunity ? s.stationId : (isFfvl ? null : s.id),
+            // v113: solo guardamos stationId si es numerico (pioupiou). Comunitarios
+            // se auto-vinculan por proximidad al cargar el favorito.
+            stationId: isCommunity ? null : (isFfvl ? null : s.id),
             name: s.name,
             lat: s.lat, lon: s.lon,
             criteria: isCommunity ? (s.raw?.criteria || null) : null,
@@ -4823,7 +4857,7 @@ function openTakeoffSubmit(prefill) {
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
   document.getElementById("toSubmitMsg").textContent = "";
-  ["toName","toLat","toLon","toAlt","toOrient","toStation","toNotes","toWindMin","toWindMax","toGustMax"].forEach(id => {
+  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   // Restaura título y botón por si veníamos de modo sugerencia (será sobreescrito por openTakeoffSuggest si aplica)
@@ -4859,7 +4893,6 @@ function openTakeoffSubmit(prefill) {
     if (prefill.name) document.getElementById("toName").value = prefill.name;
     if (prefill.lat != null) document.getElementById("toLat").value = Number(prefill.lat).toFixed(5);
     if (prefill.lon != null) document.getElementById("toLon").value = Number(prefill.lon).toFixed(5);
-    if (prefill.stationId != null) document.getElementById("toStation").value = String(prefill.stationId);
     if (prefill.alt != null && prefill.alt !== "") document.getElementById("toAlt").value = String(prefill.alt);
     if (prefill.orientations) document.getElementById("toOrient").value = String(prefill.orientations);
     if (prefill.notes) document.getElementById("toNotes").value = String(prefill.notes);
@@ -4918,7 +4951,6 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       lon: document.getElementById("toLon").value,
       alt: document.getElementById("toAlt").value,
       orientations: orientationsText,
-      stationId: document.getElementById("toStation").value,
       notes: document.getElementById("toNotes").value,
       criteria,
       targetId: _suggestTargetId || null,
@@ -5221,6 +5253,34 @@ async function resolveDefaultTakeoff() {
     chosen = [...favs].sort((a, b) => _addedAtMs(a) - _addedAtMs(b))[0];
   }
   if (chosen) {
+    // v113: para favoritos comunitarios sin stationId guardado, autovincula con
+    // la estacion mas cercana (cualquier proveedor) en el momento de cargar.
+    if (chosen.source === "community" && (chosen.stationId == null || Number.isNaN(Number(chosen.stationId)))) {
+      try {
+        const all = await ensureAllStations();
+        const LINK_KM = 10;
+        let best = null, bestKm = LINK_KM + 1;
+        const pools = [
+          (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
+          (all.aemet || []),
+          (all.holfuy || []),
+        ];
+        for (const pool of pools) for (const st of pool) {
+          if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
+          if (!isStationRecent(st, 24)) continue;
+          const km = haversineKm(chosen.lat, chosen.lon, st.lat, st.lon);
+          if (km < bestKm) { bestKm = km; best = st; }
+        }
+        if (best) {
+          selectStation(
+            { id: best.id, provider: best.provider, name: chosen.name, shortName: chosen.name, lat: chosen.lat, lon: chosen.lon },
+            { criteria: chosen.criteria || null, originId: chosen.refId }
+          );
+          _defaultResolvedOnce = true;
+          return;
+        }
+      } catch (e) { console.warn("resolveDefaultTakeoff community link:", e); }
+    }
     const conv = _favToStation(chosen);
     if (conv) { selectStation(conv.station, conv.opts); _defaultResolvedOnce = true; return; }
   }
