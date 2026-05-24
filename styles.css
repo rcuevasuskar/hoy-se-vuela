@@ -266,6 +266,43 @@ header.topbar .ts-current {
   grid-template-columns: repeat(8, 1fr);
   gap: 4px;
 }
+/* Variante en forma de brújula/rosa de los vientos */
+.to-dir-rose.compass-rose-picker {
+  display: block;
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 6px auto;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.0) 65%),
+    repeating-conic-gradient(from -11.25deg, rgba(255,255,255,0.04) 0deg 22.5deg, transparent 22.5deg 45deg);
+  border: 1px solid var(--border);
+}
+.to-dir-rose.compass-rose-picker::before,
+.to-dir-rose.compass-rose-picker::after {
+  content: "";
+  position: absolute; left: 50%; top: 50%;
+  background: rgba(255,255,255,0.08);
+}
+.to-dir-rose.compass-rose-picker::before { width: 1px; height: 100%; transform: translate(-50%, -50%); }
+.to-dir-rose.compass-rose-picker::after  { width: 100%; height: 1px; transform: translate(-50%, -50%); }
+.to-dir-rose.compass-rose-picker .to-dir-btn {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 38px; height: 28px;
+  margin: 0;
+  padding: 0;
+  font-size: .68rem;
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-92px) rotate(calc(-1 * var(--angle)));
+}
+.to-dir-rose.compass-rose-picker .to-dir-btn.is-cardinal {
+  width: 44px; height: 32px;
+  font-size: .82rem;
+}
+.to-dir-rose.compass-rose-picker .to-dir-btn:hover {
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-92px) rotate(calc(-1 * var(--angle))) scale(1.1);
+}
 .to-dir-btn {
   background: var(--panel-2); color: var(--fg);
   border: 1px solid var(--border);
@@ -283,6 +320,18 @@ header.topbar .ts-current {
 .to-dir-btn[data-q="bad"]   { background: #e74c3c; color: #fff; border-color: #b03a2e; }
 .to-field { display: flex; flex-direction: column; gap: 2px; font-size: .75rem; color: var(--muted); flex: 1; }
 .to-field input { width: 100%; }
+.to-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+.to-actions .auth-primary { flex: 1; }
+.auth-secondary {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.auth-secondary:hover { color: var(--fg); border-color: var(--accent); }
 
 /* Search result icon buttons (star, crown, bell, propose) */
 .ts-result-icons {

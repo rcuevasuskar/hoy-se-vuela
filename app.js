@@ -116,6 +116,7 @@ const I18N = {
     "to.notes_ph": "Notas (acceso, peligros…)",
     "to.pick_map": "📍 Usar coordenadas actuales del mapa",
     "to.submit": "Enviar para revisión",
+    "to.cancel": "Cancelar",
     "to.submit_ok": "¡Enviado! Recibirás una respuesta tras la revisión.",
     "to.submit_err": "No se pudo enviar la propuesta.",
     "to.submit_login": "Debes iniciar sesión para proponer un despegue.",
@@ -345,6 +346,7 @@ const I18N = {
     "to.notes_ph": "Notes (access, hazards…)",
     "to.pick_map": "📍 Use current map coordinates",
     "to.submit": "Submit for review",
+    "to.cancel": "Cancel",
     "to.submit_ok": "Sent! You'll get a reply after review.",
     "to.submit_err": "Could not submit the proposal.",
     "to.submit_login": "You must sign in to propose a takeoff.",
@@ -574,6 +576,7 @@ const I18N = {
     "to.notes_ph": "Notizen (Zugang, Gefahren…)",
     "to.pick_map": "📍 Aktuelle Kartenkoordinaten verwenden",
     "to.submit": "Zur Prüfung senden",
+    "to.cancel": "Abbrechen",
     "to.submit_ok": "Gesendet! Antwort nach Prüfung.",
     "to.submit_err": "Vorschlag konnte nicht gesendet werden.",
     "to.submit_login": "Bitte zum Vorschlagen anmelden.",
@@ -803,6 +806,7 @@ const I18N = {
     "to.notes_ph": "Notes (accès, dangers…)",
     "to.pick_map": "📍 Utiliser les coordonnées de la carte",
     "to.submit": "Envoyer pour validation",
+    "to.cancel": "Annuler",
     "to.submit_ok": "Envoyé ! Tu auras une réponse après validation.",
     "to.submit_err": "Envoi impossible.",
     "to.submit_login": "Connecte-toi pour proposer un déco.",
@@ -3259,12 +3263,18 @@ function renderDirRose(currentQualities) {
   const host = document.getElementById("toDirRose");
   if (!host) return;
   host.innerHTML = "";
+  host.classList.add("compass-rose-picker");
+  // Marca cardinales más grandes para guiar.
+  const CARDINAL = new Set(["N","E","S","W"]);
   DIR16.forEach((name, idx) => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "to-dir-btn";
+    b.className = "to-dir-btn" + (CARDINAL.has(name) ? " is-cardinal" : "");
     b.textContent = name;
     b.dataset.idx = String(idx);
+    // Posicionado en círculo: 0=N (arriba), 4=E (derecha), 8=S (abajo), 12=W (izq)
+    const angle = idx * 22.5; // grados desde N en sentido horario
+    b.style.setProperty("--angle", `${angle}deg`);
     const q = currentQualities[idx] || "";
     if (q) b.dataset.q = q;
     b.addEventListener("click", () => {
@@ -3346,6 +3356,7 @@ function closeTakeoffSubmit() {
 }
 
 document.getElementById("toSubmitClose")?.addEventListener("click", closeTakeoffSubmit);
+document.getElementById("toCancelBtn")?.addEventListener("click", closeTakeoffSubmit);
 document.getElementById("takeoffSubmitModal")?.addEventListener("click", (e) => {
   if (e.target.id === "takeoffSubmitModal") closeTakeoffSubmit();
 });
