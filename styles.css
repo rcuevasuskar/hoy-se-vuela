@@ -467,6 +467,15 @@ header.topbar .ts-current {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+}
+.app-brand {
+  margin: 0 6px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 .ts-search {
   flex: 1;

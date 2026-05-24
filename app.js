@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.128";
+const APP_VERSION = "v0.129";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -91,6 +91,7 @@ const NOTIFY_COOLDOWN_MS = 30 * 60 * 1000; // no avisar más de 1 vez cada 30 mi
 const I18N = {
   es: {
     "app.title": "Hoy se vuela",
+    "app.brand": "¿Hoy se vuela?",
     "header.h1": "🪂 Viento en Cenes de la Vega",
     "header.subtitle": "Despegue de parapente · Estación",
     "btn.install": "📲 Instalar app",
@@ -380,6 +381,7 @@ const I18N = {
   },
   en: {
     "app.title": "Hoy se vuela",
+    "app.brand": "Flying today?",
     "header.h1": "🪂 Wind at Cenes de la Vega",
     "header.subtitle": "Paragliding takeoff · Station",
     "btn.install": "📲 Install app",
@@ -654,6 +656,7 @@ const I18N = {
   },
   de: {
     "app.title": "Hoy se vuela",
+    "app.brand": "Fliegen wir heute?",
     "header.h1": "🪂 Wind in Cenes de la Vega",
     "header.subtitle": "Gleitschirm-Startplatz · Station",
     "btn.install": "📲 App installieren",
@@ -928,6 +931,7 @@ const I18N = {
   },
   fr: {
     "app.title": "Hoy se vuela",
+    "app.brand": "On vole aujourd’hui ?",
     "header.h1": "🪂 Vent à Cenes de la Vega",
     "header.subtitle": "Décollage parapente · Station",
     "btn.install": "📲 Installer l'app",
@@ -1202,6 +1206,7 @@ const I18N = {
   },
   eu: {
     "app.title": "Hoy se vuela",
+    "app.brand": "Gaur hegan egingo dugu?",
     "header.h1": "🪂 Haizea Cenes de la Vegan",
     "header.subtitle": "Parapente irteguia · Estazioa",
     "btn.install": "📲 Aplikazioa instalatu",
@@ -1430,6 +1435,7 @@ const I18N = {
   },
   ca: {
     "app.title": "Hoy se vuela",
+    "app.brand": "Avui es vola?",
     "header.h1": "🪂 Vent a Cenes de la Vega",
     "header.subtitle": "Enlairament de parapent · Estació",
     "btn.install": "📲 Instal·lar l'app",
