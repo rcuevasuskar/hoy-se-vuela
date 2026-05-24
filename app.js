@@ -99,6 +99,8 @@ const I18N = {
     "read.last": "Última lectura",
     "read.dir": "Dirección",
     "verdict.loading": "Cargando…",
+    "verdict.unavailable.title": "Datos de viento no disponibles",
+    "verdict.unavailable.detail": "La estación no reporta lecturas ahora mismo. La previsión sí está disponible más abajo.",
     "verdict.ideal.title": "Condiciones ideales ✅",
     "verdict.ideal.detail": "Buena dirección y velocidad en el rango óptimo.",
     "verdict.ok.title": "Volable ⚠️",
@@ -373,6 +375,8 @@ const I18N = {
     "read.last": "Last reading",
     "read.dir": "Direction",
     "verdict.loading": "Loading…",
+    "verdict.unavailable.title": "Wind data unavailable",
+    "verdict.unavailable.detail": "The station has no current readings. Forecast is still available below.",
     "verdict.ideal.title": "Ideal conditions ✅",
     "verdict.ideal.detail": "Good direction and speed within the optimal range.",
     "verdict.ok.title": "Flyable ⚠️",
@@ -632,6 +636,8 @@ const I18N = {
     "read.last": "Letzte Messung",
     "read.dir": "Richtung",
     "verdict.loading": "Lädt…",
+    "verdict.unavailable.title": "Winddaten nicht verfügbar",
+    "verdict.unavailable.detail": "Die Station meldet derzeit keine Werte. Die Vorhersage ist weiter unten verfügbar.",
     "verdict.ideal.title": "Ideale Bedingungen ✅",
     "verdict.ideal.detail": "Gute Richtung und Geschwindigkeit im optimalen Bereich.",
     "verdict.ok.title": "Fliegbar ⚠️",
@@ -891,6 +897,8 @@ const I18N = {
     "read.last": "Dernière mesure",
     "read.dir": "Direction",
     "verdict.loading": "Chargement…",
+    "verdict.unavailable.title": "Données de vent indisponibles",
+    "verdict.unavailable.detail": "La station ne renvoie aucune mesure. La prévision reste disponible ci-dessous.",
     "verdict.ideal.title": "Conditions idéales ✅",
     "verdict.ideal.detail": "Bonne direction et vitesse dans la plage optimale.",
     "verdict.ok.title": "Volable ⚠️",
@@ -1150,6 +1158,8 @@ const I18N = {
     "read.last": "Azken neurketa",
     "read.dir": "Norabidea",
     "verdict.loading": "Kargatzen…",
+    "verdict.unavailable.title": "Haize datuak ez daude eskuragarri",
+    "verdict.unavailable.detail": "Estazioak ez du irakurketarik orain. Iragarpena eskuragarri dago behean.",
     "verdict.ideal.title": "Baldintza ezin hobeak ✅",
     "verdict.ideal.detail": "Norabide ona eta abiadura tarte optimoan.",
     "verdict.ok.title": "Hegagarria ⚠️",
@@ -1363,6 +1373,8 @@ const I18N = {
     "read.last": "Última lectura",
     "read.dir": "Direcció",
     "verdict.loading": "Carregant…",
+    "verdict.unavailable.title": "Dades de vent no disponibles",
+    "verdict.unavailable.detail": "L'estació no té lectures ara mateix. La previsió segueix disponible més avall.",
     "verdict.ideal.title": "Condicions ideals ✅",
     "verdict.ideal.detail": "Bona direcció i velocitat dins el rang òptim.",
     "verdict.ok.title": "Volable ⚠️",
@@ -2054,7 +2066,38 @@ function fmtTime(iso) {
 // === Estado actual ===
 let previousAvg = null;
 function renderLive(live) {
-  if (!live) return;
+  // v106: si no hay datos disponibles (p.ej. estación AEMET caída o sin reporte
+  // reciente), limpiamos toda la UI de viento y mostramos "datos no disponibles".
+  // La previsión sigue funcionando aparte (usa coords del despegue).
+  const hasAnyWind = !!(live && live.measurements && (
+    live.measurements.wind_heading != null ||
+    live.measurements.wind_speed_avg != null ||
+    live.measurements.wind_speed_max != null ||
+    live.measurements.wind_speed_min != null
+  ));
+  if (!live || !hasAnyWind) {
+    latestLive = null;
+    previousAvg = null;
+    setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—");
+    setText("lastUpdate", "—");
+    const trendEl = document.getElementById("windAvgTrend");
+    if (trendEl) trendEl.hidden = true;
+    setText("dirLabel", t("dirLabel.dash"));
+    const wedge = document.getElementById("windWedge");
+    if (wedge) {
+      wedge.dataset.dir = "";
+      wedge.style.transform = "";
+      wedge.dataset.quality = "unknown";
+      wedge.dataset.speed = "unknown";
+    }
+    const centerEl = document.getElementById("compassAvg");
+    if (centerEl) centerEl.textContent = "—";
+    const light = document.getElementById("verdictLight");
+    if (light) light.className = "verdict-light unknown";
+    setText("verdictTitle", t("verdict.unavailable.title"));
+    setText("verdictDetail", t("verdict.unavailable.detail"));
+    return;
+  }
   latestLive = live;
   const m = live.measurements || {};
   const dir = m.wind_heading;
@@ -3252,8 +3295,9 @@ async function refreshObservations() {
     renderLive(await getLive());
   } catch (e) {
     console.error(e);
-    setText("verdictTitle", t("error.fetch"));
-    setText("verdictDetail", e.message);
+    // v106: si el fetch falla, tratamos como "datos no disponibles" para no dejar
+    // valores viejos en pantalla. El detalle del error queda en consola.
+    renderLive(null);
   }
   // Histórico 6h se refresca en paralelo (no bloquea el live)
   refreshWindHistory();
@@ -4022,9 +4066,21 @@ function _overrideKeyForCurrent() {
   if (currentStation?.provider && currentStationId != null) return currentStation.provider + ":" + currentStationId;
   return null;
 }
+// v106: devuelve TODAS las claves posibles bajo las que puede haberse guardado
+// un override para el contexto actual. Necesario porque resolveCurrentTakeoffOrigin
+// puede enganchar un doc comunitario (≤3 km) DESPUÉS de guardar un override por estación,
+// haciendo que la clave cambie de "aemet:1234" a "to:<docId>".
+function _overrideKeysForCurrent() {
+  const keys = [];
+  if (currentTakeoff?.id) keys.push("to:" + currentTakeoff.id);
+  if (currentStation?.provider && currentStationId != null) keys.push(currentStation.provider + ":" + currentStationId);
+  return keys;
+}
 function getCurrentOverride() {
-  const k = _overrideKeyForCurrent();
-  return k ? (userTakeoffOverrides[k] || null) : null;
+  for (const k of _overrideKeysForCurrent()) {
+    if (userTakeoffOverrides[k]) return userTakeoffOverrides[k];
+  }
+  return null;
 }
 function applyCurrentOverride() {
   const ov = getCurrentOverride();
@@ -4835,9 +4891,9 @@ document.getElementById("criteriaOverrideModal")?.addEventListener("click", (e) 
   if (e.target.id === "criteriaOverrideModal") closeCriteriaOverride();
 });
 document.getElementById("coResetBtn")?.addEventListener("click", () => {
-  const key = _overrideKeyForCurrent();
-  if (!key) return;
-  delete userTakeoffOverrides[key];
+  const keys = _overrideKeysForCurrent();
+  if (!keys.length) return;
+  for (const k of keys) delete userTakeoffOverrides[k];
   _saveUserOverrides();
   // Reaplicar: como el override está borrado, recargamos criteria desde el doc si existe.
   const doc = getCurrentTakeoffDoc();
@@ -4848,8 +4904,8 @@ document.getElementById("coResetBtn")?.addEventListener("click", () => {
   refreshAllForCurrentTakeoff();
 });
 document.getElementById("coSaveBtn")?.addEventListener("click", () => {
-  const key = _overrideKeyForCurrent();
-  if (!key) return;
+  const keys = _overrideKeysForCurrent();
+  if (!keys.length) return;
   const qualityByIndex = collectDirRose("coDirRose");
   const wmin = parseFloat(document.getElementById("coWindMin").value);
   const wmax = parseFloat(document.getElementById("coWindMax").value);
@@ -4860,7 +4916,9 @@ document.getElementById("coSaveBtn")?.addEventListener("click", () => {
     windMax: Number.isFinite(wmax) ? wmax : null,
     gustMax: Number.isFinite(gmax) ? gmax : null,
   };
-  userTakeoffOverrides[key] = criteria;
+  // Guardar bajo TODAS las claves posibles para que el override se encuentre
+  // independientemente de si el resolver (≤3 km) engancha o no un doc comunitario.
+  for (const k of keys) userTakeoffOverrides[k] = criteria;
   _saveUserOverrides();
   currentTakeoff.criteria = criteria;
   currentTakeoffCriteria = criteria;
