@@ -1712,12 +1712,12 @@ async function getAllAemetStations() {
   if (!key) return [];
   try {
     const metaUrl = `https://opendata.aemet.es/opendata/api/observacion/convencional/todas?api_key=${encodeURIComponent(key)}`;
-    const meta = await fetchJson(CORS_PROXY + encodeURIComponent(metaUrl));
+    const meta = await fetchJson(metaUrl);
     if (!meta?.datos) {
       console.warn("AEMET: respuesta sin 'datos'", meta);
       return [];
     }
-    const records = await fetchJson(CORS_PROXY + encodeURIComponent(meta.datos));
+    const records = await fetchJson(meta.datos);
     if (!Array.isArray(records)) return [];
     // Conserva el registro más reciente por estación (idema).
     const byId = new Map();

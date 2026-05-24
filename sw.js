@@ -1,5 +1,5 @@
 // Service Worker básico para PWA: cache-first del shell, network-first de datos.
-const CACHE = "viento-cenes-v89";
+const CACHE = "viento-cenes-v90";
 const SHELL = [
   "./",
   "./index.html",
@@ -31,6 +31,8 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
 
+  const fallback503 = () => new Response("", { status: 503, statusText: "Offline" });
+
   // Datos en vivo o pronóstico: network-first sin cachear
   if (url.hostname.includes("pioupiou.fr") ||
       url.hostname.includes("open-meteo.com") ||
@@ -45,7 +47,9 @@ self.addEventListener("fetch", (e) => {
       url.hostname.includes("firebaseapp.com") ||
       url.hostname.includes("accounts.google.com") ||
       url.pathname.includes("/__/auth")) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    e.respondWith(
+      fetch(e.request).catch(async () => (await caches.match(e.request)) || fallback503())
+    );
     return;
   }
 
@@ -58,7 +62,7 @@ self.addEventListener("fetch", (e) => {
           caches.open(CACHE).then(c => c.put(e.request, copy));
         }
         return resp;
-      }).catch(() => cached)
+      }).catch(() => cached || fallback503())
     )
   );
 });
