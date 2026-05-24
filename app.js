@@ -2609,8 +2609,16 @@ function renderForecast(fc) {
     added++;
   }
 
-  // Re-evaluar veredicto en vivo ahora que tenemos meteo actualizada
+  // Re-evaluar veredicto en vivo ahora que tenemos meteo actualizada.
+  // Si aún no hay live para la nueva estación, refrescamos al menos los paneles meteo
+  // (clouds, temp, sun, cloud analysis) con las coordenadas nuevas (v99).
   if (latestLive) renderLive(latestLive);
+  else {
+    const cw = currentWeather();
+    const risk = weatherRisk(cw);
+    renderWeatherStrip(cw, risk);
+    renderCloudPanel(cw, risk);
+  }
   renderBestWindow(fc);
 }
 
