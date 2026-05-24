@@ -180,6 +180,12 @@ const I18N = {
     "to.wind_max": "Viento máx. ideal (km/h)",
     "to.gust_max": "Racha máx. segura (km/h)",
     "to.suggest": "Sugerir cambios",
+    "co.btn": "Mis criterios",
+    "co.title": "Mis criterios para este despegue",
+    "co.hint": "Estos criterios se guardan solo en tu dispositivo y sustituyen al veredicto por defecto del despegue.",
+    "co.save": "Guardar",
+    "co.reset": "Restablecer al original",
+    "co.active": "Veredicto según tus criterios personales",
     "to.suggest_title": "Sugerir cambios al despegue",
     "to.suggest_submit": "Enviar sugerencia",
     "to.suggest_ok": "Sugerencia enviada. La revisará un administrador.",
@@ -446,6 +452,12 @@ const I18N = {
     "to.wind_max": "Ideal wind max (km/h)",
     "to.gust_max": "Max safe gust (km/h)",
     "to.suggest": "Suggest changes",
+    "co.btn": "My criteria",
+    "co.title": "My criteria for this takeoff",
+    "co.hint": "These criteria are stored only on your device and override the takeoff default verdict.",
+    "co.save": "Save",
+    "co.reset": "Reset to original",
+    "co.active": "Verdict using your personal criteria",
     "to.suggest_title": "Suggest changes to takeoff",
     "to.suggest_submit": "Send suggestion",
     "to.suggest_ok": "Suggestion sent. An admin will review it.",
@@ -697,6 +709,12 @@ const I18N = {
     "to.wind_max": "Ideal Wind max (km/h)",
     "to.gust_max": "Max. sichere Böe (km/h)",
     "to.suggest": "Änderungen vorschlagen",
+    "co.btn": "Meine Kriterien",
+    "co.title": "Meine Kriterien für diesen Startplatz",
+    "co.hint": "Diese Kriterien werden nur auf deinem Gerät gespeichert und ersetzen das Standardurteil.",
+    "co.save": "Speichern",
+    "co.reset": "Auf Original zurücksetzen",
+    "co.active": "Urteil nach deinen persönlichen Kriterien",
     "to.suggest_title": "Änderungen am Startplatz vorschlagen",
     "to.suggest_submit": "Vorschlag senden",
     "to.suggest_ok": "Vorschlag gesendet. Ein Admin prüft ihn.",
@@ -948,6 +966,12 @@ const I18N = {
     "to.wind_max": "Vent max idéal (km/h)",
     "to.gust_max": "Rafale max sûre (km/h)",
     "to.suggest": "Suggérer des modifications",
+    "co.btn": "Mes critères",
+    "co.title": "Mes critères pour ce déco",
+    "co.hint": "Ces critères sont stockés uniquement sur votre appareil et remplacent le verdict par défaut.",
+    "co.save": "Enregistrer",
+    "co.reset": "Rétablir l'original",
+    "co.active": "Verdict selon vos critères personnels",
     "to.suggest_title": "Suggérer des modifications au déco",
     "to.suggest_submit": "Envoyer la suggestion",
     "to.suggest_ok": "Suggestion envoyée. Un admin la vérifiera.",
@@ -1199,6 +1223,12 @@ const I18N = {
     "to.wind_max": "Haize max. aproposa (km/h)",
     "to.gust_max": "Bolada max. segurua (km/h)",
     "to.suggest": "Aldaketak proposatu",
+    "co.btn": "Nire irizpideak",
+    "co.title": "Nire irizpideak irteguia honetarako",
+    "co.hint": "Irizpide hauek zure gailuan bakarrik gordeko dira eta lehenetsitako epaia ordezkatzen dute.",
+    "co.save": "Gorde",
+    "co.reset": "Jatorrizkora itzuli",
+    "co.active": "Zure irizpide pertsonalen araberako epaia",
     "to.suggest_title": "Irteguiari aldaketak proposatu",
     "to.suggest_submit": "Bidali iradokizuna",
     "to.suggest_ok": "Iradokizuna bidalita. Administrari batek berrikusiko du.",
@@ -1404,6 +1434,12 @@ const I18N = {
     "to.wind_max": "Vent màx. ideal (km/h)",
     "to.gust_max": "Ratxa màx. segura (km/h)",
     "to.suggest": "Suggereix canvis",
+    "co.btn": "Els meus criteris",
+    "co.title": "Els meus criteris per a aquest enlairament",
+    "co.hint": "Aquests criteris es desen només al teu dispositiu i substitueixen el veredicte per defecte.",
+    "co.save": "Desa",
+    "co.reset": "Restableix l'original",
+    "co.active": "Veredicte segons els teus criteris personals",
     "to.suggest_title": "Suggereix canvis a l'enlairament",
     "to.suggest_submit": "Envia el suggeriment",
     "to.suggest_ok": "Suggeriment enviat. Un administrador el revisarà.",
@@ -3676,10 +3712,11 @@ function updatePanelForLabels() {
   const text = toName && toName !== stName
     ? t("panel.for_to_st", { to: toName, st: stName })
     : t("panel.for_st", { st: stName });
+  const suffix = getCurrentOverride() ? " · " + t("co.active") : "";
   ["panelFor", "panelForBlock"].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.textContent = text;
+    el.textContent = text + suffix;
     el.hidden = !stName;
   });
 }
@@ -3880,6 +3917,17 @@ function renderCurrentTakeoffActions() {
     }
   });
   host.appendChild(sug);
+
+  // 🛠 mis criterios (override personal) — disponible siempre que haya despegue/estación.
+  if (_overrideKeyForCurrent()) {
+    const ov = document.createElement("button");
+    const hasOv = !!getCurrentOverride();
+    ov.type = "button"; ov.className = "ts-icon-btn" + (hasOv ? " is-active" : "");
+    ov.title = t("co.btn");
+    ov.textContent = "🛠";
+    ov.addEventListener("click", openCriteriaOverride);
+    host.appendChild(ov);
+  }
 }
 
 function openTakeoffSuggest(originId) {
@@ -3940,6 +3988,38 @@ function _attachTakeoffDoc(doc) {
   // Aliases compat
   currentTakeoffOriginId = doc.id;
   currentTakeoffCriteria = doc.criteria || null;
+  applyCurrentOverride();
+}
+
+// v104: override personal de criterios por despegue. Se guarda en localStorage
+// + prefs del usuario (PCAuth). Se aplica automáticamente al cargar/cambiar takeoff.
+const USER_OVERRIDES_KEY = "takeoffOverrides";
+let userTakeoffOverrides = (function loadUserOverrides() {
+  try {
+    const raw = localStorage.getItem(USER_OVERRIDES_KEY);
+    if (raw) return JSON.parse(raw) || {};
+  } catch {}
+  return {};
+})();
+function _saveUserOverrides() {
+  try { localStorage.setItem(USER_OVERRIDES_KEY, JSON.stringify(userTakeoffOverrides)); } catch {}
+  window.PCAuth?.savePref?.(USER_OVERRIDES_KEY, JSON.stringify(userTakeoffOverrides));
+}
+function _overrideKeyForCurrent() {
+  if (currentTakeoff?.id) return "to:" + currentTakeoff.id;
+  if (currentStation?.provider && currentStationId != null) return currentStation.provider + ":" + currentStationId;
+  return null;
+}
+function getCurrentOverride() {
+  const k = _overrideKeyForCurrent();
+  return k ? (userTakeoffOverrides[k] || null) : null;
+}
+function applyCurrentOverride() {
+  const ov = getCurrentOverride();
+  if (!ov) return false;
+  currentTakeoff.criteria = ov;
+  currentTakeoffCriteria = ov;
+  return true;
 }
 
 // v103: API canónica para cambiar el lugar/fuente de datos. Asegura coherencia
@@ -3978,6 +4058,7 @@ function setCurrent({ takeoff, station }) {
   }
   currentTakeoffOriginId = currentTakeoff.id;
   currentTakeoffCriteria = currentTakeoff.criteria;
+  applyCurrentOverride();
 }
 
 function selectStation(station, opts) {
@@ -4529,8 +4610,8 @@ function _collapse16To8(q16) {
   return out;
 }
 
-function renderDirRose(currentQualities) {
-  const host = document.getElementById("toDirRose");
+function renderDirRose(currentQualities, hostId) {
+  const host = document.getElementById(hostId || "toDirRose");
   if (!host) return;
   host.innerHTML = "";
   host.classList.add("compass-rose-picker");
@@ -4589,9 +4670,9 @@ function renderDirRose(currentQualities) {
   host.appendChild(svg);
 }
 
-function collectDirRose() {
+function collectDirRose(hostId) {
   const q8 = new Array(8).fill("bad");
-  document.querySelectorAll("#toDirRose .rose-sector").forEach(b => {
+  document.querySelectorAll("#" + (hostId || "toDirRose") + " .rose-sector").forEach(b => {
     const k = parseInt(b.dataset.idx, 10);
     if (Number.isFinite(k) && k >= 0 && k < 8) q8[k] = b.dataset.q || "bad";
   });
@@ -4707,6 +4788,73 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
     console.error("[to] submit", e);
     msg.textContent = t("to.submit_err") + " [" + (e?.code || e?.message || "?") + "]";
   }
+});
+
+// v104: modal de criterios personales (override)
+function openCriteriaOverride() {
+  const u = window.PCAuth?.user;
+  if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
+  const key = _overrideKeyForCurrent();
+  if (!key) return;
+  const modal = document.getElementById("criteriaOverrideModal");
+  if (!modal) return;
+  document.getElementById("coMsg").textContent = "";
+  // Pre-rellena con el override si existe; si no, con la criteria actual (doc); si no, vacío.
+  const base = getCurrentOverride() || currentTakeoff.criteria || null;
+  const initialQ = (base?.qualityByIndex && base.qualityByIndex.some(Boolean))
+    ? base.qualityByIndex.slice(0, 16)
+    : new Array(16).fill(null);
+  while (initialQ.length < 16) initialQ.push(null);
+  renderDirRose(initialQ, "coDirRose");
+  document.getElementById("coWindMin").value = Number.isFinite(base?.windMin) ? String(base.windMin) : "";
+  document.getElementById("coWindMax").value = Number.isFinite(base?.windMax) ? String(base.windMax) : "";
+  document.getElementById("coGustMax").value = Number.isFinite(base?.gustMax) ? String(base.gustMax) : "";
+  const sub = document.getElementById("coSubtitle");
+  if (sub) sub.textContent = t("co.hint") + " · " + (currentTakeoff.name || currentStation?.name || "");
+  modal.hidden = false;
+}
+function closeCriteriaOverride() {
+  const m = document.getElementById("criteriaOverrideModal");
+  if (m) m.hidden = true;
+}
+document.getElementById("coClose")?.addEventListener("click", closeCriteriaOverride);
+document.getElementById("coCancelBtn")?.addEventListener("click", closeCriteriaOverride);
+document.getElementById("criteriaOverrideModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "criteriaOverrideModal") closeCriteriaOverride();
+});
+document.getElementById("coResetBtn")?.addEventListener("click", () => {
+  const key = _overrideKeyForCurrent();
+  if (!key) return;
+  delete userTakeoffOverrides[key];
+  _saveUserOverrides();
+  // Reaplicar: como el override está borrado, recargamos criteria desde el doc si existe.
+  const doc = getCurrentTakeoffDoc();
+  currentTakeoff.criteria = doc?.criteria || null;
+  currentTakeoffCriteria = currentTakeoff.criteria;
+  closeCriteriaOverride();
+  applyCurrentTakeoffLabel();
+  refreshAllForCurrentTakeoff();
+});
+document.getElementById("coSaveBtn")?.addEventListener("click", () => {
+  const key = _overrideKeyForCurrent();
+  if (!key) return;
+  const qualityByIndex = collectDirRose("coDirRose");
+  const wmin = parseFloat(document.getElementById("coWindMin").value);
+  const wmax = parseFloat(document.getElementById("coWindMax").value);
+  const gmax = parseFloat(document.getElementById("coGustMax").value);
+  const criteria = {
+    qualityByIndex,
+    windMin: Number.isFinite(wmin) ? wmin : null,
+    windMax: Number.isFinite(wmax) ? wmax : null,
+    gustMax: Number.isFinite(gmax) ? gmax : null,
+  };
+  userTakeoffOverrides[key] = criteria;
+  _saveUserOverrides();
+  currentTakeoff.criteria = criteria;
+  currentTakeoffCriteria = criteria;
+  closeCriteriaOverride();
+  applyCurrentTakeoffLabel();
+  refreshAllForCurrentTakeoff();
 });
 
 // Admin review modal

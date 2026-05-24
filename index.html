@@ -393,6 +393,37 @@
     </div>
   </div>
 
+  <!-- Modal: criterios personales (v104) -->
+  <div id="criteriaOverrideModal" class="auth-modal" hidden>
+    <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="coTitle">
+      <button id="coClose" class="auth-close" title="Cerrar">✕</button>
+      <h2 id="coTitle" data-i18n="co.title">Mis criterios para este despegue</h2>
+      <p class="auth-account-info" id="coSubtitle" data-i18n="co.hint">Estos criterios se guardan solo en tu dispositivo y sustituyen al veredicto por defecto del despegue.</p>
+      <fieldset class="to-criteria">
+        <legend data-i18n="to.criteria_title">Criterios de vuelo</legend>
+        <p class="to-hint" data-i18n="to.dirs_hint">Pulsa cada dirección para marcarla como Ideal (verde), Volable (amarillo) o Peligrosa (rojo).</p>
+        <div id="coDirRose" class="to-dir-rose"></div>
+        <div class="to-row">
+          <label class="to-field"><span data-i18n="to.wind_min">Viento mín. ideal (km/h)</span>
+            <input id="coWindMin" type="number" step="1" min="0" max="60" placeholder="5" />
+          </label>
+          <label class="to-field"><span data-i18n="to.wind_max">Viento máx. ideal (km/h)</span>
+            <input id="coWindMax" type="number" step="1" min="0" max="80" placeholder="15" />
+          </label>
+          <label class="to-field"><span data-i18n="to.gust_max">Racha máx. segura (km/h)</span>
+            <input id="coGustMax" type="number" step="1" min="0" max="100" placeholder="30" />
+          </label>
+        </div>
+      </fieldset>
+      <div class="to-actions">
+        <button id="coResetBtn" class="auth-link" type="button" data-i18n="co.reset">Restablecer al original</button>
+        <button id="coCancelBtn" class="auth-secondary" type="button" data-i18n="to.cancel">Cancelar</button>
+        <button id="coSaveBtn" class="auth-primary" type="button" data-i18n="co.save">Guardar</button>
+      </div>
+      <p id="coMsg" class="auth-error" role="alert"></p>
+    </div>
+  </div>
+
   <!-- Modal: panel admin de revisión -->
   <div id="takeoffAdminModal" class="auth-modal" hidden>
     <div class="auth-dialog auth-dialog-wide" role="dialog" aria-modal="true" aria-labelledby="toAdminTitle">
