@@ -372,6 +372,21 @@ header.topbar .ts-current {
   background: rgba(0,0,0,0.15);
 }
 .ts-result.disabled:hover { background: rgba(0,0,0,0.15); border-color: transparent; }
+.ts-result-row { display: flex; gap: 4px; align-items: stretch; }
+.ts-result-row .ts-result { flex: 1; min-width: 0; }
+.ts-result-propose {
+  flex-shrink: 0;
+  background: rgba(78,161,255,0.12);
+  border: 1px dashed rgba(78,161,255,0.5);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 0 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+.ts-result-propose:hover { background: rgba(78,161,255,0.25); border-style: solid; }
 .ts-result .ts-result-soon {
   font-size: 0.65rem;
   text-transform: uppercase;

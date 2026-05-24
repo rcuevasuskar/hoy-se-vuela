@@ -2676,6 +2676,29 @@ async function tsRunSearch() {
         document.getElementById("tsToggleBtn").setAttribute("aria-expanded", "false");
       });
     }
+    // Botón "+ Proponer" para resultados deshabilitados (estaciones sin despegue conocido)
+    if (!enabled && !isCommunity) {
+      const u = window.PCAuth?.user;
+      if (u && !u.isAnonymous) {
+        const wrap = document.createElement("div");
+        wrap.className = "ts-result-row";
+        wrap.appendChild(btn);
+        const prop = document.createElement("button");
+        prop.type = "button";
+        prop.className = "ts-result-propose";
+        prop.title = t("to.propose");
+        prop.textContent = "+";
+        prop.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          openTakeoffSubmit({
+            name: s.name, lat: s.lat, lon: s.lon, stationId: s.id,
+          });
+        });
+        wrap.appendChild(prop);
+        resultsEl.appendChild(wrap);
+        continue;
+      }
+    }
     resultsEl.appendChild(btn);
   }
 }
@@ -2806,19 +2829,28 @@ renderNearby();
 setInterval(refreshLiveOnly, REFRESH_MS);
 
 // === Despegues comunitarios: submit + admin ===
-function openTakeoffSubmit() {
+function openTakeoffSubmit(prefill) {
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
   document.getElementById("toSubmitMsg").textContent = "";
   ["toName","toLat","toLon","toAlt","toOrient","toStation","toNotes"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
-  // Pre-rellena con el centro actual (despegue seleccionado o ubicación del usuario)
-  const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
-  const lat = document.getElementById("toLat");
-  const lon = document.getElementById("toLon");
-  if (lat) lat.value = c.lat.toFixed(5);
-  if (lon) lon.value = c.lon.toFixed(5);
+  // Pre-rellena: si nos pasan datos de una estación, los usamos; si no, centro actual.
+  if (prefill && (prefill.lat != null || prefill.name)) {
+    if (prefill.name) document.getElementById("toName").value = prefill.name;
+    if (prefill.lat != null) document.getElementById("toLat").value = Number(prefill.lat).toFixed(5);
+    if (prefill.lon != null) document.getElementById("toLon").value = Number(prefill.lon).toFixed(5);
+    if (prefill.stationId != null) document.getElementById("toStation").value = String(prefill.stationId);
+    // Foco en el nombre para que pueda cambiarlo
+    setTimeout(() => { document.getElementById("toName")?.focus(); document.getElementById("toName")?.select(); }, 50);
+  } else {
+    const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
+    const lat = document.getElementById("toLat");
+    const lon = document.getElementById("toLon");
+    if (lat) lat.value = c.lat.toFixed(5);
+    if (lon) lon.value = c.lon.toFixed(5);
+  }
   document.getElementById("takeoffSubmitModal").hidden = false;
 }
 function closeTakeoffSubmit() { document.getElementById("takeoffSubmitModal").hidden = true; }
