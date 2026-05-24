@@ -5013,10 +5013,29 @@ function _hookTakeoffStreams() {
   window.PCAuth.onApprovedTakeoffsChange = () => {
     const panel = document.getElementById("tsPanel");
     if (panel && !panel.hidden) tsRunSearch();
-    // Cuando lleguen los aprobados, reintenta resolver el origen del despegue actual
-    // y descarta el criterio cacheado para que se recoja el actualizado (v97).
-    currentTakeoffOriginId = null;
-    currentTakeoffCriteria = null;
+    // v107: re-engancha el doc del despegue actual con datos frescos del snapshot.
+    // El bug previo era: limpiar aliases sin re-aplicar el doc dejaba la criteria
+    // vieja en currentTakeoff y los alias en null → classifyDirection caía a neutro.
+    const list = window.PCAuth?.approvedTakeoffs || [];
+    if (currentTakeoff.id) {
+      const fresh = list.find(t => t.id === currentTakeoff.id);
+      if (fresh) {
+        _attachTakeoffDoc(fresh);
+      } else {
+        // El doc desapareció (rechazado/borrado): limpia el lugar comunitario.
+        currentTakeoff.id = null;
+        currentTakeoff.criteria = null;
+        currentTakeoff.notes = "";
+        currentTakeoff.orientations = "";
+        currentTakeoffOriginId = null;
+        currentTakeoffCriteria = null;
+      }
+    } else {
+      // Sin id: intenta resolver de nuevo por stationId/nombre/proximidad.
+      resolveCurrentTakeoffOrigin();
+    }
+    // Override personal siempre tiene prioridad sobre la criteria del doc.
+    applyCurrentOverride();
     renderCurrentTakeoffActions();
     renderTakeoffPanel();
     updatePanelForLabels();
