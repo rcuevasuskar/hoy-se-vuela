@@ -1759,3 +1759,59 @@ footer {
   :root[data-theme="auto"] .ws-storm-bar { background: rgba(0,0,0,0.08); }
   :root[data-theme="auto"] .compass-rose { background: rgba(255,255,255,0.65); border: 1px solid var(--border); }
 }
+
+/* === Menú de usuario consolidado === */
+.user-menu { position: relative; display: inline-flex; align-items: center; }
+.user-menu-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 4px 8px; cursor: pointer; font-size: 0.85rem; line-height: 1;
+}
+.user-menu-btn:hover { border-color: var(--accent); }
+.user-menu-btn .um-avatar { font-size: 1rem; }
+.user-menu-btn .um-label { font-weight: 600; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-menu-btn .um-caret { font-size: 0.7rem; opacity: 0.7; }
+.user-menu-btn[aria-expanded="true"] { border-color: var(--accent); }
+
+.user-menu-panel {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 220px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  padding: 6px;
+  z-index: 1000;
+  display: flex; flex-direction: column; gap: 2px;
+}
+:root[data-theme="light"] .user-menu-panel,
+:root[data-theme="auto"] .user-menu-panel { background: #fff; box-shadow: 0 8px 28px rgba(20,40,80,0.18); }
+
+.um-item {
+  display: inline-flex; align-items: center; gap: 10px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem; line-height: 1.2;
+  cursor: pointer; text-align: left;
+}
+.um-item:hover { background: rgba(255,255,255,0.06); }
+:root[data-theme="light"] .um-item:hover,
+:root[data-theme="auto"] .um-item:hover { background: rgba(0,0,0,0.05); }
+.um-item-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+.um-item-label { flex: 1; }
+
+.um-item-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; gap: 10px; }
+.um-item-row .um-item-label { color: var(--muted); font-size: 0.85rem; }
+
+/* Dentro del menú: la pastilla de idioma vuelve compacta */
+.user-menu-panel .lang-picker { position: relative; }
+.user-menu-panel .lang-current { padding: 2px 6px; border-radius: 6px; }
+.user-menu-panel .lang-menu { right: 0; top: calc(100% + 4px); }
+
+/* Estado activo de avisos */
+#notifyBtn.active .um-item-icon { color: var(--accent); }

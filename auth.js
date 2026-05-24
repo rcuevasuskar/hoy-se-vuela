@@ -54,7 +54,10 @@ if (!isConfigured()) {
   function setUserLabel(user) {
     const label = $("userBtnLabel");
     const btn = $("userBtn");
-    const avatar = btn?.querySelector(".ts-user-avatar");
+    // Avatar puede vivir en el botón principal del menú (.um-avatar) o en el ítem (.ts-user-avatar) si quedara en versiones antiguas.
+    const avatar =
+      document.querySelector("#userMenuBtn .um-avatar") ||
+      btn?.querySelector(".ts-user-avatar");
     if (!label) return;
     if (!user) {
       label.textContent = t("auth.guest");

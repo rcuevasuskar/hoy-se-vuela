@@ -252,6 +252,12 @@ const I18N = {
     "theme.auto": "Tema: automático",
     "theme.dark": "Tema: oscuro",
     "theme.light": "Tema: claro",
+    "menu.lang": "Idioma",
+    "menu.theme": "Tema",
+    "menu.notify": "Avisos",
+    "menu.install": "Instalar app",
+    "menu.help": "Ayuda",
+    "menu.account": "Cuenta",
     "ts.locate": "Usar mi ubicación",
     "ts.hint": "Pulsa 📍 para usar tu ubicación o escribe para filtrar.",
     "ts.loading": "Cargando estaciones…",
@@ -490,6 +496,12 @@ const I18N = {
     "ts.radius": "Radius",
     "ts.no_radius": "No limit",
     "theme.title": "Theme (auto/dark/light)",
+    "menu.lang": "Language",
+    "menu.theme": "Theme",
+    "menu.notify": "Alerts",
+    "menu.install": "Install app",
+    "menu.help": "Help",
+    "menu.account": "Account",
     "theme.auto": "Theme: automatic",
     "theme.dark": "Theme: dark",
     "theme.light": "Theme: light",
@@ -731,6 +743,12 @@ const I18N = {
     "ts.radius": "Radius",
     "ts.no_radius": "Kein Limit",
     "theme.title": "Design (auto/dunkel/hell)",
+    "menu.lang": "Sprache",
+    "menu.theme": "Design",
+    "menu.notify": "Hinweise",
+    "menu.install": "App installieren",
+    "menu.help": "Hilfe",
+    "menu.account": "Konto",
     "theme.auto": "Design: automatisch",
     "theme.dark": "Design: dunkel",
     "theme.light": "Design: hell",
@@ -972,6 +990,12 @@ const I18N = {
     "ts.radius": "Rayon",
     "ts.no_radius": "Sans limite",
     "theme.title": "Thème (auto/sombre/clair)",
+    "menu.lang": "Langue",
+    "menu.theme": "Thème",
+    "menu.notify": "Alertes",
+    "menu.install": "Installer l'app",
+    "menu.help": "Aide",
+    "menu.account": "Compte",
     "theme.auto": "Thème : automatique",
     "theme.dark": "Thème : sombre",
     "theme.light": "Thème : clair",
@@ -1213,6 +1237,12 @@ const I18N = {
     "ts.radius": "Erradioa",
     "ts.no_radius": "Mugarik gabe",
     "theme.title": "Gaia (auto/iluna/argia)",
+    "menu.lang": "Hizkuntza",
+    "menu.theme": "Gaia",
+    "menu.notify": "Abisuak",
+    "menu.install": "App-a instalatu",
+    "menu.help": "Laguntza",
+    "menu.account": "Kontua",
     "theme.auto": "Gaia: automatikoa",
     "theme.dark": "Gaia: iluna",
     "theme.light": "Gaia: argia",
@@ -1408,6 +1438,12 @@ const I18N = {
     "ts.radius": "Radi",
     "ts.no_radius": "Sense límit",
     "theme.title": "Tema (auto/fosc/clar)",
+    "menu.lang": "Idioma",
+    "menu.theme": "Tema",
+    "menu.notify": "Avisos",
+    "menu.install": "Instal·la l'app",
+    "menu.help": "Ajuda",
+    "menu.account": "Compte",
     "theme.auto": "Tema: automàtic",
     "theme.dark": "Tema: fosc",
     "theme.light": "Tema: clar",
@@ -2964,6 +3000,7 @@ function maybeNotify(verdict, dirInfo, avg, max) {
 
 async function toggleNotifications() {
   const btn = document.getElementById("notifyBtn");
+  const ico = btn?.querySelector(".um-item-icon");
   if (!("Notification" in window)) {
     alert(t("notify.unsupported"));
     return;
@@ -2971,7 +3008,7 @@ async function toggleNotifications() {
   if (notificationsEnabled()) {
     localStorage.setItem("notifyEnabled", "0");
     btn.classList.remove("active");
-    btn.textContent = "🔔";
+    if (ico) ico.textContent = "🔔";
     btn.title = t("btn.notify_off");
     return;
   }
@@ -2980,7 +3017,7 @@ async function toggleNotifications() {
   if (perm === "granted") {
     localStorage.setItem("notifyEnabled", "1");
     btn.classList.add("active");
-    btn.textContent = "🔕";
+    if (ico) ico.textContent = "🔕";
     btn.title = t("btn.notify_on");
   } else {
     alert(t("notify.denied"));
@@ -2989,12 +3026,13 @@ async function toggleNotifications() {
 
 function syncNotifyButtonInitial() {
   const btn = document.getElementById("notifyBtn");
+  const ico = btn?.querySelector(".um-item-icon");
   if (notificationsEnabled()) {
     btn.classList.add("active");
-    btn.textContent = "🔕";
+    if (ico) ico.textContent = "🔕";
     btn.title = t("btn.notify_on");
   } else {
-    btn.textContent = "🔔";
+    if (ico) ico.textContent = "🔔";
     btn.title = t("btn.notify_off");
   }
 }
@@ -3319,6 +3357,30 @@ document.querySelectorAll("#forecastButtons button").forEach(btn => {
 });
 
 document.getElementById("notifyBtn").addEventListener("click", toggleNotifications);
+
+// === Menú de usuario (dropdown) ===
+(function initUserMenu(){
+  const btn = document.getElementById("userMenuBtn");
+  const panel = document.getElementById("userMenuPanel");
+  if (!btn || !panel) return;
+  function close(){ panel.hidden = true; btn.setAttribute("aria-expanded","false"); }
+  function open(){ panel.hidden = false; btn.setAttribute("aria-expanded","true"); }
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (panel.hidden) open(); else close();
+  });
+  document.addEventListener("click", (e) => {
+    if (panel.hidden) return;
+    if (!panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !panel.hidden) close();
+  });
+  // Cerrar al elegir una acción dentro del menú (excepto el sub-picker de idioma)
+  panel.querySelectorAll(".um-item").forEach(item => {
+    item.addEventListener("click", () => { close(); });
+  });
+})();
 
 // === Ayuda ===
 const HELP_DOCS_BY_LANG = {

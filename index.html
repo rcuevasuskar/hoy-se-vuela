@@ -25,24 +25,48 @@
                data-i18n-placeholder="ts.placeholder"
                placeholder="Buscar despegues cercanos o favoritos" />
         <button id="tsToggleBtn" class="ts-toggle" title="Mostrar opciones" aria-expanded="false">▾</button>
-        <div class="lang-picker" id="langPicker">
-          <button type="button" class="lang-current" id="langCurrent" aria-haspopup="listbox" aria-expanded="false" title="Idioma / Language">
-            <span class="lang-flag" id="langCurrentFlag"></span>
-            <span class="lang-caret">▾</span>
-          </button>
-          <ul class="lang-menu" id="langMenu" hidden role="listbox"></ul>
-        </div>
-        <button id="themeToggle" class="ts-theme" type="button" title="Tema" data-i18n-title="theme.title" aria-label="Tema">
-          <span id="themeIcon" aria-hidden="true">🌙</span>
-        </button>
-        <button id="notifyBtn" class="ts-notify" title="Avisarme si hay condiciones ideales" data-i18n-title="btn.notify_off">🔔</button>
-        <button id="installBtn" class="ts-install" hidden title="Instalar app" data-i18n-title="btn.install">📲</button>
         <button id="refreshBtn" class="ts-refresh" title="Actualizar">⟳</button>
-        <button id="helpBtn" class="ts-help" type="button" title="Ayuda" data-i18n-title="help.title" aria-haspopup="dialog">?</button>
-        <button id="userBtn" class="ts-user" type="button" title="Cuenta">
-          <span class="ts-user-avatar" aria-hidden="true">👤</span>
-          <span id="userBtnLabel" class="ts-user-label" data-i18n="auth.guest">Invitado</span>
-        </button>
+
+        <!-- Menú de usuario (agrupa idioma, tema, avisos, instalar, ayuda, cuenta) -->
+        <div class="user-menu" id="userMenu">
+          <button id="userMenuBtn" class="user-menu-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Menú">
+            <span class="um-avatar" aria-hidden="true">👤</span>
+            <span class="um-label" id="userBtnLabel" data-i18n="auth.guest">Invitado</span>
+            <span class="um-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="user-menu-panel" id="userMenuPanel" hidden role="menu">
+            <div class="um-item um-item-row" role="none">
+              <span class="um-item-label" data-i18n="menu.lang">Idioma</span>
+              <div class="lang-picker" id="langPicker">
+                <button type="button" class="lang-current" id="langCurrent" aria-haspopup="listbox" aria-expanded="false" title="Idioma / Language">
+                  <span class="lang-flag" id="langCurrentFlag"></span>
+                  <span class="lang-caret">▾</span>
+                </button>
+                <ul class="lang-menu" id="langMenu" hidden role="listbox"></ul>
+              </div>
+            </div>
+            <button id="themeToggle" class="um-item" type="button" role="menuitem" data-i18n-title="theme.title">
+              <span class="um-item-icon" id="themeIcon" aria-hidden="true">🌙</span>
+              <span class="um-item-label" data-i18n="menu.theme">Tema</span>
+            </button>
+            <button id="notifyBtn" class="um-item" type="button" role="menuitem" data-i18n-title="btn.notify_off">
+              <span class="um-item-icon" aria-hidden="true">🔔</span>
+              <span class="um-item-label" data-i18n="menu.notify">Avisos</span>
+            </button>
+            <button id="installBtn" class="um-item" type="button" role="menuitem" hidden data-i18n-title="btn.install">
+              <span class="um-item-icon" aria-hidden="true">📲</span>
+              <span class="um-item-label" data-i18n="menu.install">Instalar app</span>
+            </button>
+            <button id="helpBtn" class="um-item" type="button" role="menuitem" data-i18n-title="help.title" aria-haspopup="dialog">
+              <span class="um-item-icon" aria-hidden="true">❓</span>
+              <span class="um-item-label" data-i18n="menu.help">Ayuda</span>
+            </button>
+            <button id="userBtn" class="um-item" type="button" role="menuitem" title="Cuenta">
+              <span class="um-item-icon" aria-hidden="true">👤</span>
+              <span class="um-item-label" data-i18n="menu.account">Cuenta</span>
+            </button>
+          </div>
+        </div>
       </div>
       <div class="ts-current">
         <span class="ts-current-label" data-i18n="ts.current">Despegue:</span>
