@@ -521,13 +521,47 @@ header.topbar .ts-current {
   padding-top: 10px;
   border-top: 1px solid rgba(255,255,255,0.08);
 }
-.ts-radius { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
-.ts-radius label { font-size: 0.8rem; color: var(--muted); display: flex; gap: 6px; align-items: baseline; }
-.ts-radius label span:last-of-type { color: #fff; font-weight: 600; }
+.ts-radius { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.ts-radius .ts-radius-label { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ts-radius .ts-radius-text { font-size: 0.8rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: baseline; cursor: pointer; }
+.ts-radius .ts-radius-value { color: #fff; font-weight: 600; }
 .ts-radius input[type="range"] { width: 100%; accent-color: var(--accent); }
 .ts-radius input[type="range"]:disabled { opacity: 0.4; }
-.ts-no-radius { display: flex !important; align-items: center !important; gap: 6px !important; color: var(--muted) !important; font-size: 0.8rem; cursor: pointer; }
-.ts-no-radius input { accent-color: var(--accent); cursor: pointer; }
+
+/* Switch "Sin límite" embebido en la línea de Radio */
+.ts-no-radius {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+.ts-no-radius input { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+.ts-no-radius .ts-switch {
+  position: relative;
+  width: 28px; height: 16px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 999px;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+.ts-no-radius .ts-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 12px; height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+.ts-no-radius input:checked + .ts-switch { background: var(--accent); }
+.ts-no-radius input:checked + .ts-switch::after { transform: translateX(12px); }
+.ts-no-radius input:focus-visible + .ts-switch { box-shadow: 0 0 0 2px rgba(78,161,255,0.4); }
+.ts-no-radius:hover .ts-switch { background: rgba(255,255,255,0.2); }
+.ts-no-radius input:checked ~ .ts-no-radius-text { color: #fff; }
 .ts-results {
   max-height: 240px;
   overflow-y: auto;
