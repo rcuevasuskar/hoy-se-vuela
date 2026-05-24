@@ -1227,7 +1227,7 @@ function sunriseSunsetForOffset(fc, offsetFromToday) {
 }
 // Determina si la previsión debe referirse a hoy o a mañana.
 // A partir de SUNSET_SHIFT_H antes del ocaso (o tras él) → mañana.
-const SUNSET_SHIFT_H = 2;
+const SUNSET_SHIFT_H = 1;
 function referenceDayInfo(fc) {
   const today = sunriseSunsetForOffset(fc, 0);
   const tomorrow = sunriseSunsetForOffset(fc, 1);
@@ -1489,11 +1489,12 @@ function renderForecast(fc) {
 }
 
 // === Comparativa últimos días ===
+let compareRenderToken = 0;
 async function renderCompare() {
   const grid = document.getElementById("compareGrid");
   setText("compareWindowLabel", t("cmp.window_solar"));
 
-  grid.innerHTML = "";
+  const myToken = ++compareRenderToken;
   const days = [1, 2, 3];
   const fc = latestForecast;
   const results = await Promise.all(days.map(async (offset) => {
@@ -1517,6 +1518,10 @@ async function renderCompare() {
       return { offset, error: e.message };
     }
   }));
+
+  // Si entretanto se ha disparado otro render, abortamos para evitar duplicados.
+  if (myToken !== compareRenderToken) return;
+  grid.innerHTML = "";
 
   for (const r of results) {
     const card = document.createElement("div");
@@ -1986,6 +1991,15 @@ async function refreshObservations() {
 async function refreshForecast() {
   try {
     const fc = await getForecast(Math.max(2, currentForecastDays));
+    // Si estamos a <=1h del ocaso o ya ha pasado, mañana es el día relevante:
+    // forzamos el selector a +24 h para que el usuario vea hoy(resto)+mañana.
+    const ref = referenceDayInfo(fc);
+    if (ref.dayOffset === 1 && currentForecastDays === 1) {
+      currentForecastDays = 2;
+      document.querySelectorAll("#forecastButtons button").forEach(b => {
+        b.classList.toggle("active", parseInt(b.dataset.days, 10) === 2);
+      });
+    }
     renderForecast(fc);
     // La comparativa usa daily.sunrise/sunset de los últimos días (past_days=3).
     renderCompare();
