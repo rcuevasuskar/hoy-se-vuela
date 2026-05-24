@@ -207,6 +207,7 @@ const I18N = {
     "wx.precip": "Prob. lluvia",
     "wx.storm": "Tormenta",
     "wx.storm_risk": "Riesgo de tormenta",
+    "wx.storm_level.vlow": "muy bajo",
     "wx.storm_level.low":  "bajo",
     "wx.storm_level.med":  "medio",
     "wx.storm_level.high": "alto",
@@ -225,6 +226,7 @@ const I18N = {
     "ts.placeholder": "Buscar despegues cercanos o favoritos",
     "ts.current": "Despegue:",
     "ts.radius": "Radio",
+    "ts.no_radius": "Sin límite",
     "ts.locate": "Usar mi ubicación",
     "ts.hint": "Pulsa 📍 para usar tu ubicación o escribe para filtrar.",
     "ts.loading": "Cargando estaciones…",
@@ -442,6 +444,7 @@ const I18N = {
     "wx.precip": "Rain prob.",
     "wx.storm": "Storm",
     "wx.storm_risk": "Storm risk",
+    "wx.storm_level.vlow": "very low",
     "wx.storm_level.low":  "low",
     "wx.storm_level.med":  "medium",
     "wx.storm_level.high": "high",
@@ -460,6 +463,7 @@ const I18N = {
     "ts.placeholder": "Search nearby or favorite takeoffs",
     "ts.current": "Takeoff:",
     "ts.radius": "Radius",
+    "ts.no_radius": "No limit",
     "ts.locate": "Use my location",
     "ts.hint": "Tap 📍 to use your location or type to filter.",
     "ts.loading": "Loading stations…",
@@ -677,6 +681,7 @@ const I18N = {
     "wx.precip": "Regenwahrsch.",
     "wx.storm": "Gewitter",
     "wx.storm_risk": "Gewittergefahr",
+    "wx.storm_level.vlow": "sehr gering",
     "wx.storm_level.low":  "gering",
     "wx.storm_level.med":  "mittel",
     "wx.storm_level.high": "hoch",
@@ -695,6 +700,7 @@ const I18N = {
     "ts.placeholder": "Startplätze in der Nähe oder Favoriten suchen",
     "ts.current": "Startplatz:",
     "ts.radius": "Radius",
+    "ts.no_radius": "Kein Limit",
     "ts.locate": "Meinen Standort verwenden",
     "ts.hint": "📍 tippen, um deinen Standort zu nutzen, oder filtern.",
     "ts.loading": "Stationen werden geladen…",
@@ -912,6 +918,7 @@ const I18N = {
     "wx.precip": "Prob. pluie",
     "wx.storm": "Orage",
     "wx.storm_risk": "Risque d'orage",
+    "wx.storm_level.vlow": "très faible",
     "wx.storm_level.low":  "faible",
     "wx.storm_level.med":  "moyen",
     "wx.storm_level.high": "élevé",
@@ -930,6 +937,7 @@ const I18N = {
     "ts.placeholder": "Rechercher décollages proches ou favoris",
     "ts.current": "Décollage :",
     "ts.radius": "Rayon",
+    "ts.no_radius": "Sans limite",
     "ts.locate": "Utiliser ma position",
     "ts.hint": "Appuyez sur 📍 pour utiliser votre position ou filtrez.",
     "ts.loading": "Chargement des stations…",
@@ -1147,6 +1155,7 @@ const I18N = {
     "wx.precip": "Euri probab.",
     "wx.storm": "Ekaitza",
     "wx.storm_risk": "Ekaitz arriskua",
+    "wx.storm_level.vlow": "oso baxua",
     "wx.storm_level.low":  "baxua",
     "wx.storm_level.med":  "ertaina",
     "wx.storm_level.high": "altua",
@@ -1165,6 +1174,7 @@ const I18N = {
     "ts.placeholder": "Bilatu inguruko edo gogoko irteguiak",
     "ts.current": "Irteguia:",
     "ts.radius": "Erradioa",
+    "ts.no_radius": "Mugarik gabe",
     "ts.locate": "Erabili nire kokapena",
     "ts.hint": "Sakatu 📍 zure kokapena erabiltzeko edo idatzi iragazteko.",
     "ts.loading": "Estazioak kargatzen…",
@@ -1336,6 +1346,7 @@ const I18N = {
     "wx.precip": "Prob. pluja",
     "wx.storm": "Tempesta",
     "wx.storm_risk": "Risc de tempesta",
+    "wx.storm_level.vlow": "molt baix",
     "wx.storm_level.low":  "baix",
     "wx.storm_level.med":  "mitjà",
     "wx.storm_level.high": "alt",
@@ -1354,6 +1365,7 @@ const I18N = {
     "ts.placeholder": "Cerca enlairaments propers o preferits",
     "ts.current": "Enlairament:",
     "ts.radius": "Radi",
+    "ts.no_radius": "Sense límit",
     "ts.locate": "Utilitza la meva ubicació",
     "ts.hint": "Prem 📍 per usar la teva ubicació o escriu per filtrar.",
     "ts.loading": "Carregant estacions…",
@@ -1699,6 +1711,7 @@ function stormLevel(pct) {
   if (pct >= 75) return "high";
   if (pct >= 50) return "med";
   if (pct >= 25) return "low";
+  if (pct > 0) return "vlow";
   return "none";
 }
 
@@ -3309,6 +3322,7 @@ function distCenter() {
   return userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
 }
 let tsRadius = parseInt(localStorage.getItem("tsRadius") || "50", 10);
+let tsNoRadius = localStorage.getItem("tsNoRadius") === "1";
 
 function refreshAllForCurrentTakeoff() {
   // Limpia el mapa de marcadores Pioupiou y vuelve a pintar el despegue
@@ -3639,19 +3653,20 @@ async function tsRunSearch() {
 
   resultsEl.innerHTML = `<div class="ts-loading">${t("ts.loading")}</div>`;
   const all = await ensureAllStations();
+  const maxDist = tsNoRadius ? Infinity : tsRadius;
 
   let items = (all.pioupiou || [])
     .map(stationFromPioupiou)
     .filter(Boolean)
     .filter(s => isStationRecent(s, 24))
     .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
-    .filter(s => s.dist <= tsRadius);
+    .filter(s => s.dist <= maxDist);
 
   // FFVL: añadimos solo balises con datos recientes en las últimas 24 h
   const ffvlItems = (all.ffvl || [])
     .filter(s => isStationRecent(s, 24))
     .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
-    .filter(s => s.dist <= tsRadius);
+    .filter(s => s.dist <= maxDist);
   items = items.concat(ffvlItems);
 
   // Mezcla despegues comunitarios aprobados
@@ -3664,7 +3679,7 @@ async function tsRunSearch() {
     stationId: to.stationId,
     raw: to,
     dist: haversineKm(center.lat, center.lon, to.lat, to.lon),
-  })).filter(s => s.dist <= tsRadius);
+  })).filter(s => s.dist <= maxDist);
   items = items.concat(community);
 
   // Evita duplicados: si una estación Pioupiou/FFVL ya está registrada como despegue comunitario
@@ -3924,6 +3939,7 @@ function initTakeoffSelector() {
   const searchEl = document.getElementById("tsSearch");
   const radiusEl = document.getElementById("tsRadius");
   const radiusValEl = document.getElementById("tsRadiusValue");
+  const noRadiusEl = document.getElementById("tsNoRadius");
   const panel = document.getElementById("tsPanel");
   const toggleBtn = document.getElementById("tsToggleBtn");
   const locateBtn = document.getElementById("tsLocateBtn");
@@ -3931,11 +3947,23 @@ function initTakeoffSelector() {
   if (radiusEl) {
     radiusEl.value = String(tsRadius);
     if (radiusValEl) radiusValEl.textContent = String(tsRadius);
+    radiusEl.disabled = tsNoRadius;
     radiusEl.addEventListener("input", () => {
       tsRadius = parseInt(radiusEl.value, 10);
       if (radiusValEl) radiusValEl.textContent = String(tsRadius);
       localStorage.setItem("tsRadius", String(tsRadius));
       window.PCAuth?.savePref?.("tsRadius", tsRadius);
+      tsRunSearch();
+    });
+  }
+
+  if (noRadiusEl) {
+    noRadiusEl.checked = tsNoRadius;
+    noRadiusEl.addEventListener("change", () => {
+      tsNoRadius = noRadiusEl.checked;
+      localStorage.setItem("tsNoRadius", tsNoRadius ? "1" : "0");
+      window.PCAuth?.savePref?.("tsNoRadius", tsNoRadius);
+      if (radiusEl) radiusEl.disabled = tsNoRadius;
       tsRunSearch();
     });
   }

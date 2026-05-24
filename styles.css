@@ -525,6 +525,9 @@ header.topbar .ts-current {
 .ts-radius label { font-size: 0.8rem; color: var(--muted); display: flex; gap: 6px; align-items: baseline; }
 .ts-radius label span:last-of-type { color: #fff; font-weight: 600; }
 .ts-radius input[type="range"] { width: 100%; accent-color: var(--accent); }
+.ts-radius input[type="range"]:disabled { opacity: 0.4; }
+.ts-no-radius { display: flex !important; align-items: center !important; gap: 6px !important; color: var(--muted) !important; font-size: 0.8rem; cursor: pointer; }
+.ts-no-radius input { accent-color: var(--accent); cursor: pointer; }
 .ts-results {
   max-height: 240px;
   overflow-y: auto;
@@ -1295,6 +1298,7 @@ main {
   margin-top: 4px; font-size: 0.7rem; color: var(--muted);
 }
 .forecast-slot .wx .storm { color: var(--warn); font-weight: 700; }
+.forecast-slot .wx .storm-vlow { color: var(--muted); }
 .forecast-slot .wx .storm-low  { color: #7bd389; }
 .forecast-slot .wx .storm-med  { color: var(--warn); }
 .forecast-slot .wx .storm-high { color: var(--bad); }
@@ -1351,6 +1355,7 @@ main {
 #wsStormBox[data-level="low"]  .ws-storm-fill { background: #7bd389; }
 #wsStormBox[data-level="med"]  .ws-storm-fill { background: var(--warn); }
 #wsStormBox[data-level="high"] .ws-storm-fill { background: var(--bad); }
+#wsStormBox[data-level="vlow"] .ws-storm-fill { background: var(--muted); }
 .ws-storm-level {
   font-size: 0.75rem;
   padding: 2px 8px;
@@ -1362,6 +1367,7 @@ main {
 #wsStormBox[data-level="low"]  .ws-storm-level { background: #7bd389; }
 #wsStormBox[data-level="med"]  .ws-storm-level { background: var(--warn); color: #fff; }
 #wsStormBox[data-level="high"] .ws-storm-level { background: var(--bad); color: #fff; }
+#wsStormBox[data-level="vlow"] .ws-storm-level { background: var(--muted); color: #0b1320; }
 
 /* Compare grid */
 .compare-grid {

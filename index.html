@@ -54,6 +54,10 @@
             <span id="tsRadiusValue">50</span> km
           </label>
           <input type="range" id="tsRadius" min="10" max="300" step="5" value="50" />
+          <label class="ts-no-radius">
+            <input type="checkbox" id="tsNoRadius" />
+            <span data-i18n="ts.no_radius">Sin límite</span>
+          </label>
         </div>
         <div class="ts-results" id="tsResults">
           <div class="ts-hint" data-i18n="ts.hint">Pulsa 📍 para usar tu ubicación o escribe para filtrar.</div>
@@ -216,6 +220,7 @@
         <div class="range-buttons" id="forecastButtons">
           <button data-days="1" class="active" data-i18n="fc.today">Hoy</button>
           <button data-days="2">+24 h</button>
+          <button data-days="3">+48 h</button>
         </div>
       </div>
       <div class="chart-wrap">
