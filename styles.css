@@ -915,6 +915,9 @@ main {
 .wedge-wrap[data-speed="warn"]  .wedge polygon { fill: var(--warn); }
 .wedge-wrap[data-speed="bad"]   .wedge polygon { fill: var(--bad); }
 .wedge-wrap[data-speed="unknown"] .wedge polygon { fill: #6b7891; }
+/* v121: si la direccion es mala (sector rojo), la flecha siempre se pinta roja,
+   independientemente de la velocidad. Sobrescribe los anteriores. */
+.wedge-wrap[data-quality="bad"] .wedge polygon { fill: var(--bad); }
 
 /* Lectura central: viento medio en km/h */
 .compass-center {
