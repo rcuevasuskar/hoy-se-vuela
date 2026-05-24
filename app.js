@@ -26,7 +26,7 @@ const THEME_VALUES = ["auto", "dark", "light"];
 const THEME_ICON = { auto: "💻", dark: "🌙", light: "☀️" };
 let currentTheme = (function() {
   const saved = localStorage.getItem("theme");
-  return THEME_VALUES.includes(saved) ? saved : "auto";
+  return THEME_VALUES.includes(saved) ? saved : "dark";
 })();
 function applyTheme(theme) {
   if (!THEME_VALUES.includes(theme)) theme = "auto";

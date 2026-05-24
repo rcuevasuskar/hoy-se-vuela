@@ -90,10 +90,10 @@ header.topbar {
   top: 0;
   z-index: 500;
   padding: 8px 10px;
-  background: rgba(15, 24, 34, 0.78);
+  background: var(--topbar-bg, rgba(15, 24, 34, 0.78));
   backdrop-filter: blur(10px) saturate(140%);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--topbar-border, rgba(255,255,255,0.08));
   text-align: left;
   box-shadow: 0 2px 12px rgba(0,0,0,0.35);
 }
@@ -1815,3 +1815,30 @@ footer {
 
 /* Estado activo de avisos */
 #notifyBtn.active .um-item-icon { color: var(--accent); }
+
+/* Asegura que [hidden] gana sobre display:flex del panel */
+.user-menu-panel[hidden] { display: none !important; }
+
+/* Topbar: tinte por tema */
+:root[data-theme="light"] {
+  --topbar-bg: rgba(245, 248, 252, 0.92);
+  --topbar-border: rgba(20, 40, 80, 0.12);
+}
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] {
+    --topbar-bg: rgba(245, 248, 252, 0.92);
+    --topbar-border: rgba(20, 40, 80, 0.12);
+  }
+}
+:root[data-theme="light"] header.topbar { box-shadow: 0 2px 12px rgba(20,40,80,0.08); }
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] header.topbar { box-shadow: 0 2px 12px rgba(20,40,80,0.08); }
+}
+
+/* Botón del menú: contrastar con la barra */
+.user-menu-btn { background: rgba(0,0,0,0.18); }
+:root[data-theme="light"] .user-menu-btn,
+:root[data-theme="auto"] .user-menu-btn { background: rgba(255,255,255,0.6); border-color: rgba(20,40,80,0.18); }
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="auto"] .user-menu-btn { background: rgba(0,0,0,0.18); border-color: var(--border); }
+}
