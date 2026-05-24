@@ -1,5 +1,5 @@
 // Service Worker básico para PWA: cache-first del shell, network-first de datos.
-const CACHE = "viento-cenes-v94";
+const CACHE = "viento-cenes-v95";
 const SHELL = [
   "./",
   "./index.html",
@@ -34,10 +34,16 @@ self.addEventListener("fetch", (e) => {
 
   const fallback503 = () => new Response("", { status: 503, statusText: "Offline" });
 
-  // Datos en vivo o pronóstico: network-first sin cachear
-  if (url.hostname.includes("pioupiou.fr") ||
+  // APIs de datos y cross-origin: network-first sin cachear.
+  // Importante: las URLs de datos AEMET (opendata.aemet.es/.../sh/<id>) son
+  // efimeras; cachearlas devuelve resultados caducados/vacios.
+  const isData = url.hostname.includes("pioupiou.fr") ||
       url.hostname.includes("open-meteo.com") ||
       url.hostname.includes("corsproxy.io") ||
+      url.hostname.includes("allorigins.win") ||
+      url.hostname.includes("codetabs.com") ||
+      url.hostname.includes("aemet.es") ||
+      url.hostname.includes("ffvl.fr") ||
       url.hostname.includes("aviationweather.gov") ||
       url.hostname.includes("tile.openstreetmap.org") ||
       url.hostname.includes("googleapis.com") ||
@@ -47,7 +53,8 @@ self.addEventListener("fetch", (e) => {
       url.hostname.includes("securetoken.googleapis.com") ||
       url.hostname.includes("firebaseapp.com") ||
       url.hostname.includes("accounts.google.com") ||
-      url.pathname.includes("/__/auth")) {
+      url.pathname.includes("/__/auth");
+  if (isData) {
     e.respondWith(
       fetch(e.request).catch(async () => (await caches.match(e.request)) || fallback503())
     );

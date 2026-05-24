@@ -1775,8 +1775,11 @@ async function getAllAemetStations() {
     for (const r of records) {
       if (!r?.idema) continue;
       const prev = byId.get(r.idema);
-      // fint viene sin zona, AEMET lo publica en UTC.
-      const ts = new Date(String(r.fint || "").replace(/(\d)$/, "$1Z").replace(/ZZ$/, "Z")).getTime();
+      // fint puede venir como "YYYY-MM-DDTHH:MM:SS" (sin zona) o ya con offset
+      // explicito tipo "+0000". Solo anadimos "Z" cuando no hay zona horaria.
+      const f = String(r.fint || "");
+      const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(f);
+      const ts = new Date(hasTz ? f : f + "Z").getTime();
       if (!Number.isFinite(ts)) continue;
       if (!prev || ts > prev._ts) { r._ts = ts; byId.set(r.idema, r); }
     }
