@@ -194,6 +194,25 @@ if (!isConfigured()) {
   window.PCAuth.submitTakeoff = async (data) => {
     const u = auth.currentUser;
     if (!u || u.isAnonymous) throw new Error("login_required");
+    const isAdminUser = !!window.PCAuth.isAdmin;
+    // Admin + sugerencia sobre despegue existente → aplica directo sin pasar por pendiente.
+    if (isAdminUser && data.targetId) {
+      await updateDoc(doc(db, "takeoffs", data.targetId), {
+        name: String(data.name || "").trim(),
+        lat: Number(data.lat),
+        lon: Number(data.lon),
+        alt: data.alt != null && data.alt !== "" ? Number(data.alt) : null,
+        orientations: String(data.orientations || "").trim(),
+        stationId: data.stationId != null && data.stationId !== "" ? Number(data.stationId) : null,
+        notes: String(data.notes || "").trim() || null,
+        criteria: data.criteria || null,
+        lastSuggestionBy: u.uid,
+        lastSuggestionAt: serverTimestamp(),
+        reviewedBy: u.uid,
+        reviewedAt: serverTimestamp(),
+      });
+      return { id: data.targetId, autoApplied: true };
+    }
     const payload = {
       name: String(data.name || "").trim(),
       lat: Number(data.lat),
@@ -204,12 +223,12 @@ if (!isConfigured()) {
       notes: String(data.notes || "").trim() || null,
       criteria: data.criteria || null,
       targetId: data.targetId || null,
-      status: "pending",
+      status: isAdminUser ? "approved" : "pending",
       submittedBy: u.uid,
       submittedByName: u.displayName || u.email || "anon",
       submittedAt: serverTimestamp(),
-      reviewedBy: null,
-      reviewedAt: null,
+      reviewedBy: isAdminUser ? u.uid : null,
+      reviewedAt: isAdminUser ? serverTimestamp() : null,
       rejectionReason: null,
     };
     if (!payload.name || !Number.isFinite(payload.lat) || !Number.isFinite(payload.lon)) {
