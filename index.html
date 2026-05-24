@@ -18,6 +18,10 @@
 </head>
 <body>
   <header>
+    <button id="userBtn" class="user-btn" type="button" title="Cuenta">
+      <span class="user-icon" aria-hidden="true">👤</span>
+      <span id="userBtnLabel" class="user-btn-label" data-i18n="auth.guest">Invitado</span>
+    </button>
   </header>
 
   <main>
@@ -255,6 +259,51 @@
     <p data-i18n="footer">Datos en tiempo real: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Pronóstico: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Mapa: © OpenStreetMap. No oficial. Valora siempre las condiciones in situ.</p>
   </footer>
 
+  <!-- Modal de autenticación -->
+  <div id="authModal" class="auth-modal" hidden>
+    <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <button id="authClose" class="auth-close" title="Cerrar">✕</button>
+      <h2 id="authTitle" data-i18n="auth.title">Cuenta</h2>
+
+      <div class="auth-tabs">
+        <button data-auth-tab="login" data-i18n="auth.tab_login">Entrar</button>
+        <button data-auth-tab="register" data-i18n="auth.tab_register">Registrarse</button>
+      </div>
+
+      <!-- Login -->
+      <section class="auth-section" data-section="login">
+        <input id="authEmail" type="email" autocomplete="email" placeholder="email@dominio.com" data-i18n-placeholder="auth.email_ph" />
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="contraseña" data-i18n-placeholder="auth.pwd_ph" />
+        <button id="authEmailLoginBtn" class="auth-primary" data-i18n="auth.login">Entrar</button>
+        <button id="authMagicBtn" class="auth-link" data-i18n="auth.magic">Enviarme enlace al email</button>
+        <div class="auth-divider"><span data-i18n="auth.or">o</span></div>
+        <button id="authGoogleBtn" class="auth-google">
+          <span class="g-logo">G</span> <span data-i18n="auth.google">Continuar con Google</span>
+        </button>
+        <button id="authAnonBtn" class="auth-anon" data-i18n="auth.anon_btn">Continuar sin cuenta</button>
+      </section>
+
+      <!-- Register -->
+      <section class="auth-section" data-section="register" hidden>
+        <input id="authRegEmail" type="email" autocomplete="email" placeholder="email@dominio.com" data-i18n-placeholder="auth.email_ph" />
+        <input id="authRegPassword" type="password" autocomplete="new-password" placeholder="contraseña (mín. 6)" data-i18n-placeholder="auth.pwd_new_ph" />
+        <button id="authRegisterBtn" class="auth-primary" data-i18n="auth.register">Crear cuenta</button>
+      </section>
+
+      <!-- Account -->
+      <section class="auth-section" data-section="account" hidden>
+        <p class="auth-account-info">
+          <span data-i18n="auth.signed_as">Conectado como</span>
+          <strong id="authAccountName">—</strong>
+        </p>
+        <button id="authLogoutBtn" class="auth-primary" data-i18n="auth.logout">Cerrar sesión</button>
+      </section>
+
+      <p id="authError" class="auth-error" role="alert"></p>
+    </div>
+  </div>
+
   <script src="app.js"></script>
+  <script type="module" src="auth.js"></script>
 </body>
 </html>
