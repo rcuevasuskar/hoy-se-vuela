@@ -1426,6 +1426,14 @@ function renderForecast(fc) {
     ],
   };
   const options = chartCommonOptions();
+  // Ocultar la entrada "Dirección" de la leyenda (la flecha ya indica color/dir).
+  const dirLabel = t("chart.dir");
+  options.plugins = options.plugins || {};
+  options.plugins.legend = options.plugins.legend || {};
+  options.plugins.legend.labels = {
+    ...(options.plugins.legend.labels || {}),
+    filter: (item) => item.text !== dirLabel,
+  };
 
   if (forecastChart) { forecastChart.data = data; forecastChart.options = options; forecastChart.update(); }
   else forecastChart = new Chart(ctx, { type: "line", data, options });
