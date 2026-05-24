@@ -122,6 +122,7 @@ const I18N = {
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Volable",
     "near.airport_label": "Aeropuerto de Granada (LEGR)",
+    "near.airport_prefix": "Aeropuerto",
     "near.airport_src": "Open-Meteo (METAR aprox.)",
     "banner.title": "Despegue de parapente de Cenes de la Vega",
     "ts.placeholder": "Buscar despegue / estación…",
@@ -277,6 +278,7 @@ const I18N = {
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Flyable",
     "near.airport_label": "Granada Airport (LEGR)",
+    "near.airport_prefix": "Airport",
     "near.airport_src": "Open-Meteo (approx. METAR)",
     "banner.title": "Paragliding takeoff of Cenes de la Vega",
     "ts.placeholder": "Search takeoff / station…",
@@ -432,6 +434,7 @@ const I18N = {
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Fliegbar",
     "near.airport_label": "Flughafen Granada (LEGR)",
+    "near.airport_prefix": "Flughafen",
     "near.airport_src": "Open-Meteo (ca. METAR)",
     "banner.title": "Gleitschirm-Startplatz von Cenes de la Vega",
     "ts.placeholder": "Startplatz / Station suchen…",
@@ -587,6 +590,7 @@ const I18N = {
     "best.ideal": "✅ Idéal",
     "best.ok": "⚠️ Volable",
     "near.airport_label": "Aéroport de Grenade (LEGR)",
+    "near.airport_prefix": "Aéroport",
     "near.airport_src": "Open-Meteo (METAR approx.)",
     "banner.title": "Décollage parapente de Cenes de la Vega",
     "ts.placeholder": "Rechercher décollage / station…",
@@ -1737,33 +1741,93 @@ async function renderNearby() {
   }
 
   // Añadir la estación del Aeropuerto de Granada (Open-Meteo en sus coordenadas)
-  await renderAirportStation();
+  await renderMetarStations();
   // Mapa centrado en el despegue (sin estaciones).
 }
 
-async function renderAirportStation() {
+// === Estaciones METAR de aeropuertos cercanos ===
+// Fuente: NOAA / AviationWeather.gov  (sin clave, CORS habilitado).
+// API: https://aviationweather.gov/api/data/metar?ids=...&format=json
+const METAR_AIRPORTS = [
+  // Andalucía
+  { icao: "LEGR", name: "Granada",       lat: 37.1887, lon: -3.7775 },
+  { icao: "LEMG", name: "Málaga",        lat: 36.6749, lon: -4.4991 },
+  { icao: "LEAM", name: "Almería",       lat: 36.8439, lon: -2.3701 },
+  { icao: "LEZL", name: "Sevilla",       lat: 37.4180, lon: -5.8931 },
+  { icao: "LEJR", name: "Jerez",         lat: 36.7446, lon: -6.0601 },
+  // Sur/Centro
+  { icao: "LEMU", name: "Murcia",        lat: 37.8030, lon: -1.1248 },
+  { icao: "LEAL", name: "Alicante",      lat: 38.2822, lon: -0.5582 },
+  { icao: "LEVC", name: "Valencia",      lat: 39.4893, lon: -0.4815 },
+  { icao: "LEMD", name: "Madrid",        lat: 40.4936, lon: -3.5668 },
+  // Norte
+  { icao: "LEBB", name: "Bilbao",        lat: 43.3011, lon: -2.9106 },
+  { icao: "LESO", name: "San Sebastián", lat: 43.3565, lon: -1.7906 },
+  { icao: "LEVT", name: "Vitoria",       lat: 42.8828, lon: -2.7244 },
+  { icao: "LEZG", name: "Zaragoza",      lat: 41.6661, lon: -1.0411 },
+  // Cataluña / Baleares
+  { icao: "LEBL", name: "Barcelona",     lat: 41.2974, lon:  2.0833 },
+  { icao: "LEPA", name: "Palma",         lat: 39.5517, lon:  2.7388 },
+  // Pirineo (paracaidismo/parapente)
+  { icao: "LEHC", name: "Huesca-Pirineos", lat: 42.0760, lon: -0.3163 },
+  // Canarias
+  { icao: "GCLP", name: "Las Palmas",    lat: 27.9319, lon: -15.3866 },
+  { icao: "GCXO", name: "Tenerife Norte",lat: 28.4827, lon: -16.3414 },
+];
+
+function ktToKmh(kt) { return kt == null ? null : kt * 1.852; }
+
+async function renderMetarStations() {
   const grid = document.getElementById("nearbyGrid");
   if (!grid) return;
-  const lat = 37.1887, lon = -3.7775; // LEGR
-  const dist = haversineKm(currentTakeoff.lat, currentTakeoff.lon, lat, lon);
-  // Solo mostrar el aeropuerto de Granada si el despegue está razonablemente cerca
-  if (dist > 50) return;
+  // Filtra aeropuertos dentro del radio (tsRadius).
+  const within = METAR_AIRPORTS
+    .map(a => ({ ...a, dist: haversineKm(currentTakeoff.lat, currentTakeoff.lon, a.lat, a.lon) }))
+    .filter(a => a.dist <= tsRadius)
+    .sort((a, b) => a.dist - b.dist);
+  if (!within.length) return;
+
+  const ids = within.map(a => a.icao).join(",");
+  let metars = [];
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-                `&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kmh&timezone=auto`;
+    const url = `https://aviationweather.gov/api/data/metar?ids=${ids}&format=json&taf=false&hours=2`;
     const data = await fetchJson(url);
-    const cur = data?.current;
-    if (!cur) return;
-    const spd = cur.wind_speed_10m;
-    const dir = cur.wind_direction_10m;
+    if (Array.isArray(data)) metars = data;
+  } catch (e) {
+    console.warn("METAR fetch:", e);
+    return;
+  }
+  // Quedarnos con el METAR más reciente por estación.
+  const latestByIcao = {};
+  for (const m of metars) {
+    const icao = m.icaoId || m.icao || m.station_id;
+    if (!icao) continue;
+    const ts = m.obsTime || m.reportTime || 0;
+    if (!latestByIcao[icao] || ts > (latestByIcao[icao]._ts || 0)) {
+      latestByIcao[icao] = { ...m, _ts: ts };
+    }
+  }
+
+  for (const ap of within) {
+    const m = latestByIcao[ap.icao];
+    if (!m) continue;
+    // wdir/wspd/wgst en grados / nudos. wdir puede ser "VRB" (string).
+    const dir = (typeof m.wdir === "number") ? m.wdir : null;
+    const spd = ktToKmh(typeof m.wspd === "number" ? m.wspd : null);
+    const gst = ktToKmh(typeof m.wgst === "number" ? m.wgst : null);
     const dirInfo = classifyDirection(dir);
+    const spdBand = spd == null ? "unknown"
+      : spd <= 15 ? "ideal" : spd <= 22 ? "ok" : "bad";
+    const obsTs = m.obsTime ? new Date(m.obsTime * 1000) : null;
+    const obsStr = obsTs ? obsTs.toLocaleTimeString(t("locale"), { hour: "2-digit", minute: "2-digit" }) : "—";
+
     const card = document.createElement("div");
     card.className = "nearby-card airport";
-    const label = t("near.airport_label");
+    const label = `${t("near.airport_prefix")} ${ap.name} (${ap.icao})`;
     card.innerHTML = `
       <h3>
-        <a href="https://www.windy.com/-?37.1887,-3.7775,11" target="_blank" rel="noopener">${escapeHtml(label)}</a>
-        <small>${dist.toFixed(1)} km</small>
+        <a href="https://www.windy.com/-?${ap.lat},${ap.lon},10" target="_blank" rel="noopener">${escapeHtml(label)}</a>
+        <small>${ap.dist.toFixed(1)} km</small>
       </h3>
       <div class="mini-compass">
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -1773,28 +1837,31 @@ async function renderAirportStation() {
           <text x="91" y="54" text-anchor="middle" class="mc-card">E</text>
           <text x="9"  y="54" text-anchor="middle" class="mc-card">O</text>
           <g class="mc-arrow-g" transform="rotate(${dir ?? 0} 50 50)">
-            <polygon class="mc-arrow ${spd != null ? 'quality-' + (spd <= 15 ? 'ideal' : spd <= 22 ? 'ok' : 'bad') : ''}" points="50,32 42,12 58,12" />
+            <polygon class="mc-arrow ${spdBand !== 'unknown' ? 'quality-' + spdBand : ''}" points="50,32 42,12 58,12" />
           </g>
-          <circle cx="50" cy="50" r="3" fill="#4ea1ff"/>
+          <circle cx="50" cy="50" r="3" fill="#f1c40f"/>
         </svg>
       </div>
       <div class="nearby-meta">
-        <div class="nearby-dir">${dir != null ? dirInfo.name + ' · ' + Math.round(dir) + '°' : '—'}</div>
-        <div class="nearby-avg"><b>${fmtNum(spd)}</b> <span>km/h</span></div>
-        <div class="badge-src">${t("near.airport_src")}</div>
+        <div class="nearby-dir">${dir != null ? dirInfo.name + ' · ' + Math.round(dir) + '°' : (m.wdir === "VRB" ? "VRB" : "—")}</div>
+        <div class="nearby-avg">
+          <b>${fmtNum(spd)}</b> <span>km/h</span>
+          ${gst != null ? `· <span title="rachas">${fmtNum(gst)}</span>` : ""}
+        </div>
+        <div class="badge-src">METAR · ${obsStr}</div>
       </div>
     `;
     grid.appendChild(card);
     if (map) {
-      L.circleMarker([lat, lon], {
+      L.circleMarker([ap.lat, ap.lon], {
         radius: 7, color: "#fff", weight: 1, fillColor: "#f1c40f", fillOpacity: 0.9,
       }).addTo(map)
-        .bindPopup(`<b>${escapeHtml(label)}</b><br/>${dist.toFixed(1)} km`)
+        .bindPopup(`<b>${escapeHtml(label)}</b><br/>${ap.dist.toFixed(1)} km`)
         .bindTooltip(label, {
           permanent: true, direction: "right", offset: [8, 0], className: "station-label airport"
         });
     }
-  } catch (e) { console.warn("airport station:", e); }
+  }
 }
 
 function escapeHtml(s) {
