@@ -331,7 +331,12 @@ if (!isConfigured()) {
   }
 
   // Resultado de signInWithRedirect (mobile fallback)
-  getRedirectResult(auth).catch(e => console.warn("[auth] redirect result", e));
+  getRedirectResult(auth).then(res => {
+    if (res && res.user) console.log("[auth] redirect ok", res.user.uid);
+  }).catch(e => {
+    console.warn("[auth] redirect result", e);
+    try { alert("Login redirect error: " + (e?.code || e?.message || e)); } catch {}
+  });
 
   // === Handlers UI (esperan a DOMContentLoaded) ===
   document.addEventListener("DOMContentLoaded", () => {

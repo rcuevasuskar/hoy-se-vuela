@@ -1,5 +1,5 @@
 // Service Worker básico para PWA: cache-first del shell, network-first de datos.
-const CACHE = "viento-cenes-v55";
+const CACHE = "viento-cenes-v56";
 const SHELL = [
   "./",
   "./index.html",
@@ -41,7 +41,10 @@ self.addEventListener("fetch", (e) => {
       url.hostname.includes("firebaseio.com") ||
       url.hostname.includes("identitytoolkit") ||
       url.hostname.includes("firestore.googleapis.com") ||
-      url.hostname.includes("securetoken.googleapis.com")) {
+      url.hostname.includes("securetoken.googleapis.com") ||
+      url.hostname.includes("firebaseapp.com") ||
+      url.hostname.includes("accounts.google.com") ||
+      url.pathname.includes("/__/auth")) {
     e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
     return;
   }
