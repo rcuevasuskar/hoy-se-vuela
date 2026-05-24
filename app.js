@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v123";
+const APP_VERSION = "v124";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -3014,11 +3014,19 @@ function fitMapToNearby() {
 async function renderNearby() {
   const grid = document.getElementById("nearbyGrid");
   if (!grid) return;
+  // v123: token de render para evitar duplicados cuando se disparan varios
+  // renderNearby() en paralelo (selectStation + refresh + geolocate, etc.).
+  // Si por el momento de pintar la version ha avanzado, abortamos.
+  const myToken = (++_nearbyRenderToken);
   nearbyLatLngs = [];
   try {
     const all = await getAllStations();
+    if (myToken !== _nearbyRenderToken) return;
     const now = Date.now();
-    const c = distCenter();
+    // v123: las estaciones cercanas se miden respecto al DESPEGUE actual,
+    // no respecto a la ubicacion del usuario; si el usuario esta en Granada
+    // mirando Sopelana no queremos ver aeropuertos de Granada en "cercanas".
+    const c = { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
     const within = all
       .map(s => {
         const lat = s.location?.latitude, lon = s.location?.longitude;
@@ -3178,8 +3186,11 @@ function ktToKmh(kt) { return kt == null ? null : kt * 1.852; }
 async function renderMetarStations() {
   const grid = document.getElementById("nearbyGrid");
   if (!grid) return;
-  // Filtra aeropuertos dentro del radio (tsRadius) desde la posición del usuario (o despegue como fallback).
-  const c = distCenter();
+  const myToken = _nearbyRenderToken;
+  // Filtra aeropuertos dentro del radio (tsRadius) desde el despegue actual.
+  // v123: igual que renderNearby, los aeropuertos cercanos son los del despegue,
+  // no los de la ubicacion del usuario.
+  const c = { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
   const within = METAR_AIRPORTS
     .map(a => ({ ...a, dist: haversineKm(c.lat, c.lon, a.lat, a.lon) }))
     .filter(a => a.dist <= tsRadius)
@@ -3196,6 +3207,15 @@ async function renderMetarStations() {
     console.warn("METAR fetch:", e);
     return;
   }
+  // v123: si entretanto se disparo otro renderNearby, abortamos para no duplicar.
+  if (myToken !== _nearbyRenderToken) return;
+  // v123: defensa extra: si ya hay tarjetas de aeropuerto en el grid (otra ronda
+  // las pinto antes), no las volvemos a anadir.
+  const existingIcaos = new Set(
+    [...grid.querySelectorAll(".nearby-card.airport")]
+      .map(el => el.dataset.icao)
+      .filter(Boolean)
+  );
   // Quedarnos con el METAR más reciente por estación.
   const latestByIcao = {};
   for (const m of metars) {
@@ -3210,6 +3230,8 @@ async function renderMetarStations() {
   for (const ap of within) {
     const m = latestByIcao[ap.icao];
     if (!m) continue;
+    // v123: salta si ya hay una tarjeta para este aeropuerto.
+    if (existingIcaos.has(ap.icao)) continue;
     // wdir/wspd/wgst en grados / nudos. wdir puede ser "VRB" (string).
     const dir = (typeof m.wdir === "number") ? m.wdir : null;
     const spd = ktToKmh(typeof m.wspd === "number" ? m.wspd : null);
@@ -3222,6 +3244,7 @@ async function renderMetarStations() {
 
     const card = document.createElement("div");
     card.className = "nearby-card airport";
+    card.dataset.icao = ap.icao;
     const label = `${t("near.airport_prefix")} ${ap.name} (${ap.icao})`;
     card.innerHTML = `
       <h3>
@@ -3800,6 +3823,8 @@ let userLocation = null; // {lat, lon} si el usuario lo ha activado
 function distCenter() {
   return userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
 }
+// v123: token global para abortar renders concurrentes de "estaciones cercanas".
+let _nearbyRenderToken = 0;
 let tsRadius = parseInt(localStorage.getItem("tsRadius") || "50", 10);
 let tsNoRadius = localStorage.getItem("tsNoRadius") === "1";
 const TS_PROVIDERS_ALL = ["community", "pioupiou", "aemet", "holfuy"];
