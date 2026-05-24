@@ -156,6 +156,38 @@ const I18N = {
     "wx.code.snow_showers": "Chubascos de nieve",
     "wx.code.storm": "Tormenta",
     "wx.code.storm_hail": "Tormenta con granizo",
+    "cp.title": "Análisis de nubes",
+    "cp.high": "Altas",
+    "cp.mid":  "Medias",
+    "cp.low":  "Bajas",
+    "cp.base": "Base nube",
+    "cp.stab": "Inestabilidad",
+    "cp.none": "—",
+    "cp.stab.stable": "Estable",
+    "cp.stab.low":    "Débil",
+    "cp.stab.mod":    "Moderada",
+    "cp.stab.high":   "Alta",
+    "cp.stab.extreme":"Extrema",
+    "cp.type.high.cs": "Cirrostratos (velo, halo solar)",
+    "cp.type.high.ci": "Cirros (filamentos, cristales de hielo)",
+    "cp.type.high.cc": "Cirrocúmulos (aborregado fino)",
+    "cp.type.mid.as":  "Altoestratos (capa gris, sol difuso)",
+    "cp.type.mid.ac":  "Altocúmulos (cielo aborregado)",
+    "cp.type.mid.acc": "Altocúmulos castellanus (inestabilidad en altura)",
+    "cp.type.low.st":  "Estratos (capa baja gris, mal día)",
+    "cp.type.low.cuh": "Cúmulos humilis (térmicas suaves)",
+    "cp.type.low.cum": "Cúmulos mediocris (buenas térmicas)",
+    "cp.type.low.sc":  "Estratocúmulos (capa con claros)",
+    "cp.type.low.ns":  "Nimbostratos (lluvia continua)",
+    "cp.type.low.tcu": "Towering Cúmulus (sobredesarrollo)",
+    "cp.type.low.cb":  "Cumulonimbos (tormenta ⚠️)",
+    "cp.sum.clear":   "Cielo limpio: térmicas azules posibles si hay sol.",
+    "cp.sum.good":    "Cúmulos bien definidos: térmicas óptimas.",
+    "cp.sum.weak":    "Nubes altas/medias filtran el sol: térmicas más débiles.",
+    "cp.sum.stable":  "Atmósfera estable o cubierta baja: térmicas pobres.",
+    "cp.sum.overdev": "Riesgo de sobredesarrollo: vigila evolución vertical.",
+    "cp.sum.storm":   "⚠️ Peligro de tormenta/cumulonimbos: no volar.",
+    "cp.sum.rain":    "Precipitación probable: vuelo descartado.",
     "locale": "es-ES"
   },
   en: {
@@ -277,7 +309,39 @@ const I18N = {
     "wx.code.snow_showers": "Snow showers",
     "wx.code.storm": "Thunderstorm",
     "wx.code.storm_hail": "Thunderstorm with hail",
-    "locale": "en-GB"
+    "locale": "en-GB",
+    "cp.title": "Cloud analysis",
+    "cp.high": "High",
+    "cp.mid":  "Mid",
+    "cp.low":  "Low",
+    "cp.base": "Cloud base",
+    "cp.stab": "Instability",
+    "cp.none": "—",
+    "cp.stab.stable": "Stable",
+    "cp.stab.low":    "Weak",
+    "cp.stab.mod":    "Moderate",
+    "cp.stab.high":   "High",
+    "cp.stab.extreme":"Extreme",
+    "cp.type.high.cs": "Cirrostratus (veil, solar halo)",
+    "cp.type.high.ci": "Cirrus (ice-crystal wisps)",
+    "cp.type.high.cc": "Cirrocumulus (fine mackerel sky)",
+    "cp.type.mid.as":  "Altostratus (grey sheet, diffuse sun)",
+    "cp.type.mid.ac":  "Altocumulus (mackerel sky)",
+    "cp.type.mid.acc": "Altocumulus castellanus (upper instability)",
+    "cp.type.low.st":  "Stratus (low grey layer, poor day)",
+    "cp.type.low.cuh": "Cumulus humilis (soft thermals)",
+    "cp.type.low.cum": "Cumulus mediocris (good thermals)",
+    "cp.type.low.sc":  "Stratocumulus (broken layer)",
+    "cp.type.low.ns":  "Nimbostratus (steady rain)",
+    "cp.type.low.tcu": "Towering Cumulus (overdevelopment)",
+    "cp.type.low.cb":  "Cumulonimbus (thunderstorm ⚠️)",
+    "cp.sum.clear":   "Clear sky: blue thermals possible if sun strong.",
+    "cp.sum.good":    "Well-formed cumulus: optimal thermals.",
+    "cp.sum.weak":    "High/mid clouds filter sun: weaker thermals.",
+    "cp.sum.stable":  "Stable air or low overcast: poor thermals.",
+    "cp.sum.overdev": "Overdevelopment risk: watch vertical growth.",
+    "cp.sum.storm":   "⚠️ Thunderstorm / Cb risk: do not fly.",
+    "cp.sum.rain":    "Rain likely: no-fly."
   },
   de: {
     "app.title": "Wind in Cenes de la Vega · Gleitschirm",
@@ -398,7 +462,39 @@ const I18N = {
     "wx.code.snow_showers": "Schneeschauer",
     "wx.code.storm": "Gewitter",
     "wx.code.storm_hail": "Gewitter mit Hagel",
-    "locale": "de-DE"
+    "locale": "de-DE",
+    "cp.title": "Wolkenanalyse",
+    "cp.high": "Hoch",
+    "cp.mid":  "Mittel",
+    "cp.low":  "Tief",
+    "cp.base": "Wolkenbasis",
+    "cp.stab": "Instabilität",
+    "cp.none": "—",
+    "cp.stab.stable": "Stabil",
+    "cp.stab.low":    "Schwach",
+    "cp.stab.mod":    "Mäßig",
+    "cp.stab.high":   "Hoch",
+    "cp.stab.extreme":"Extrem",
+    "cp.type.high.cs": "Cirrostratus (Schleier, Sonnenhalo)",
+    "cp.type.high.ci": "Cirrus (Eiskristall-Fäden)",
+    "cp.type.high.cc": "Cirrocumulus (feines Schafüben)",
+    "cp.type.mid.as":  "Altostratus (graue Schicht, diffuse Sonne)",
+    "cp.type.mid.ac":  "Altocumulus (Schafüben)",
+    "cp.type.mid.acc": "Altocumulus castellanus (Höheninstabilität)",
+    "cp.type.low.st":  "Stratus (tiefe graue Schicht, schlechter Tag)",
+    "cp.type.low.cuh": "Cumulus humilis (weiche Thermik)",
+    "cp.type.low.cum": "Cumulus mediocris (gute Thermik)",
+    "cp.type.low.sc":  "Stratocumulus (aufgerissene Schicht)",
+    "cp.type.low.ns":  "Nimbostratus (Dauerregen)",
+    "cp.type.low.tcu": "Towering Cumulus (Überentwicklung)",
+    "cp.type.low.cb":  "Cumulonimbus (Gewitter ⚠️)",
+    "cp.sum.clear":   "Klarer Himmel: blaue Thermik möglich bei Sonne.",
+    "cp.sum.good":    "Schön geformte Cumulus: optimale Thermik.",
+    "cp.sum.weak":    "Hohe/mittlere Wolken filtern Sonne: schwächere Thermik.",
+    "cp.sum.stable":  "Stabile Luft oder tiefe Bedeckung: schwache Thermik.",
+    "cp.sum.overdev": "Überentwicklungsrisiko: Vertikalwachstum beobachten.",
+    "cp.sum.storm":   "⚠️ Gewitter/Cb-Risiko: nicht fliegen.",
+    "cp.sum.rain":    "Regen wahrscheinlich: Flug abgesagt."
   },
   fr: {
     "app.title": "Vent à Cenes de la Vega · Parapente",
@@ -519,7 +615,39 @@ const I18N = {
     "wx.code.snow_showers": "Averses de neige",
     "wx.code.storm": "Orage",
     "wx.code.storm_hail": "Orage avec grêle",
-    "locale": "fr-FR"
+    "locale": "fr-FR",
+    "cp.title": "Analyse des nuages",
+    "cp.high": "Hauts",
+    "cp.mid":  "Moyens",
+    "cp.low":  "Bas",
+    "cp.base": "Base nuage",
+    "cp.stab": "Instabilité",
+    "cp.none": "—",
+    "cp.stab.stable": "Stable",
+    "cp.stab.low":    "Faible",
+    "cp.stab.mod":    "Modérée",
+    "cp.stab.high":   "Élevée",
+    "cp.stab.extreme":"Extrême",
+    "cp.type.high.cs": "Cirrostratus (voile, halo solaire)",
+    "cp.type.high.ci": "Cirrus (filaments de glace)",
+    "cp.type.high.cc": "Cirrocumulus (ciel moutonné fin)",
+    "cp.type.mid.as":  "Altostratus (couche grise, soleil diffus)",
+    "cp.type.mid.ac":  "Altocumulus (ciel moutonné)",
+    "cp.type.mid.acc": "Altocumulus castellanus (instabilité en altitude)",
+    "cp.type.low.st":  "Stratus (couche grise basse, mauvaise journée)",
+    "cp.type.low.cuh": "Cumulus humilis (thermiques légères)",
+    "cp.type.low.cum": "Cumulus mediocris (bonnes thermiques)",
+    "cp.type.low.sc":  "Stratocumulus (couche fracturée)",
+    "cp.type.low.ns":  "Nimbostratus (pluie continue)",
+    "cp.type.low.tcu": "Towering Cumulus (surdéveloppement)",
+    "cp.type.low.cb":  "Cumulonimbus (orage ⚠️)",
+    "cp.sum.clear":   "Ciel dégagé : thermiques bleues possibles au soleil.",
+    "cp.sum.good":    "Cumulus bien formés : thermiques optimales.",
+    "cp.sum.weak":    "Nuages hauts/moyens filtrent le soleil : thermiques plus faibles.",
+    "cp.sum.stable":  "Air stable ou couverture basse : thermiques pauvres.",
+    "cp.sum.overdev": "Risque de surdéveloppement : surveiller la croissance verticale.",
+    "cp.sum.storm":   "⚠️ Risque d’orage / Cb : ne pas voler.",
+    "cp.sum.rain":    "Pluie probable : vol annulé."
   }
 };
 
@@ -678,7 +806,7 @@ async function getArchiveLastHours(hours) {
 
 async function getForecast(days = 2) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentTakeoff.lat}&longitude=${currentTakeoff.lon}` +
-              `&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,precipitation_probability,weather_code,cape,temperature_2m,apparent_temperature` +
+              `&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,precipitation_probability,weather_code,cape,lifted_index,temperature_2m,dew_point_2m,apparent_temperature` +
               `&daily=sunrise,sunset` +
               `&wind_speed_unit=kmh&timezone=auto&forecast_days=${days}`;
   return fetchJson(url);
@@ -751,10 +879,15 @@ function currentWeather() {
     idx: i,
     time: new Date(h.time[i]),
     cloud: h.cloud_cover?.[i],
+    cloudLow: h.cloud_cover_low?.[i],
+    cloudMid: h.cloud_cover_mid?.[i],
+    cloudHigh: h.cloud_cover_high?.[i],
     code: h.weather_code?.[i],
     precip: h.precipitation_probability?.[i],
     cape: h.cape?.[i],
+    li: h.lifted_index?.[i],
     temp: h.temperature_2m?.[i],
+    dew: h.dew_point_2m?.[i],
     feels: h.apparent_temperature?.[i],
   };
 }
@@ -885,8 +1018,117 @@ function renderLive(live) {
   setText("verdictDetail", detail);
 
   renderWeatherStrip(cw, risk);
+  renderCloudPanel(cw, risk);
 
   maybeNotify(verdict, dirInfo, avg, max);
+}
+
+// === Panel de tipos de nubes ===
+// Heurística basada en cobertura por capas (low/mid/high), CAPE, lifted index,
+// temperatura y punto de rocío. Fuente: Open-Meteo + presentación "NUBES" (R. Cuevas).
+function classifyClouds(cw) {
+  if (!cw) return null;
+  const low  = cw.cloudLow  ?? 0;
+  const mid  = cw.cloudMid  ?? 0;
+  const high = cw.cloudHigh ?? 0;
+  const cape = cw.cape ?? 0;
+  const li   = cw.li;   // lifted_index (negativo = inestable)
+  const precip = cw.precip ?? 0;
+  const code = cw.code;
+
+  // Inestabilidad: prioriza LI, si no, CAPE
+  let stab = "stable";
+  if (li != null) {
+    if (li <= -8) stab = "extreme";
+    else if (li <= -5) stab = "high";
+    else if (li <= -2) stab = "mod";
+    else if (li < 0)  stab = "low";
+    else stab = "stable";
+  } else {
+    if (cape >= 2500) stab = "extreme";
+    else if (cape >= 1500) stab = "high";
+    else if (cape >= 700)  stab = "mod";
+    else if (cape >= 200)  stab = "low";
+    else stab = "stable";
+  }
+
+  // Base de nube por Espy: h(m) ≈ 120 · (T − DP)
+  let baseM = null;
+  if (cw.temp != null && cw.dew != null) {
+    baseM = Math.max(0, Math.round(120 * (cw.temp - cw.dew) / 10) * 10);
+  }
+
+  // Tipo capa baja
+  let lowType = null;
+  const stormCode = code != null && [95, 96, 99].includes(code);
+  const rainHeavy = precip >= 60 || (code != null && [61,63,65,66,67,80,81,82].includes(code));
+  if (stormCode || (cape >= 2500 && low >= 30)) lowType = "cb";
+  else if ((cape >= 1500 || (li != null && li <= -5)) && low >= 30) lowType = "tcu";
+  else if (rainHeavy && low >= 60) lowType = "ns";
+  else if (low >= 60 && cape < 250) lowType = "st";
+  else if (low >= 25 && cape >= 500) lowType = "cum";
+  else if (low >= 60 && cape >= 250) lowType = "sc";
+  else if (low >= 10) lowType = "cuh";
+
+  // Tipo capa media
+  let midType = null;
+  if (mid >= 25) {
+    if (mid >= 30 && cape >= 800) midType = "acc";
+    else if (mid >= 60) midType = "as";
+    else midType = "ac";
+  }
+
+  // Tipo capa alta
+  let highType = null;
+  if (high >= 10) {
+    if (high >= 60) highType = "cs";
+    else if (high >= 20) highType = "ci";
+    else highType = "cc";
+  }
+
+  // Resumen / impacto en térmicas
+  let sumKey = "cp.sum.clear";
+  if (stormCode || lowType === "cb") sumKey = "cp.sum.storm";
+  else if (rainHeavy || lowType === "ns") sumKey = "cp.sum.rain";
+  else if (lowType === "tcu" || (cape >= 1800 && low >= 25)) sumKey = "cp.sum.overdev";
+  else if (lowType === "st" || (low >= 70 && cape < 300)) sumKey = "cp.sum.stable";
+  else if (["cum","cuh"].includes(lowType) && low >= 15 && low <= 55 && cape >= 400) sumKey = "cp.sum.good";
+  else if (high >= 50 && low < 30) sumKey = "cp.sum.weak";
+  else if (low < 15 && mid < 25 && high < 30) sumKey = "cp.sum.clear";
+  else sumKey = "cp.sum.weak";
+
+  return { low, mid, high, lowType, midType, highType, cape, stab, baseM, sumKey };
+}
+
+function renderCloudPanel(cw) {
+  const box = document.getElementById("cloudPanel");
+  if (!box) return;
+  const cl = classifyClouds(cw);
+  if (!cl) { box.hidden = true; return; }
+  box.hidden = false;
+
+  const setLayer = (layer, pct, typeKey) => {
+    const p = Math.round(pct || 0);
+    document.getElementById(`cp${layer}Pct`).textContent  = `${p}%`;
+    document.getElementById(`cp${layer}Fill`).style.width = `${p}%`;
+    const typeEl = document.getElementById(`cp${layer}Type`);
+    typeEl.textContent = typeKey ? t(typeKey) : "";
+    typeEl.dataset.kind = typeKey || "";
+  };
+  setLayer("High", cl.high, cl.highType ? `cp.type.high.${cl.highType}` : null);
+  setLayer("Mid",  cl.mid,  cl.midType  ? `cp.type.mid.${cl.midType}`   : null);
+  setLayer("Low",  cl.low,  cl.lowType  ? `cp.type.low.${cl.lowType}`   : null);
+
+  document.getElementById("cpBase").textContent = cl.baseM != null ? `~${cl.baseM} m` : "—";
+  document.getElementById("cpStab").textContent = t(`cp.stab.${cl.stab}`);
+  document.getElementById("cpStab").dataset.level = cl.stab;
+  document.getElementById("cpSummary").textContent = t(cl.sumKey);
+  box.dataset.severity =
+    cl.sumKey === "cp.sum.storm" ? "bad" :
+    cl.sumKey === "cp.sum.rain"  ? "bad" :
+    cl.sumKey === "cp.sum.overdev" ? "warn" :
+    cl.sumKey === "cp.sum.good"  ? "good" :
+    cl.sumKey === "cp.sum.clear" ? "good" : "ok";
 }
 
 function renderWeatherStrip(cw, risk) {

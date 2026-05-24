@@ -151,6 +151,38 @@
         </div>
       </div>
 
+      <div id="cloudPanel" class="cloud-panel" hidden>
+        <div class="cp-header">
+          <span class="cp-icon">☁️</span>
+          <span class="cp-title" data-i18n="cp.title">Análisis de nubes</span>
+        </div>
+        <div class="cp-layers">
+          <div class="cp-layer" data-layer="high">
+            <span class="cp-l-name" data-i18n="cp.high">Altas</span>
+            <div class="cp-bar"><div class="cp-bar-fill" id="cpHighFill"></div></div>
+            <span class="cp-l-pct" id="cpHighPct">—</span>
+            <span class="cp-l-type" id="cpHighType"></span>
+          </div>
+          <div class="cp-layer" data-layer="mid">
+            <span class="cp-l-name" data-i18n="cp.mid">Medias</span>
+            <div class="cp-bar"><div class="cp-bar-fill" id="cpMidFill"></div></div>
+            <span class="cp-l-pct" id="cpMidPct">—</span>
+            <span class="cp-l-type" id="cpMidType"></span>
+          </div>
+          <div class="cp-layer" data-layer="low">
+            <span class="cp-l-name" data-i18n="cp.low">Bajas</span>
+            <div class="cp-bar"><div class="cp-bar-fill" id="cpLowFill"></div></div>
+            <span class="cp-l-pct" id="cpLowPct">—</span>
+            <span class="cp-l-type" id="cpLowType"></span>
+          </div>
+        </div>
+        <div class="cp-meta">
+          <span class="cp-meta-item"><span data-i18n="cp.base">Base nube</span>: <strong id="cpBase">—</strong></span>
+          <span class="cp-meta-item"><span data-i18n="cp.stab">Inestabilidad</span>: <strong id="cpStab">—</strong></span>
+        </div>
+        <div class="cp-summary" id="cpSummary"></div>
+      </div>
+
       <div id="bestWindow" class="best-window" hidden>
         <span class="bw-icon">⏱️</span>
         <span class="bw-label" data-i18n="best.label">Mejor ventana hoy:</span>
