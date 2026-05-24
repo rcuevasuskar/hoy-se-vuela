@@ -4404,7 +4404,9 @@ function renderSearchRow(s, ctx) {
   const isHolfuy = s.provider === "holfuy";
   const enabled = isCommunity ? (s.stationId != null)
                   : isFfvl ? false
-                  : (isAemet || isHolfuy) ? true
+                  // v112: AEMET/Holfuy aparecen "proximamente" igual que Pioupiou hasta
+                  // que un admin cree/edite un despegue comunitario que las referencie.
+                  : (isAemet || isHolfuy) ? false
                   : ENABLED_STATION_IDS.has(s.id);
   const btn = document.createElement("button");
   btn.type = "button";
@@ -4422,9 +4424,10 @@ function renderSearchRow(s, ctx) {
   } else if (isFfvl) {
     tail = `<span class="ts-result-provider ffvl">FFVL</span>`;
   } else if (isAemet) {
-    tail = `<span class="ts-result-provider aemet">AEMET</span>`;
+    // v112: AEMET deshabilitado por defecto -> "proximamente" + badge proveedor.
+    tail = `<span class="ts-result-provider aemet">AEMET</span><span class="ts-result-soon">${t("ts.coming_soon")}</span>`;
   } else if (isHolfuy) {
-    tail = `<span class="ts-result-provider holfuy">Holfuy</span>`;
+    tail = `<span class="ts-result-provider holfuy">Holfuy</span><span class="ts-result-soon">${t("ts.coming_soon")}</span>`;
   } else if (enabled) {
     tail = `<span class="ts-result-provider">${s.provider}</span>`;
   } else {
