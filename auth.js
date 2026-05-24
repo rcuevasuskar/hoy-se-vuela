@@ -47,10 +47,30 @@ if (!isConfigured()) {
 
   function setUserLabel(user) {
     const label = $("userBtnLabel");
+    const btn = $("userBtn");
+    const avatar = btn?.querySelector(".ts-user-avatar");
     if (!label) return;
-    if (!user) { label.textContent = t("auth.guest"); return; }
-    if (user.isAnonymous) { label.textContent = t("auth.anon"); return; }
-    label.textContent = user.displayName || user.email || t("auth.user");
+    if (!user) {
+      label.textContent = t("auth.guest");
+      btn?.classList.remove("is-logged", "is-anon");
+      if (avatar) avatar.textContent = "👤";
+      return;
+    }
+    if (user.isAnonymous) {
+      label.textContent = t("auth.anon");
+      btn?.classList.remove("is-logged");
+      btn?.classList.add("is-anon");
+      if (avatar) avatar.textContent = "👤";
+      return;
+    }
+    const name = user.displayName || user.email || t("auth.user");
+    label.textContent = name;
+    btn?.classList.add("is-logged");
+    btn?.classList.remove("is-anon");
+    if (avatar) {
+      const initial = (user.displayName || user.email || "?").trim().charAt(0).toUpperCase();
+      avatar.textContent = initial;
+    }
   }
 
   function openModal()  { $("authModal")?.removeAttribute("hidden"); }

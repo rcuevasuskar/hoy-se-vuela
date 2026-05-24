@@ -17,50 +17,50 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
 <body>
-  <header>
-    <button id="userBtn" class="user-btn" type="button" title="Cuenta">
-      <span class="user-icon" aria-hidden="true">👤</span>
-      <span id="userBtnLabel" class="user-btn-label" data-i18n="auth.guest">Invitado</span>
-    </button>
+  <header class="topbar">
+    <div class="takeoff-selector" id="takeoffSelector">
+      <div class="ts-row">
+        <button id="tsLocateBtn" class="ts-locate" title="Usar mi ubicación" data-i18n-title="ts.locate">📍</button>
+        <input type="text" id="tsSearch" class="ts-search" autocomplete="off"
+               data-i18n-placeholder="ts.placeholder"
+               placeholder="Buscar despegue / estación…" />
+        <button id="tsToggleBtn" class="ts-toggle" title="Mostrar opciones" aria-expanded="false">▾</button>
+        <select id="langSel" class="ts-lang" title="Idioma / Language">
+          <option value="es">🇪🇸</option>
+          <option value="en">🇬🇧</option>
+          <option value="de">🇩🇪</option>
+          <option value="fr">🇫🇷</option>
+        </select>
+        <button id="notifyBtn" class="ts-notify" title="Avisarme si hay condiciones ideales" data-i18n-title="btn.notify_off">🔔</button>
+        <button id="installBtn" class="ts-install" hidden title="Instalar app" data-i18n-title="btn.install">📲</button>
+        <button id="refreshBtn" class="ts-refresh" title="Actualizar">⟳</button>
+        <button id="userBtn" class="ts-user" type="button" title="Cuenta">
+          <span class="ts-user-avatar" aria-hidden="true">👤</span>
+          <span id="userBtnLabel" class="ts-user-label" data-i18n="auth.guest">Invitado</span>
+        </button>
+      </div>
+      <div class="ts-current">
+        <span class="ts-current-label" data-i18n="ts.current">Despegue:</span>
+        <strong id="tsCurrentName">Cenes de la Vega</strong>
+      </div>
+      <div class="ts-panel" id="tsPanel" hidden>
+        <div class="ts-radius">
+          <label for="tsRadius">
+            <span data-i18n="ts.radius">Radio</span>
+            <span id="tsRadiusValue">50</span> km
+          </label>
+          <input type="range" id="tsRadius" min="10" max="300" step="5" value="50" />
+        </div>
+        <div class="ts-results" id="tsResults">
+          <div class="ts-hint" data-i18n="ts.hint">Pulsa 📍 para usar tu ubicación o escribe para filtrar.</div>
+        </div>
+      </div>
+    </div>
   </header>
 
   <main>
     <!-- Estado actual -->
     <section class="card status-card" id="statusCard">
-      <div class="takeoff-selector" id="takeoffSelector">
-        <div class="ts-row">
-          <button id="tsLocateBtn" class="ts-locate" title="Usar mi ubicación" data-i18n-title="ts.locate">📍</button>
-          <input type="text" id="tsSearch" class="ts-search" autocomplete="off"
-                 data-i18n-placeholder="ts.placeholder"
-                 placeholder="Buscar despegue / estación…" />
-          <button id="tsToggleBtn" class="ts-toggle" title="Mostrar opciones" aria-expanded="false">▾</button>
-          <select id="langSel" class="ts-lang" title="Idioma / Language">
-            <option value="es">🇪🇸</option>
-            <option value="en">🇬🇧</option>
-            <option value="de">🇩🇪</option>
-            <option value="fr">🇫🇷</option>
-          </select>
-          <button id="notifyBtn" class="ts-notify" title="Avisarme si hay condiciones ideales" data-i18n-title="btn.notify_off">🔔</button>
-          <button id="installBtn" class="ts-install" hidden title="Instalar app" data-i18n-title="btn.install">📲</button>
-          <button id="refreshBtn" class="ts-refresh" title="Actualizar">⟳</button>
-        </div>
-        <div class="ts-current">
-          <span class="ts-current-label" data-i18n="ts.current">Despegue:</span>
-          <strong id="tsCurrentName">Cenes de la Vega</strong>
-        </div>
-        <div class="ts-panel" id="tsPanel" hidden>
-          <div class="ts-radius">
-            <label for="tsRadius">
-              <span data-i18n="ts.radius">Radio</span>
-              <span id="tsRadiusValue">50</span> km
-            </label>
-            <input type="range" id="tsRadius" min="10" max="300" step="5" value="50" />
-          </div>
-          <div class="ts-results" id="tsResults">
-            <div class="ts-hint" data-i18n="ts.hint">Pulsa 📍 para usar tu ubicación o escribe para filtrar.</div>
-          </div>
-        </div>
-      </div>
       <div class="status-grid">
         <div class="compass-wrap">
           <div class="compass">
