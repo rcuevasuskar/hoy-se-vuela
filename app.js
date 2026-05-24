@@ -4635,8 +4635,10 @@ function _hookTakeoffStreams() {
   window.PCAuth.onApprovedTakeoffsChange = () => {
     const panel = document.getElementById("tsPanel");
     if (panel && !panel.hidden) tsRunSearch();
-    // Cuando lleguen los aprobados, reintenta resolver el origen del despegue actual.
+    // Cuando lleguen los aprobados, reintenta resolver el origen del despegue actual
+    // y descarta el criterio cacheado para que se recoja el actualizado (v97).
     currentTakeoffOriginId = null;
+    currentTakeoffCriteria = null;
     renderCurrentTakeoffActions();
     renderTakeoffPanel();
     // Recalcula los indicadores con los nuevos criterios (sin recargar pronóstico/histórico).
