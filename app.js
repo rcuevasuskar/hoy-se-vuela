@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.133";
+const APP_VERSION = "v0.134";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -123,6 +123,7 @@ const I18N = {
     "hist.title": "Evolución observada",
     "hist.legend": "Línea azul: velocidad media · Línea roja: racha máx · Flechas: dirección (color = aptitud)",
     "chart.avg": "Velocidad media (km/h)",
+    "chart.ideal_band": "Velocidad ideal",
     "chart.gust": "Racha máx (km/h)",
     "chart.dir": "Dirección",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
@@ -414,6 +415,7 @@ const I18N = {
     "hist.title": "Observed evolution",
     "hist.legend": "Blue line: average speed · Red line: max gust · Dots: direction (color = suitability)",
     "chart.avg": "Average speed (km/h)",
+    "chart.ideal_band": "Ideal speed",
     "chart.gust": "Max gust (km/h)",
     "chart.dir": "Direction",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
@@ -690,6 +692,7 @@ const I18N = {
     "hist.title": "Beobachteter Verlauf",
     "hist.legend": "Blaue Linie: Mittelgeschwindigkeit · Rote Linie: max. Böe · Punkte: Richtung (Farbe = Eignung)",
     "chart.avg": "Mittelgeschwindigkeit (km/h)",
+    "chart.ideal_band": "Ideale Geschwindigkeit",
     "chart.gust": "Max. Böe (km/h)",
     "chart.dir": "Richtung",
     "chart.dir_tooltip": "Richt.: {name} ({deg}°)",
@@ -966,6 +969,7 @@ const I18N = {
     "hist.title": "Évolution observée",
     "hist.legend": "Ligne bleue : vitesse moyenne · Ligne rouge : rafale max · Points : direction (couleur = aptitude)",
     "chart.avg": "Vitesse moyenne (km/h)",
+    "chart.ideal_band": "Vitesse idéale",
     "chart.gust": "Rafale max (km/h)",
     "chart.dir": "Direction",
     "chart.dir_tooltip": "Dir : {name} ({deg}°)",
@@ -1242,6 +1246,7 @@ const I18N = {
     "hist.title": "Bilakaera",
     "hist.legend": "Lerro urdina: batez besteko abiadura · Lerro gorria: bolada max · Geziak: norabidea (kolorea = aproposa)",
     "chart.avg": "Batez besteko abiadura (km/h)",
+    "chart.ideal_band": "Abiadura ezin hobea",
     "chart.gust": "Bolada max (km/h)",
     "chart.dir": "Norabidea",
     "chart.dir_tooltip": "Norab.: {name} ({deg}°)",
@@ -1472,6 +1477,7 @@ const I18N = {
     "hist.title": "Evolució observada",
     "hist.legend": "Línia blava: velocitat mitjana · Línia vermella: ratxa màx · Fletxes: direcció (color = aptitud)",
     "chart.avg": "Velocitat mitjana (km/h)",
+    "chart.ideal_band": "Velocitat ideal",
     "chart.gust": "Ratxa màx (km/h)",
     "chart.dir": "Direcció",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
@@ -2743,6 +2749,45 @@ const forecastDaySepPlugin = {
 };
 if (typeof Chart !== "undefined") Chart.register(forecastDaySepPlugin);
 
+// v134: Plugin para pintar una franja horizontal con el rango de velocidad
+// media de viento ideal para despegar (segun los criterios del despegue
+// actual). Se dibuja DETRAS de las lineas para no taparlas.
+const forecastIdealBandPlugin = {
+  id: "forecastIdealBand",
+  beforeDatasetsDraw(chart) {
+    const band = chart.$idealBand;
+    if (!band || !Number.isFinite(band.min) || !Number.isFinite(band.max)) return;
+    const yScale = chart.scales?.y;
+    if (!yScale) return;
+    const { ctx, chartArea } = chart;
+    const yTop    = yScale.getPixelForValue(band.max);
+    const yBottom = yScale.getPixelForValue(band.min);
+    const top    = Math.max(chartArea.top, Math.min(chartArea.bottom, yTop));
+    const bottom = Math.max(chartArea.top, Math.min(chartArea.bottom, yBottom));
+    if (bottom <= top) return;
+    ctx.save();
+    ctx.fillStyle = "rgba(46,204,113,0.14)";
+    ctx.fillRect(chartArea.left, top, chartArea.right - chartArea.left, bottom - top);
+    ctx.strokeStyle = "rgba(46,204,113,0.55)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(chartArea.left, top); ctx.lineTo(chartArea.right, top);
+    ctx.moveTo(chartArea.left, bottom); ctx.lineTo(chartArea.right, bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Etiqueta discreta dentro de la franja.
+    ctx.font = "bold 10px sans-serif";
+    ctx.fillStyle = "rgba(46,204,113,0.95)";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    const label = `${t("chart.ideal_band")}: ${band.min}–${band.max} km/h`;
+    ctx.fillText(label, chartArea.left + 6, top + 3);
+    ctx.restore();
+  },
+};
+if (typeof Chart !== "undefined") Chart.register(forecastIdealBandPlugin);
+
 function renderForecast(fc) {
   if (!fc?.hourly) return;
   latestForecast = fc;
@@ -2859,6 +2904,13 @@ function renderForecast(fc) {
   if (forecastChart) { forecastChart.data = data; forecastChart.options = options; }
   else forecastChart = new Chart(ctx, { type: "line", data, options });
   forecastChart.$daySep = daySeparators;
+  // v134: rango ideal de velocidad media segun criterios del despegue actual.
+  {
+    const c = currentTakeoffCriteria || {};
+    const wmin = Number.isFinite(c.windMin) ? c.windMin : 5;
+    const wmax = Number.isFinite(c.windMax) ? c.windMax : 15;
+    forecastChart.$idealBand = { min: wmin, max: wmax };
+  }
   forecastChart.update();
   renderForecastLegend();
 
