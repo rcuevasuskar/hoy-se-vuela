@@ -1842,3 +1842,28 @@ footer {
 @media (prefers-color-scheme: dark) {
   :root[data-theme="auto"] .user-menu-btn { background: rgba(0,0,0,0.18); border-color: var(--border); }
 }
+
+/* === Despegue inline en la topbar === */
+.ts-current-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 1;
+  min-width: 0;
+  padding: 0 6px;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.ts-current-inline .ts-current-name {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  font-size: 0.95rem;
+}
+@media (max-width: 640px) {
+  .ts-current-inline .ts-current-name { max-width: 110px; font-size: 0.85rem; }
+  .ts-current-inline { padding: 0 4px; gap: 2px; }
+}

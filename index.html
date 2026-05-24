@@ -25,6 +25,11 @@
                data-i18n-placeholder="ts.placeholder"
                placeholder="Buscar despegues cercanos o favoritos" />
         <button id="tsToggleBtn" class="ts-toggle" title="Mostrar opciones" aria-expanded="false">▾</button>
+        <div class="ts-current-inline">
+          <strong id="tsCurrentName" class="ts-current-name">Cenes de la Vega</strong>
+          <span class="ts-current-actions" id="tsCurrentActions"></span>
+          <button class="ts-icon-btn ts-current-compass" id="orientToggle" type="button" title="Orientación del dispositivo" data-i18n-title="act.orient_toggle">🧭</button>
+        </div>
         <button id="refreshBtn" class="ts-refresh" title="Actualizar">⟳</button>
 
         <!-- Menú de usuario (agrupa idioma, tema, avisos, instalar, ayuda, cuenta) -->
@@ -67,12 +72,6 @@
             </button>
           </div>
         </div>
-      </div>
-      <div class="ts-current">
-        <span class="ts-current-label" data-i18n="ts.current">Despegue:</span>
-        <strong id="tsCurrentName">Cenes de la Vega</strong>
-        <span class="ts-current-actions" id="tsCurrentActions"></span>
-        <button class="ts-icon-btn ts-current-compass" id="orientToggle" type="button" title="Orientación del dispositivo" data-i18n-title="act.orient_toggle">🧭</button>
       </div>
       <div class="ts-panel" id="tsPanel" hidden>
         <div class="ts-radius">
