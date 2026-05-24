@@ -11,6 +11,7 @@ let currentStation = loadSavedStation() || { ...DEFAULT_STATION };
 // Compat: alias mutables usados en el resto del código
 let currentStationId = currentStation.id;
 let currentTakeoff = { lat: currentStation.lat, lon: currentStation.lon, name: currentStation.name };
+let currentTakeoffCriteria = null; // {qualityByIndex:[16], windMin, windMax, gustMax} - sustituye verdict global cuando hay valores
 
 // Despegues con criterios de volabilidad ya definidos.
 // Hasta definir el resto, sólo estos serán seleccionables en el buscador.
@@ -102,7 +103,7 @@ const I18N = {
     "auth.err_email_in_use": "Ese email ya está registrado.",
     "auth.err_pwd_short": "La contraseña debe tener al menos 6 caracteres.",
     "auth.err_popup_blocked": "El navegador bloqueó la ventana. Intenta de nuevo.",
-    "to.propose": "+ Proponer despegue",
+    "to.propose": "Dar de alta datos de despegue",
     "to.submit_title": "Proponer nuevo despegue",
     "to.submit_hint": "Tu propuesta será revisada por un administrador antes de publicarse.",
     "to.name_ph": "Nombre del despegue",
@@ -126,6 +127,20 @@ const I18N = {
     "to.delete": "Eliminar",
     "to.community_badge": "comunidad",
     "to.submitted_by": "Propuesto por",
+    "to.criteria_title": "Criterios de vuelo",
+    "to.dirs_hint": "Pulsa cada dirección para marcarla como Ideal (verde), Volable (amarillo) o Peligrosa (rojo).",
+    "to.wind_min": "Viento mín. ideal (km/h)",
+    "to.wind_max": "Viento máx. ideal (km/h)",
+    "to.gust_max": "Racha máx. segura (km/h)",
+    "fav.add": "Marcar como favorito",
+    "fav.remove": "Quitar de favoritos",
+    "fav.home_set": "Marcar como despegue habitual",
+    "fav.home_unset": "Quitar como despegue habitual",
+    "fav.alert_on": "Activar alertas para este despegue",
+    "fav.alert_off": "Desactivar alertas",
+    "fav.section": "Tus despegues",
+    "fav.others": "Resultados cercanos",
+    "fav.notify_title": "🦂 Condiciones ideales en {name}",
     "cmp.title": "Comparativa últimos días",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(amanecer +3 h → ocaso −1 h)",
@@ -310,7 +325,7 @@ const I18N = {
     "auth.err_email_in_use": "That email is already registered.",
     "auth.err_pwd_short": "Password must be at least 6 characters.",
     "auth.err_popup_blocked": "Popup blocked. Try again.",
-    "to.propose": "+ Propose takeoff",
+    "to.propose": "Register takeoff details",
     "to.submit_title": "Propose a new takeoff",
     "to.submit_hint": "Your proposal will be reviewed by an admin before publishing.",
     "to.name_ph": "Takeoff name",
@@ -334,6 +349,20 @@ const I18N = {
     "to.delete": "Delete",
     "to.community_badge": "community",
     "to.submitted_by": "Proposed by",
+    "to.criteria_title": "Flight criteria",
+    "to.dirs_hint": "Tap each direction to mark as Ideal (green), Flyable (yellow) or Dangerous (red).",
+    "to.wind_min": "Ideal wind min (km/h)",
+    "to.wind_max": "Ideal wind max (km/h)",
+    "to.gust_max": "Max safe gust (km/h)",
+    "fav.add": "Add to favorites",
+    "fav.remove": "Remove from favorites",
+    "fav.home_set": "Mark as default takeoff",
+    "fav.home_unset": "Unset default takeoff",
+    "fav.alert_on": "Enable alerts for this takeoff",
+    "fav.alert_off": "Disable alerts",
+    "fav.section": "Your takeoffs",
+    "fav.others": "Nearby results",
+    "fav.notify_title": "🦂 Ideal conditions at {name}",
     "cmp.title": "Last days comparison",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(sunrise +3 h → sunset −1 h)",
@@ -518,7 +547,7 @@ const I18N = {
     "auth.err_email_in_use": "E-Mail ist bereits registriert.",
     "auth.err_pwd_short": "Passwort muss mind. 6 Zeichen haben.",
     "auth.err_popup_blocked": "Popup blockiert. Erneut versuchen.",
-    "to.propose": "+ Startplatz vorschlagen",
+    "to.propose": "Startplatzdaten eintragen",
     "to.submit_title": "Neuen Startplatz vorschlagen",
     "to.submit_hint": "Dein Vorschlag wird von einem Admin geprüft.",
     "to.name_ph": "Name des Startplatzes",
@@ -542,6 +571,20 @@ const I18N = {
     "to.delete": "Löschen",
     "to.community_badge": "Community",
     "to.submitted_by": "Vorgeschlagen von",
+    "to.criteria_title": "Flugkriterien",
+    "to.dirs_hint": "Tippe jede Richtung, um sie als Ideal (grün), Fliegbar (gelb) oder Gefährlich (rot) zu markieren.",
+    "to.wind_min": "Ideal Wind min (km/h)",
+    "to.wind_max": "Ideal Wind max (km/h)",
+    "to.gust_max": "Max. sichere Böe (km/h)",
+    "fav.add": "Zu Favoriten hinzufügen",
+    "fav.remove": "Aus Favoriten entfernen",
+    "fav.home_set": "Als Stamm-Startplatz festlegen",
+    "fav.home_unset": "Stamm-Startplatz aufheben",
+    "fav.alert_on": "Alarme für diesen Startplatz aktivieren",
+    "fav.alert_off": "Alarme deaktivieren",
+    "fav.section": "Deine Startplätze",
+    "fav.others": "Treffer in der Nähe",
+    "fav.notify_title": "🦂 Ideale Bedingungen in {name}",
     "cmp.title": "Vergleich letzter Tage",
     "cmp.window": "({h1}:00–{h2}:00 Ortszeit)",
     "cmp.window_solar": "(Sonnenaufgang +3 h → Sonnenuntergang −1 h)",
@@ -726,7 +769,7 @@ const I18N = {
     "auth.err_email_in_use": "Cet email est déjà enregistré.",
     "auth.err_pwd_short": "Le mot de passe doit avoir au moins 6 caractères.",
     "auth.err_popup_blocked": "Fenêtre bloquée. Réessaie.",
-    "to.propose": "+ Proposer un déco",
+    "to.propose": "Enregistrer les données d'un déco",
     "to.submit_title": "Proposer un nouveau déco",
     "to.submit_hint": "Ta proposition sera examinée par un administrateur.",
     "to.name_ph": "Nom du déco",
@@ -750,6 +793,20 @@ const I18N = {
     "to.delete": "Supprimer",
     "to.community_badge": "communauté",
     "to.submitted_by": "Proposé par",
+    "to.criteria_title": "Critères de vol",
+    "to.dirs_hint": "Touche chaque direction pour la marquer Idéal (vert), Volable (jaune) ou Dangereux (rouge).",
+    "to.wind_min": "Vent min idéal (km/h)",
+    "to.wind_max": "Vent max idéal (km/h)",
+    "to.gust_max": "Rafale max sûre (km/h)",
+    "fav.add": "Ajouter aux favoris",
+    "fav.remove": "Retirer des favoris",
+    "fav.home_set": "Définir comme déco habituel",
+    "fav.home_unset": "Retirer comme déco habituel",
+    "fav.alert_on": "Activer les alertes pour ce déco",
+    "fav.alert_off": "Désactiver les alertes",
+    "fav.section": "Tes décos",
+    "fav.others": "Résultats proches",
+    "fav.notify_title": "🦂 Conditions idéales à {name}",
     "cmp.title": "Comparatif derniers jours",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(lever +3 h → coucher −1 h)",
@@ -934,16 +991,21 @@ function classifyDirection(deg) {
   if (deg == null || isNaN(deg)) return { name: "—", quality: "unknown", deg: null };
   const d = ((deg % 360) + 360) % 360;
   const idx = Math.round(d / 22.5) % 16;
-  return { name: dirName(d), quality: QUALITY_BY_INDEX[idx], deg: d };
+  const arr = (currentTakeoffCriteria?.qualityByIndex && currentTakeoffCriteria.qualityByIndex.some(Boolean))
+    ? currentTakeoffCriteria.qualityByIndex.map(q => q || "ok")
+    : QUALITY_BY_INDEX;
+  return { name: dirName(d), quality: arr[idx] || "unknown", deg: d };
 }
 
 function classifySpeed(avg, max) {
   if (avg == null) return "unknown";
-  // Demasiado fuerte: media ≥ 20 km/h o rachas ≥ 30 km/h.
-  if (avg >= 20 || (max != null && max >= 30)) return "warn";
-  // Ideal: media entre 5 y 15 km/h con rachas hasta 25 km/h.
-  if (avg >= 5 && avg <= 15 && (max == null || max <= 25)) return "ideal";
-  // Resto: volable.
+  const c = currentTakeoffCriteria;
+  const wmin = (c && Number.isFinite(c.windMin)) ? c.windMin : 5;
+  const wmax = (c && Number.isFinite(c.windMax)) ? c.windMax : 15;
+  const gmax = (c && Number.isFinite(c.gustMax)) ? c.gustMax : 30;
+  // Demasiado fuerte: rachas ≥ gmax o media ≥ gmax*0.66 (aprox 20 si gmax=30).
+  if (avg >= gmax * 0.66 || (max != null && max >= gmax)) return "warn";
+  if (avg >= wmin && avg <= wmax && (max == null || max <= gmax * 0.83)) return "ideal";
   return "ok";
 }
 
@@ -2605,10 +2667,11 @@ function applyCurrentTakeoffLabel() {
   if (guideEl) guideEl.textContent = currentStation.shortName || currentStation.name;
 }
 
-function selectStation(station) {
+function selectStation(station, opts) {
   currentStation = station;
   currentStationId = station.id;
   currentTakeoff = { lat: station.lat, lon: station.lon, name: station.name };
+  currentTakeoffCriteria = (opts && opts.criteria) ? opts.criteria : null;
   saveSelectedStation(station);
   applyCurrentTakeoffLabel();
   refreshAllForCurrentTakeoff();
@@ -2687,87 +2750,208 @@ async function tsRunSearch() {
     items = items.filter(s => s.name.toLowerCase().includes(query));
   }
   items.sort((a, b) => a.dist - b.dist);
-  items = items.slice(0, 50);
 
-  if (!items.length) {
+  // Identifica favoritos + home
+  const favs = window.PCAuth?.favorites || [];
+  const homeId = window.PCAuth?.prefs?.homeFavId || null;
+  const favKey = (s) => {
+    if (s.community) return "co_" + (s.raw?.id || "");
+    if (s.provider === "ffvl") return "ffvl_" + (s.rawId || s.id);
+    return "pp_" + s.id;
+  };
+  const favByKey = {};
+  favs.forEach(f => {
+    let key;
+    if (f.source === "community") key = "co_" + f.refId;
+    else if (f.source === "ffvl") key = "ffvl_" + f.refId;
+    else key = "pp_" + f.refId;
+    favByKey[key] = f;
+  });
+
+  // Construye lista de favoritos (siempre mostrar, no depende del radio)
+  const favItems = favs.map(f => {
+    const fakeItem = {
+      id: f.source === "pioupiou" ? Number(f.refId) : (f.source === "community" ? "to_" + f.refId : "ffvl_" + f.refId),
+      provider: f.source,
+      name: f.name,
+      lat: f.lat, lon: f.lon,
+      community: f.source === "community",
+      stationId: f.stationId,
+      raw: f.source === "community" ? { id: f.refId, criteria: f.criteria, stationId: f.stationId } : null,
+      rawId: f.source === "ffvl" ? f.refId : undefined,
+      dist: haversineKm(center.lat, center.lon, f.lat, f.lon),
+      _fav: f,
+      _isHome: f.id === homeId,
+    };
+    return fakeItem;
+  }).filter(f => !query || f.name.toLowerCase().includes(query));
+  // Home siempre primero; resto alfabético.
+  favItems.sort((a, b) => {
+    if (a._isHome && !b._isHome) return -1;
+    if (!a._isHome && b._isHome) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  // Filtra de items los que ya están en favoritos para no duplicar.
+  const favKeys = new Set(favItems.map(f => favKey(f)));
+  const others = items.filter(s => !favKeys.has(favKey(s))).slice(0, 50);
+
+  if (!favItems.length && !others.length) {
     resultsEl.innerHTML = `<div class="ts-empty">${t("ts.empty")}</div>`;
     return;
   }
   resultsEl.innerHTML = "";
-  for (const s of items) {
-    const isCommunity = !!s.community;
-    const isFfvl = s.provider === "ffvl";
-    // FFVL no tiene integración de observaciones todavía → siempre disabled
-    const enabled = isCommunity ? (s.stationId != null)
-                    : isFfvl ? false
-                    : ENABLED_STATION_IDS.has(s.id);
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "ts-result"
-      + (s.id === currentStationId ? " selected" : "")
-      + (enabled ? "" : " disabled")
-      + (isCommunity ? " community" : "")
-      + (isFfvl ? " ffvl" : "");
-    if (!enabled) btn.disabled = true;
-    let tail;
-    if (isCommunity) {
-      tail = `<span class="ts-result-badge">${t("to.community_badge")}</span>`;
-    } else if (isFfvl) {
-      tail = `<span class="ts-result-provider ffvl">FFVL</span>`;
-    } else if (enabled) {
-      tail = `<span class="ts-result-provider">${s.provider}</span>`;
-    } else {
-      tail = `<span class="ts-result-soon">${t("ts.coming_soon")}</span>`;
-    }
-    btn.innerHTML = `
-      <span class="ts-result-name">${escapeHtml(s.name)}</span>
-      <span class="ts-result-dist">${s.dist.toFixed(1)} km</span>
-      ${tail}
-    `;
-    if (enabled) {
-      btn.addEventListener("click", () => {
-        if (isCommunity) {
-          selectStation({
-            id: s.stationId, provider: "pioupiou",
-            name: s.name, shortName: s.name,
-            lat: s.lat, lon: s.lon,
-          });
-        } else {
-          selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon });
-        }
-        document.getElementById("tsPanel").hidden = true;
-        document.getElementById("tsToggleBtn").setAttribute("aria-expanded", "false");
-      });
-    }
-    // Botón "+ Proponer" para resultados deshabilitados (estaciones sin despegue conocido)
-    if (!enabled && !isCommunity) {
-      const u = window.PCAuth?.user;
-      if (u && !u.isAnonymous) {
-        const wrap = document.createElement("div");
-        wrap.className = "ts-result-row";
-        wrap.appendChild(btn);
-        const prop = document.createElement("button");
-        prop.type = "button";
-        prop.className = "ts-result-propose";
-        prop.title = t("to.propose");
-        prop.textContent = "+";
-        prop.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          openTakeoffSubmit({
-            name: s.name, lat: s.lat, lon: s.lon,
-            // Solo Pioupiou alimenta directamente las observaciones; FFVL no.
-            stationId: isFfvl ? null : s.id,
-            alt: s.alt || null,
-            orientations: s.orientations || "",
-          });
-        });
-        wrap.appendChild(prop);
-        resultsEl.appendChild(wrap);
-        continue;
-      }
-    }
-    resultsEl.appendChild(btn);
+  const u = window.PCAuth?.user;
+  const loggedIn = u && !u.isAnonymous;
+
+  if (favItems.length) {
+    const h = document.createElement("div");
+    h.className = "ts-section-header";
+    h.textContent = t("fav.section");
+    resultsEl.appendChild(h);
+    for (const s of favItems) resultsEl.appendChild(renderSearchRow(s, { loggedIn, favByKey, homeId, favKey }));
   }
+  if (others.length) {
+    if (favItems.length) {
+      const h2 = document.createElement("div");
+      h2.className = "ts-section-header";
+      h2.textContent = t("fav.others");
+      resultsEl.appendChild(h2);
+    }
+    for (const s of others) resultsEl.appendChild(renderSearchRow(s, { loggedIn, favByKey, homeId, favKey }));
+  }
+}
+
+function renderSearchRow(s, ctx) {
+  const isCommunity = !!s.community;
+  const isFfvl = s.provider === "ffvl";
+  const enabled = isCommunity ? (s.stationId != null)
+                  : isFfvl ? false
+                  : ENABLED_STATION_IDS.has(s.id);
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "ts-result"
+    + (s.id === currentStationId ? " selected" : "")
+    + (enabled ? "" : " disabled")
+    + (isCommunity ? " community" : "")
+    + (isFfvl ? " ffvl" : "");
+  if (!enabled) btn.disabled = true;
+  let tail;
+  if (isCommunity) {
+    tail = `<span class="ts-result-badge">${t("to.community_badge")}</span>`;
+  } else if (isFfvl) {
+    tail = `<span class="ts-result-provider ffvl">FFVL</span>`;
+  } else if (enabled) {
+    tail = `<span class="ts-result-provider">${s.provider}</span>`;
+  } else {
+    tail = `<span class="ts-result-soon">${t("ts.coming_soon")}</span>`;
+  }
+  btn.innerHTML = `
+    <span class="ts-result-name">${escapeHtml(s.name)}</span>
+    <span class="ts-result-dist">${s.dist.toFixed(1)} km</span>
+    ${tail}
+  `;
+  if (enabled) {
+    btn.addEventListener("click", () => {
+      if (isCommunity) {
+        selectStation({
+          id: s.stationId, provider: "pioupiou",
+          name: s.name, shortName: s.name,
+          lat: s.lat, lon: s.lon,
+        }, { criteria: s.raw?.criteria || null });
+      } else {
+        selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon });
+      }
+      document.getElementById("tsPanel").hidden = true;
+      document.getElementById("tsToggleBtn").setAttribute("aria-expanded", "false");
+    });
+  }
+
+  const row = document.createElement("div");
+  row.className = "ts-result-row";
+  row.appendChild(btn);
+
+  // Icon area (solo usuarios logueados no-anónimos)
+  if (ctx.loggedIn) {
+    const icons = document.createElement("span");
+    icons.className = "ts-result-icons";
+    const key = ctx.favKey(s);
+    const fav = ctx.favByKey[key];
+    const isHome = fav && fav.id === ctx.homeId;
+
+    // Estrella (favorito)
+    const star = document.createElement("button");
+    star.type = "button"; star.className = "ts-icon-btn" + (fav ? " is-active" : "");
+    star.title = fav ? t("fav.remove") : t("fav.add");
+    star.textContent = fav ? "★" : "☆";
+    star.addEventListener("click", async (ev) => {
+      ev.stopPropagation();
+      try {
+        if (fav) {
+          if (fav.id === ctx.homeId) await window.PCAuth.setHomeFavorite(null);
+          await window.PCAuth.removeFavorite(fav.id);
+        } else {
+          await window.PCAuth.addFavorite({
+            source: isCommunity ? "community" : (isFfvl ? "ffvl" : "pioupiou"),
+            refId: isCommunity ? (s.raw?.id || "") : (isFfvl ? s.rawId : s.id),
+            stationId: isCommunity ? s.stationId : (isFfvl ? null : s.id),
+            name: s.name,
+            lat: s.lat, lon: s.lon,
+            criteria: isCommunity ? (s.raw?.criteria || null) : null,
+            alertsEnabled: false,
+          });
+        }
+      } catch (e) { console.warn("[fav]", e); }
+    });
+    icons.appendChild(star);
+
+    // Corona (home) — solo si es favorito
+    if (fav) {
+      const crown = document.createElement("button");
+      crown.type = "button"; crown.className = "ts-icon-btn" + (isHome ? " is-home" : "");
+      crown.title = isHome ? t("fav.home_unset") : t("fav.home_set");
+      crown.textContent = isHome ? "👑" : "♛";
+      crown.addEventListener("click", async (ev) => {
+        ev.stopPropagation();
+        try { await window.PCAuth.setHomeFavorite(isHome ? null : fav.id); tsRunSearch(); }
+        catch (e) { console.warn("[home]", e); }
+      });
+      icons.appendChild(crown);
+
+      // Campana (alertas) — solo en favoritos
+      const bell = document.createElement("button");
+      bell.type = "button"; bell.className = "ts-icon-btn" + (fav.alertsEnabled ? " is-alert" : "");
+      bell.title = fav.alertsEnabled ? t("fav.alert_off") : t("fav.alert_on");
+      bell.textContent = fav.alertsEnabled ? "🔔" : "🔕";
+      bell.addEventListener("click", async (ev) => {
+        ev.stopPropagation();
+        try { await window.PCAuth.updateFavorite(fav.id, { alertsEnabled: !fav.alertsEnabled }); }
+        catch (e) { console.warn("[bell]", e); }
+      });
+      icons.appendChild(bell);
+    }
+
+    // Botón "+ Proponer" para resultados deshabilitados que no son comunidad
+    if (!enabled && !isCommunity) {
+      const prop = document.createElement("button");
+      prop.type = "button";
+      prop.className = "ts-result-propose";
+      prop.title = t("to.propose");
+      prop.textContent = "+";
+      prop.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        openTakeoffSubmit({
+          name: s.name, lat: s.lat, lon: s.lon,
+          stationId: isFfvl ? null : s.id,
+          alt: s.alt || null,
+          orientations: s.orientations || "",
+        });
+      });
+      icons.appendChild(prop);
+    }
+    row.appendChild(icons);
+  }
+  return row;
 }
 
 function initTakeoffSelector() {
@@ -2859,8 +3043,6 @@ window.addEventListener("pcuserchange", (e) => {
   const user = e.detail?.user;
   const isAdmin = !!e.detail?.isAdmin;
   // UI: muestra/oculta botones según estado.
-  const propose = document.getElementById("tsProposeBtn");
-  if (propose) propose.hidden = !(user && !user.isAnonymous);
   const adminBtn = document.getElementById("authAdminBtn");
   if (adminBtn) adminBtn.hidden = !isAdmin;
   if (!prefs) return;
@@ -2886,6 +3068,9 @@ window.addEventListener("pcuserchange", (e) => {
   if (changed) {
     refreshObservations(); refreshForecast(); renderCompare(); renderNearby();
   }
+  // Refresca panel de búsqueda para reflejar favoritos del usuario.
+  const panel = document.getElementById("tsPanel");
+  if (panel && !panel.hidden) tsRunSearch();
 });
 const _whTitleInit = document.getElementById("whTitle");
 if (_whTitleInit) _whTitleInit.textContent = t("wh.titleFmt").replace("{h}", WH_HOURS);
@@ -2896,13 +3081,60 @@ renderNearby();
 setInterval(refreshLiveOnly, REFRESH_MS);
 
 // === Despegues comunitarios: submit + admin ===
+const DIR16 = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+
+function renderDirRose(currentQualities) {
+  const host = document.getElementById("toDirRose");
+  if (!host) return;
+  host.innerHTML = "";
+  DIR16.forEach((name, idx) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "to-dir-btn";
+    b.textContent = name;
+    b.dataset.idx = String(idx);
+    const q = currentQualities[idx] || "";
+    if (q) b.dataset.q = q;
+    b.addEventListener("click", () => {
+      const cur = b.dataset.q || "";
+      const next = cur === "" ? "ideal" : cur === "ideal" ? "ok" : cur === "ok" ? "bad" : "";
+      if (next) b.dataset.q = next; else delete b.dataset.q;
+    });
+    host.appendChild(b);
+  });
+}
+
+function collectDirRose() {
+  const arr = new Array(16).fill(null);
+  document.querySelectorAll("#toDirRose .to-dir-btn").forEach(b => {
+    const i = parseInt(b.dataset.idx, 10);
+    const q = b.dataset.q || null;
+    if (Number.isFinite(i)) arr[i] = q;
+  });
+  return arr;
+}
+
 function openTakeoffSubmit(prefill) {
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
   document.getElementById("toSubmitMsg").textContent = "";
-  ["toName","toLat","toLon","toAlt","toOrient","toStation","toNotes"].forEach(id => {
+  ["toName","toLat","toLon","toAlt","toOrient","toStation","toNotes","toWindMin","toWindMax","toGustMax"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
+  // Roseta vacía por defecto, pero si el prefill trae orientaciones tipo "N,NO,O" las marcamos como ideal.
+  const initialQ = new Array(16).fill(null);
+  if (prefill?.orientations) {
+    // Normaliza: separa por coma, mapea NO→NW, etc.
+    const norm = (x) => x.trim().toUpperCase()
+      .replace("Ñ","N").replace("NORTE","N").replace("SUR","S").replace("ESTE","E").replace("OESTE","W")
+      .replace("NO","NW").replace("SO","SW").replace("NE","NE").replace("SE","SE");
+    String(prefill.orientations).split(/[,;\/\s]+/).map(norm).forEach(code => {
+      const idx = DIR16.indexOf(code);
+      if (idx >= 0) initialQ[idx] = "ideal";
+    });
+  }
+  renderDirRose(initialQ);
+
   // Pre-rellena: si nos pasan datos de una estación, los usamos; si no, centro actual.
   if (prefill && (prefill.lat != null || prefill.name)) {
     if (prefill.name) document.getElementById("toName").value = prefill.name;
@@ -2911,7 +3143,6 @@ function openTakeoffSubmit(prefill) {
     if (prefill.stationId != null) document.getElementById("toStation").value = String(prefill.stationId);
     if (prefill.alt != null && prefill.alt !== "") document.getElementById("toAlt").value = String(prefill.alt);
     if (prefill.orientations) document.getElementById("toOrient").value = String(prefill.orientations);
-    // Foco en el nombre para que pueda cambiarlo
     setTimeout(() => { document.getElementById("toName")?.focus(); document.getElementById("toName")?.select(); }, 50);
   } else {
     const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
@@ -2924,7 +3155,6 @@ function openTakeoffSubmit(prefill) {
 }
 function closeTakeoffSubmit() { document.getElementById("takeoffSubmitModal").hidden = true; }
 
-document.getElementById("tsProposeBtn")?.addEventListener("click", openTakeoffSubmit);
 document.getElementById("toSubmitClose")?.addEventListener("click", closeTakeoffSubmit);
 document.getElementById("takeoffSubmitModal")?.addEventListener("click", (e) => {
   if (e.target.id === "takeoffSubmitModal") closeTakeoffSubmit();
@@ -2939,14 +3169,32 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
   msg.style.color = "";
   msg.textContent = "";
   try {
+    const qualityByIndex = collectDirRose();
+    // Derivamos la lista textual "ideal: N, NNE…" para compatibilidad.
+    const ideals = DIR16.filter((_, i) => qualityByIndex[i] === "ideal");
+    const oks = DIR16.filter((_, i) => qualityByIndex[i] === "ok");
+    const orientationsText = (document.getElementById("toOrient").value || "").trim()
+      || ideals.concat(oks).join(",");
+    const windMinV = parseFloat(document.getElementById("toWindMin").value);
+    const windMaxV = parseFloat(document.getElementById("toWindMax").value);
+    const gustMaxV = parseFloat(document.getElementById("toGustMax").value);
+    const criteria = (qualityByIndex.some(Boolean) || Number.isFinite(windMinV) || Number.isFinite(windMaxV) || Number.isFinite(gustMaxV))
+      ? {
+          qualityByIndex,
+          windMin: Number.isFinite(windMinV) ? windMinV : null,
+          windMax: Number.isFinite(windMaxV) ? windMaxV : null,
+          gustMax: Number.isFinite(gustMaxV) ? gustMaxV : null,
+        }
+      : null;
     await window.PCAuth.submitTakeoff({
       name: document.getElementById("toName").value,
       lat: document.getElementById("toLat").value,
       lon: document.getElementById("toLon").value,
       alt: document.getElementById("toAlt").value,
-      orientations: document.getElementById("toOrient").value,
+      orientations: orientationsText,
       stationId: document.getElementById("toStation").value,
       notes: document.getElementById("toNotes").value,
+      criteria,
     });
     msg.style.color = "#2ecc71";
     msg.textContent = t("to.submit_ok");
@@ -3027,5 +3275,62 @@ function _hookTakeoffStreams() {
     const modal = document.getElementById("takeoffAdminModal");
     if (modal && !modal.hidden) renderAdminList();
   };
+  window.PCAuth.onFavoritesChange = () => {
+    const panel = document.getElementById("tsPanel");
+    if (panel && !panel.hidden) tsRunSearch();
+    startFavoriteAlertsPolling(); // re-arranca timer
+  };
 }
 _hookTakeoffStreams();
+
+// === Alertas por despegue favorito (polling) ===
+let _favPollTimer = null;
+const _favLastIdeal = {}; // favId → ts del último ideal notificado (anti-spam 1h)
+
+async function pollFavoriteAlerts() {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const favs = (window.PCAuth?.favorites || []).filter(f => f.alertsEnabled && f.stationId != null);
+  for (const f of favs) {
+    try {
+      const url = `${API_BASE}/live/${f.stationId}`;
+      const j = await fetchJson(url);
+      const m = j?.data?.measurements;
+      if (!m) continue;
+      const avg = m.wind_speed_avg ?? m.wind_avg ?? null;
+      const max = m.wind_speed_max ?? m.wind_max ?? null;
+      const dir = m.wind_heading ?? null;
+      if (avg == null || dir == null) continue;
+      // Aplica criterios del favorito (si los tiene) — sin tocar el estado global.
+      const c = f.criteria;
+      const arr = (c?.qualityByIndex && c.qualityByIndex.some(Boolean))
+        ? c.qualityByIndex.map(q => q || "ok")
+        : QUALITY_BY_INDEX;
+      const idx = Math.round((((dir % 360) + 360) % 360) / 22.5) % 16;
+      const dirQ = arr[idx] || "unknown";
+      const wmin = (c && Number.isFinite(c.windMin)) ? c.windMin : 5;
+      const wmax = (c && Number.isFinite(c.windMax)) ? c.windMax : 15;
+      const gmax = (c && Number.isFinite(c.gustMax)) ? c.gustMax : 30;
+      const tooStrong = avg >= gmax * 0.66 || (max != null && max >= gmax);
+      const ideal = !tooStrong && (avg >= wmin && avg <= wmax) && (max == null || max <= gmax * 0.83) && dirQ === "ideal";
+      if (!ideal) continue;
+      const last = _favLastIdeal[f.id] || 0;
+      if (Date.now() - last < 3600 * 1000) continue;
+      _favLastIdeal[f.id] = Date.now();
+      try {
+        new Notification(t("fav.notify_title").replace("{name}", f.name), {
+          body: `${avg.toFixed(0)} km/h · ${dirName(dir)}`,
+          icon: "icon.svg",
+          tag: "fav-" + f.id,
+        });
+      } catch {}
+    } catch (e) { /* silencioso */ }
+  }
+}
+
+function startFavoriteAlertsPolling() {
+  if (_favPollTimer) clearInterval(_favPollTimer);
+  // Cada 5 minutos
+  _favPollTimer = setInterval(pollFavoriteAlerts, 5 * 60 * 1000);
+  // Primera comprobación tras 30s
+  setTimeout(pollFavoriteAlerts, 30 * 1000);
+}

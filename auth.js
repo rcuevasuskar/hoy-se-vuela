@@ -128,15 +128,33 @@ if (!isConfigured()) {
   window.PCAuth.addFavorite = async (station) => {
     const u = auth.currentUser;
     if (!u || u.isAnonymous) return;
-    await addDoc(collection(db, "users", u.uid, "favorites"), {
-      stationId: station.id, name: station.name, lat: station.lat, lon: station.lon,
+    const payload = {
+      source: station.source || "pioupiou",  // "pioupiou" | "community"
+      refId: String(station.refId ?? station.id ?? ""),
+      stationId: station.stationId != null ? Number(station.stationId) : null,
+      name: station.name,
+      lat: Number(station.lat), lon: Number(station.lon),
+      criteria: station.criteria || null,
+      alertsEnabled: !!station.alertsEnabled,
       addedAt: serverTimestamp(),
-    });
+    };
+    return await addDoc(collection(db, "users", u.uid, "favorites"), payload);
+  };
+  window.PCAuth.updateFavorite = async (favId, patch) => {
+    const u = auth.currentUser;
+    if (!u || u.isAnonymous) return;
+    await updateDoc(doc(db, "users", u.uid, "favorites", favId), patch);
   };
   window.PCAuth.removeFavorite = async (favId) => {
     const u = auth.currentUser;
     if (!u || u.isAnonymous) return;
     await deleteDoc(doc(db, "users", u.uid, "favorites", favId));
+  };
+  window.PCAuth.setHomeFavorite = async (favId) => {
+    const u = auth.currentUser;
+    if (!u || u.isAnonymous) return;
+    await updateDoc(doc(db, "users", u.uid), { homeFavId: favId || null, updatedAt: serverTimestamp() });
+    if (window.PCAuth.prefs) window.PCAuth.prefs.homeFavId = favId || null;
   };
 
   // === Despegues comunitarios ===
@@ -184,6 +202,7 @@ if (!isConfigured()) {
       orientations: String(data.orientations || "").trim(),
       stationId: data.stationId != null && data.stationId !== "" ? Number(data.stationId) : null,
       notes: String(data.notes || "").trim() || null,
+      criteria: data.criteria || null,
       status: "pending",
       submittedBy: u.uid,
       submittedByName: u.displayName || u.email || "anon",

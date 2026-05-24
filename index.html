@@ -54,9 +54,6 @@
         <div class="ts-results" id="tsResults">
           <div class="ts-hint" data-i18n="ts.hint">Pulsa 📍 para usar tu ubicación o escribe para filtrar.</div>
         </div>
-        <div class="ts-panel-actions">
-          <button id="tsProposeBtn" class="ts-propose" type="button" hidden data-i18n="to.propose">+ Proponer despegue</button>
-        </div>
       </div>
     </div>
   </header>
@@ -324,6 +321,24 @@
       </div>
       <input id="toStation" type="number" step="1" placeholder="ID estación Pioupiou (opcional)" data-i18n-placeholder="to.station_ph" />
       <textarea id="toNotes" rows="3" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
+
+      <fieldset class="to-criteria">
+        <legend data-i18n="to.criteria_title">Criterios de vuelo</legend>
+        <p class="to-hint" data-i18n="to.dirs_hint">Pulsa cada dirección para marcarla como Ideal (verde), Volable (amarillo) o Peligrosa (rojo).</p>
+        <div id="toDirRose" class="to-dir-rose"></div>
+        <div class="to-row">
+          <label class="to-field"><span data-i18n="to.wind_min">Viento mín. ideal (km/h)</span>
+            <input id="toWindMin" type="number" step="1" min="0" max="60" placeholder="5" />
+          </label>
+          <label class="to-field"><span data-i18n="to.wind_max">Viento máx. ideal (km/h)</span>
+            <input id="toWindMax" type="number" step="1" min="0" max="80" placeholder="15" />
+          </label>
+          <label class="to-field"><span data-i18n="to.gust_max">Racha máx. segura (km/h)</span>
+            <input id="toGustMax" type="number" step="1" min="0" max="100" placeholder="30" />
+          </label>
+        </div>
+      </fieldset>
+
       <button id="toPickOnMapBtn" class="auth-link" type="button" data-i18n="to.pick_map">📍 Usar coordenadas actuales del mapa</button>
       <button id="toSubmitBtn" class="auth-primary" data-i18n="to.submit">Enviar para revisión</button>
       <p id="toSubmitMsg" class="auth-error" role="alert"></p>
