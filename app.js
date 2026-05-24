@@ -3523,23 +3523,33 @@ async function tsRunSearch() {
   items = items.concat(community);
 
   // Evita duplicados: si una estación Pioupiou/FFVL ya está registrada como despegue comunitario
-  // (mismo stationId o muy cerca geográficamente / mismo nombre), sólo mostramos la tarjeta comunitaria.
+  // (mismo stationId, mismo nombre normalizado o muy cerca geográficamente), sólo mostramos la tarjeta comunitaria.
   const communityStationIds = new Set(
     community.map(c => c.stationId).filter(id => id != null).map(Number)
   );
-  const normalizeName = (n) => String(n || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const normalizeName = (n) => String(n || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(despegue|cerro|alto|loma|sierra|de|del|la|el|los|las)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
   const communityNames = new Set(community.map(c => normalizeName(c.name)).filter(Boolean));
+  const PROX_KM = 2.0; // un despegue y su estación de viento suelen estar dentro de 2 km
   if (community.length) {
+    const before = items.length;
     items = items.filter(s => {
       if (s.community) return true;
       if (communityStationIds.has(Number(s.id))) return false;
-      if (communityNames.has(normalizeName(s.name))) return false;
-      // Cerca (≤200 m) de algún despegue comunitario
+      const nm = normalizeName(s.name);
+      if (nm && communityNames.has(nm)) return false;
       for (const c of community) {
-        if (haversineKm(s.lat, s.lon, c.lat, c.lon) <= 0.2) return false;
+        if (haversineKm(s.lat, s.lon, c.lat, c.lon) <= PROX_KM) return false;
       }
       return true;
     });
+    if (window.PCAuth?.isAdmin) {
+      console.debug("[ts] dedup", { before, after: items.length, communityStationIds: [...communityStationIds], communityNames: [...communityNames] });
+    }
   }
 
   if (query) {
