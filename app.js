@@ -2401,11 +2401,12 @@ async function renderNearby() {
   try {
     const all = await getAllStations();
     const now = Date.now();
+    const c = distCenter();
     const within = all
       .map(s => {
         const lat = s.location?.latitude, lon = s.location?.longitude;
         if (lat == null || lon == null) return null;
-        const dist = haversineKm(currentTakeoff.lat, currentTakeoff.lon, lat, lon);
+        const dist = haversineKm(c.lat, c.lon, lat, lon);
         return { s, dist, lat, lon };
       })
       .filter(x => x && x.dist <= 50 && x.s.id !== currentStationId)
@@ -2559,9 +2560,10 @@ function ktToKmh(kt) { return kt == null ? null : kt * 1.852; }
 async function renderMetarStations() {
   const grid = document.getElementById("nearbyGrid");
   if (!grid) return;
-  // Filtra aeropuertos dentro del radio (tsRadius).
+  // Filtra aeropuertos dentro del radio (tsRadius) desde la posición del usuario (o despegue como fallback).
+  const c = distCenter();
   const within = METAR_AIRPORTS
-    .map(a => ({ ...a, dist: haversineKm(currentTakeoff.lat, currentTakeoff.lon, a.lat, a.lon) }))
+    .map(a => ({ ...a, dist: haversineKm(c.lat, c.lon, a.lat, a.lon) }))
     .filter(a => a.dist <= tsRadius)
     .sort((a, b) => a.dist - b.dist);
   if (!within.length) return;
@@ -3111,6 +3113,12 @@ if (langBtn) {
 // === Takeoff selector ===
 let allStationsCache = null;
 let userLocation = null; // {lat, lon} si el usuario lo ha activado
+
+// Centro de referencia para distancias mostradas al usuario (estaciones cercanas, METARs,
+// buscador): preferimos su posición real si la ha compartido; en su defecto, el despegue actual.
+function distCenter() {
+  return userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
+}
 let tsRadius = parseInt(localStorage.getItem("tsRadius") || "50", 10);
 
 function refreshAllForCurrentTakeoff() {
@@ -3438,7 +3446,7 @@ async function tsRunSearch() {
   const resultsEl = document.getElementById("tsResults");
   if (!resultsEl) return;
   const query = (document.getElementById("tsSearch")?.value || "").trim().toLowerCase();
-  const center = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
+  const center = distCenter();
 
   resultsEl.innerHTML = `<div class="ts-loading">${t("ts.loading")}</div>`;
   const all = await ensureAllStations();
@@ -3756,6 +3764,8 @@ function initTakeoffSelector() {
             toggleBtn?.setAttribute("aria-expanded", "true");
           }
           tsRunSearch();
+          // Refresca también las distancias mostradas en la tarjeta "Estaciones cercanas".
+          if (typeof renderNearby === "function") renderNearby();
         },
         (err) => {
           console.warn("geolocation:", err);
