@@ -1617,6 +1617,26 @@ async function fetchJson(url) {
 }
 
 async function getLive() {
+  // v100: estaciones no-Pioupiou (AEMET / Holfuy) usan su propio fetch y
+  // devolvemos un objeto con el mismo shape `{ measurements: {...} }`.
+  const prov = currentStation?.provider;
+  if (prov === "aemet" || prov === "holfuy") {
+    const list = prov === "aemet"
+      ? await getAllAemetStations()
+      : await getAllHolfuyStations();
+    const s = (list || []).find(x => x.id === currentStationId);
+    if (!s) return null;
+    return {
+      measurements: {
+        wind_heading:   s.wind_heading   ?? null,
+        wind_speed_min: s.wind_speed_min ?? null,
+        wind_speed_avg: s.wind_speed_avg ?? null,
+        wind_speed_max: s.wind_speed_max ?? null,
+        date:           s.lastDate       ?? null,
+      },
+      status: { date: s.lastDate ?? null },
+    };
+  }
   const data = await fetchJson(`${API_BASE}/live/${currentStationId}`);
   return data?.data;
 }
@@ -4065,7 +4085,8 @@ function renderSearchRow(s, ctx) {
   const isAemet = s.provider === "aemet";
   const isHolfuy = s.provider === "holfuy";
   const enabled = isCommunity ? (s.stationId != null)
-                  : (isFfvl || isAemet || isHolfuy) ? false
+                  : isFfvl ? false
+                  : (isAemet || isHolfuy) ? true
                   : ENABLED_STATION_IDS.has(s.id);
   const btn = document.createElement("button");
   btn.type = "button";
