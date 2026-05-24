@@ -49,10 +49,13 @@ const THEME_VALUES = ["auto", "dark", "light"];
 const THEME_ICON = { auto: "💻", dark: "🌙", light: "☀️" };
 let currentTheme = (function() {
   const saved = localStorage.getItem("theme");
-  return THEME_VALUES.includes(saved) ? saved : "dark";
+  // v108: default = "dark" siempre. Migra "auto" -> "dark" (antes era el default
+  // implicito y dejaba ver tema claro si el SO estaba en claro).
+  if (saved === "auto" || !THEME_VALUES.includes(saved)) return "dark";
+  return saved;
 })();
 function applyTheme(theme) {
-  if (!THEME_VALUES.includes(theme)) theme = "auto";
+  if (!THEME_VALUES.includes(theme)) theme = "dark";
   currentTheme = theme;
   document.documentElement.setAttribute("data-theme", theme);
   const ico = document.getElementById("themeIcon");
@@ -1875,11 +1878,12 @@ function _aemetApiKey() {
 }
 
 async function getAllAemetStations() {
-  if (_aemetCache && (Date.now() - _aemetCacheTs) < AEMET_CACHE_MS) return _aemetCache;
-  // Si tenemos un cache persistido reciente, úsalo de partida y refresca en segundo plano.
-  if (!_aemetCache) {
+  // v108: trata cache vacia como ausente (antes una respuesta puntual fallida
+  // dejaba [] en _aemetCache y en LS y se servia 15 min / 24 h sin reintentar).
+  if (_aemetCache && _aemetCache.length && (Date.now() - _aemetCacheTs) < AEMET_CACHE_MS) return _aemetCache;
+  if (!_aemetCache || !_aemetCache.length) {
     const ls = _aemetLoadLs();
-    if (ls && (Date.now() - ls.ts) < AEMET_LS_TTL) {
+    if (ls && Array.isArray(ls.data) && ls.data.length && (Date.now() - ls.ts) < AEMET_LS_TTL) {
       _aemetCache = ls.data;
       _aemetCacheTs = ls.ts;
     }
@@ -1911,7 +1915,7 @@ async function getAllAemetStations() {
       if (!Number.isFinite(ts)) continue;
       if (!prev || ts > prev._ts) { r._ts = ts; byId.set(r.idema, r); }
     }
-    _aemetCache = Array.from(byId.values()).map(r => ({
+    const parsed = Array.from(byId.values()).map(r => ({
       id: "aemet_" + r.idema,
       rawId: r.idema,
       provider: "aemet",
@@ -1927,6 +1931,16 @@ async function getAllAemetStations() {
       temperature:    r.ta  != null ? r.ta  : null,
       humidity:       r.hr  != null ? r.hr  : null,
     })).filter(s => Number.isFinite(s.lat) && Number.isFinite(s.lon));
+    // v108: nunca persistas una lista vacia (proteccion contra poison cache).
+    if (parsed.length === 0 && _aemetCache && _aemetCache.length) {
+      console.warn("AEMET: parse vacio, conservando cache previa");
+      return _aemetCache;
+    }
+    if (parsed.length === 0) {
+      console.warn("AEMET: parse vacio");
+      return _aemetCache || [];
+    }
+    _aemetCache = parsed;
     _aemetCacheTs = Date.now();
     _aemetSaveLs(_aemetCache);
     return _aemetCache;
@@ -4640,7 +4654,9 @@ window.addEventListener("pcuserchange", (e) => {
     setWindHistoryHours(prefs.whHours);
   }
   if (prefs.theme && THEME_VALUES.includes(prefs.theme) && prefs.theme !== currentTheme) {
-    applyTheme(prefs.theme);
+    // v108: migra "auto" remoto -> "dark" para forzar oscuro por defecto.
+    const themeToApply = prefs.theme === "auto" ? "dark" : prefs.theme;
+    if (themeToApply !== currentTheme) applyTheme(themeToApply);
   }
   if (prefs.tsRadius && prefs.tsRadius !== tsRadius) {
     tsRadius = prefs.tsRadius;
