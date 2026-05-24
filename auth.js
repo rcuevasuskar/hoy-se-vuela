@@ -203,6 +203,7 @@ if (!isConfigured()) {
       stationId: data.stationId != null && data.stationId !== "" ? Number(data.stationId) : null,
       notes: String(data.notes || "").trim() || null,
       criteria: data.criteria || null,
+      targetId: data.targetId || null,
       status: "pending",
       submittedBy: u.uid,
       submittedByName: u.displayName || u.email || "anon",
@@ -220,6 +221,28 @@ if (!isConfigured()) {
   window.PCAuth.approveTakeoff = async (id) => {
     const u = auth.currentUser;
     if (!u || !window.PCAuth.isAdmin) throw new Error("not_admin");
+    // ¿Es una sugerencia de cambios sobre otro despegue? → fusionar y eliminar.
+    const list = window.PCAuth.pendingTakeoffs || [];
+    const it = list.find(x => x.id === id);
+    if (it && it.targetId) {
+      const patch = {
+        name: it.name,
+        lat: it.lat,
+        lon: it.lon,
+        alt: it.alt ?? null,
+        orientations: it.orientations || "",
+        stationId: it.stationId ?? null,
+        notes: it.notes ?? null,
+        criteria: it.criteria || null,
+        lastSuggestionBy: it.submittedBy,
+        lastSuggestionAt: serverTimestamp(),
+        reviewedBy: u.uid,
+        reviewedAt: serverTimestamp(),
+      };
+      await updateDoc(doc(db, "takeoffs", it.targetId), patch);
+      await deleteDoc(doc(db, "takeoffs", id));
+      return;
+    }
     await updateDoc(doc(db, "takeoffs", id), {
       status: "approved", reviewedBy: u.uid, reviewedAt: serverTimestamp(), rejectionReason: null,
     });

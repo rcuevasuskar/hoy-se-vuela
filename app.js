@@ -12,6 +12,7 @@ let currentStation = loadSavedStation() || { ...DEFAULT_STATION };
 let currentStationId = currentStation.id;
 let currentTakeoff = { lat: currentStation.lat, lon: currentStation.lon, name: currentStation.name };
 let currentTakeoffCriteria = null; // {qualityByIndex:[16], windMin, windMax, gustMax} - sustituye verdict global cuando hay valores
+let currentTakeoffOriginId = null; // id del documento takeoffs si el despegue actual viene de la comunidad
 
 // Despegues con criterios de volabilidad ya definidos.
 // Hasta definir el resto, sólo estos serán seleccionables en el buscador.
@@ -132,6 +133,13 @@ const I18N = {
     "to.wind_min": "Viento mín. ideal (km/h)",
     "to.wind_max": "Viento máx. ideal (km/h)",
     "to.gust_max": "Racha máx. segura (km/h)",
+    "to.suggest": "Sugerir cambios",
+    "to.suggest_title": "Sugerir cambios al despegue",
+    "to.suggest_submit": "Enviar sugerencia",
+    "to.suggest_ok": "Sugerencia enviada. La revisará un administrador.",
+    "to.suggest_notfound": "No se ha encontrado el despegue de origen.",
+    "to.suggestion_badge": "sugerencia",
+    "act.orient_toggle": "Orientación en tiempo real (brújula del dispositivo)",
     "fav.add": "Marcar como favorito",
     "fav.remove": "Quitar de favoritos",
     "fav.home_set": "Marcar como despegue habitual",
@@ -354,6 +362,13 @@ const I18N = {
     "to.wind_min": "Ideal wind min (km/h)",
     "to.wind_max": "Ideal wind max (km/h)",
     "to.gust_max": "Max safe gust (km/h)",
+    "to.suggest": "Suggest changes",
+    "to.suggest_title": "Suggest changes to takeoff",
+    "to.suggest_submit": "Send suggestion",
+    "to.suggest_ok": "Suggestion sent. An admin will review it.",
+    "to.suggest_notfound": "Origin takeoff not found.",
+    "to.suggestion_badge": "suggestion",
+    "act.orient_toggle": "Live orientation (device compass)",
     "fav.add": "Add to favorites",
     "fav.remove": "Remove from favorites",
     "fav.home_set": "Mark as default takeoff",
@@ -576,6 +591,13 @@ const I18N = {
     "to.wind_min": "Ideal Wind min (km/h)",
     "to.wind_max": "Ideal Wind max (km/h)",
     "to.gust_max": "Max. sichere Böe (km/h)",
+    "to.suggest": "Änderungen vorschlagen",
+    "to.suggest_title": "Änderungen am Startplatz vorschlagen",
+    "to.suggest_submit": "Vorschlag senden",
+    "to.suggest_ok": "Vorschlag gesendet. Ein Admin prüft ihn.",
+    "to.suggest_notfound": "Ursprungs-Startplatz nicht gefunden.",
+    "to.suggestion_badge": "Vorschlag",
+    "act.orient_toggle": "Live-Ausrichtung (Gerätekompass)",
     "fav.add": "Zu Favoriten hinzufügen",
     "fav.remove": "Aus Favoriten entfernen",
     "fav.home_set": "Als Stamm-Startplatz festlegen",
@@ -798,6 +820,13 @@ const I18N = {
     "to.wind_min": "Vent min idéal (km/h)",
     "to.wind_max": "Vent max idéal (km/h)",
     "to.gust_max": "Rafale max sûre (km/h)",
+    "to.suggest": "Suggérer des modifications",
+    "to.suggest_title": "Suggérer des modifications au déco",
+    "to.suggest_submit": "Envoyer la suggestion",
+    "to.suggest_ok": "Suggestion envoyée. Un admin la vérifiera.",
+    "to.suggest_notfound": "Déco d’origine introuvable.",
+    "to.suggestion_badge": "suggestion",
+    "act.orient_toggle": "Orientation en temps réel (boussole de l’appareil)",
     "fav.add": "Ajouter aux favoris",
     "fav.remove": "Retirer des favoris",
     "fav.home_set": "Définir comme déco habituel",
@@ -2665,13 +2694,117 @@ function applyCurrentTakeoffLabel() {
   if (el) el.textContent = currentStation.shortName || currentStation.name;
   const guideEl = document.getElementById("guideTakeoffName");
   if (guideEl) guideEl.textContent = currentStation.shortName || currentStation.name;
+  renderCurrentTakeoffActions();
 }
+
+function renderCurrentTakeoffActions() {
+  const host = document.getElementById("tsCurrentActions");
+  if (!host) return;
+  host.innerHTML = "";
+  const u = window.PCAuth?.user;
+  if (!u || u.isAnonymous) return;
+
+  // Localiza el favorito que corresponde al despegue actual.
+  const favs = window.PCAuth?.favorites || [];
+  const homeId = window.PCAuth?.prefs?.homeFavId || null;
+  let fav = null;
+  if (currentTakeoffOriginId) {
+    fav = favs.find(f => f.source === "community" && f.refId === currentTakeoffOriginId);
+  } else if (currentStation?.provider === "pioupiou") {
+    fav = favs.find(f => f.source === "pioupiou" && String(f.refId) === String(currentStationId));
+  } else if (currentStation?.provider === "ffvl") {
+    fav = favs.find(f => f.source === "ffvl" && String(f.refId) === String(currentStation.rawId || currentStationId));
+  }
+  const isHome = !!(fav && fav.id === homeId);
+  const favoritable = !!(currentTakeoffOriginId || (currentStation?.provider === "pioupiou") || (currentStation?.provider === "ffvl"));
+
+  // ⭐ favorito
+  if (favoritable) {
+    const star = document.createElement("button");
+    star.type = "button"; star.className = "ts-icon-btn" + (fav ? " is-active" : "");
+    star.title = fav ? t("fav.remove") : t("fav.add");
+    star.textContent = fav ? "★" : "☆";
+    star.addEventListener("click", async () => {
+      try {
+        if (fav) {
+          if (fav.id === homeId) await window.PCAuth.setHomeFavorite(null);
+          await window.PCAuth.removeFavorite(fav.id);
+        } else {
+          const source = currentTakeoffOriginId ? "community" : currentStation.provider;
+          const refId = currentTakeoffOriginId
+            ? currentTakeoffOriginId
+            : (source === "ffvl" ? (currentStation.rawId || currentStationId) : currentStationId);
+          await window.PCAuth.addFavorite({
+            source, refId,
+            stationId: source === "community" ? currentStationId : (source === "ffvl" ? null : currentStationId),
+            name: currentStation.name,
+            lat: currentTakeoff.lat, lon: currentTakeoff.lon,
+            criteria: currentTakeoffCriteria || null,
+            alertsEnabled: false,
+          });
+        }
+      } catch (e) { console.warn("[fav cur]", e); }
+    });
+    host.appendChild(star);
+  }
+
+  // ♛ habitual (solo si ya es favorito)
+  if (fav) {
+    const crown = document.createElement("button");
+    crown.type = "button"; crown.className = "ts-icon-btn" + (isHome ? " is-home" : "");
+    crown.title = isHome ? t("fav.home_unset") : t("fav.home_set");
+    crown.textContent = isHome ? "👑" : "♛";
+    crown.addEventListener("click", async () => {
+      try { await window.PCAuth.setHomeFavorite(isHome ? null : fav.id); renderCurrentTakeoffActions(); }
+      catch (e) { console.warn("[home cur]", e); }
+    });
+    host.appendChild(crown);
+    // 🔔 alertas
+    const bell = document.createElement("button");
+    bell.type = "button"; bell.className = "ts-icon-btn" + (fav.alertsEnabled ? " is-alert" : "");
+    bell.title = fav.alertsEnabled ? t("fav.alert_off") : t("fav.alert_on");
+    bell.textContent = fav.alertsEnabled ? "🔔" : "🔕";
+    bell.addEventListener("click", async () => {
+      try { await window.PCAuth.updateFavorite(fav.id, { alertsEnabled: !fav.alertsEnabled }); }
+      catch (e) { console.warn("[bell cur]", e); }
+    });
+    host.appendChild(bell);
+  }
+
+  // ✎ sugerir cambios (solo despegues comunitarios ya existentes)
+  if (currentTakeoffOriginId) {
+    const sug = document.createElement("button");
+    sug.type = "button"; sug.className = "ts-icon-btn";
+    sug.title = t("to.suggest");
+    sug.textContent = "✎";
+    sug.addEventListener("click", () => openTakeoffSuggest(currentTakeoffOriginId));
+    host.appendChild(sug);
+  }
+}
+
+function openTakeoffSuggest(originId) {
+  const to = (window.PCAuth?.approvedTakeoffs || []).find(x => x.id === originId);
+  if (!to) { alert(t("to.suggest_notfound")); return; }
+  _suggestTargetId = originId;
+  openTakeoffSubmit({
+    _suggesting: true,
+    name: to.name, lat: to.lat, lon: to.lon, alt: to.alt,
+    stationId: to.stationId,
+    orientations: to.orientations || "",
+    notes: to.notes || "",
+    criteria: to.criteria || null,
+  });
+  const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.suggest_title");
+  const sb = document.getElementById("toSubmitBtn"); if (sb) sb.textContent = t("to.suggest_submit");
+}
+let _suggestTargetId = null;
 
 function selectStation(station, opts) {
   currentStation = station;
   currentStationId = station.id;
   currentTakeoff = { lat: station.lat, lon: station.lon, name: station.name };
   currentTakeoffCriteria = (opts && opts.criteria) ? opts.criteria : null;
+  currentTakeoffOriginId = (opts && opts.originId) ? opts.originId : null;
   saveSelectedStation(station);
   applyCurrentTakeoffLabel();
   refreshAllForCurrentTakeoff();
@@ -2858,7 +2991,7 @@ function renderSearchRow(s, ctx) {
           id: s.stationId, provider: "pioupiou",
           name: s.name, shortName: s.name,
           lat: s.lat, lon: s.lon,
-        }, { criteria: s.raw?.criteria || null });
+        }, { criteria: s.raw?.criteria || null, originId: s.raw?.id || null });
       } else {
         selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon });
       }
@@ -3071,6 +3204,7 @@ window.addEventListener("pcuserchange", (e) => {
   // Refresca panel de búsqueda para reflejar favoritos del usuario.
   const panel = document.getElementById("tsPanel");
   if (panel && !panel.hidden) tsRunSearch();
+  renderCurrentTakeoffActions();
 });
 const _whTitleInit = document.getElementById("whTitle");
 if (_whTitleInit) _whTitleInit.textContent = t("wh.titleFmt").replace("{h}", WH_HOURS);
@@ -3121,10 +3255,18 @@ function openTakeoffSubmit(prefill) {
   ["toName","toLat","toLon","toAlt","toOrient","toStation","toNotes","toWindMin","toWindMax","toGustMax"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
-  // Roseta vacía por defecto, pero si el prefill trae orientaciones tipo "N,NO,O" las marcamos como ideal.
-  const initialQ = new Array(16).fill(null);
-  if (prefill?.orientations) {
-    // Normaliza: separa por coma, mapea NO→NW, etc.
+  // Restaura título y botón por si veníamos de modo sugerencia (será sobreescrito por openTakeoffSuggest si aplica)
+  if (!prefill || !prefill._suggesting) {
+    _suggestTargetId = null;
+    const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.submit_title");
+    const sb = document.getElementById("toSubmitBtn"); if (sb) sb.textContent = t("to.submit");
+  }
+  // Roseta inicial: si prefill.criteria.qualityByIndex existe, lo usamos; si no, derivamos de prefill.orientations.
+  let initialQ = new Array(16).fill(null);
+  if (prefill?.criteria?.qualityByIndex && prefill.criteria.qualityByIndex.some(Boolean)) {
+    initialQ = prefill.criteria.qualityByIndex.slice(0, 16);
+    while (initialQ.length < 16) initialQ.push(null);
+  } else if (prefill?.orientations) {
     const norm = (x) => x.trim().toUpperCase()
       .replace("Ñ","N").replace("NORTE","N").replace("SUR","S").replace("ESTE","E").replace("OESTE","W")
       .replace("NO","NW").replace("SO","SW").replace("NE","NE").replace("SE","SE");
@@ -3134,6 +3276,11 @@ function openTakeoffSubmit(prefill) {
     });
   }
   renderDirRose(initialQ);
+  if (prefill?.criteria) {
+    if (Number.isFinite(prefill.criteria.windMin)) document.getElementById("toWindMin").value = String(prefill.criteria.windMin);
+    if (Number.isFinite(prefill.criteria.windMax)) document.getElementById("toWindMax").value = String(prefill.criteria.windMax);
+    if (Number.isFinite(prefill.criteria.gustMax)) document.getElementById("toGustMax").value = String(prefill.criteria.gustMax);
+  }
 
   // Pre-rellena: si nos pasan datos de una estación, los usamos; si no, centro actual.
   if (prefill && (prefill.lat != null || prefill.name)) {
@@ -3153,7 +3300,12 @@ function openTakeoffSubmit(prefill) {
   }
   document.getElementById("takeoffSubmitModal").hidden = false;
 }
-function closeTakeoffSubmit() { document.getElementById("takeoffSubmitModal").hidden = true; }
+function closeTakeoffSubmit() {
+  document.getElementById("takeoffSubmitModal").hidden = true;
+  _suggestTargetId = null;
+  const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.submit_title");
+  const sb = document.getElementById("toSubmitBtn"); if (sb) sb.textContent = t("to.submit");
+}
 
 document.getElementById("toSubmitClose")?.addEventListener("click", closeTakeoffSubmit);
 document.getElementById("takeoffSubmitModal")?.addEventListener("click", (e) => {
@@ -3195,9 +3347,10 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       stationId: document.getElementById("toStation").value,
       notes: document.getElementById("toNotes").value,
       criteria,
+      targetId: _suggestTargetId || null,
     });
     msg.style.color = "#2ecc71";
-    msg.textContent = t("to.submit_ok");
+    msg.textContent = _suggestTargetId ? t("to.suggest_ok") : t("to.submit_ok");
     setTimeout(closeTakeoffSubmit, 1400);
   } catch (e) {
     console.error("[to] submit", e);
@@ -3221,8 +3374,14 @@ function renderAdminList() {
     const ori = it.orientations ? ` · ${escapeHtml(it.orientations)}` : "";
     const alt = it.alt != null ? ` · ${it.alt} m` : "";
     const sta = it.stationId != null ? ` · Pioupiou ${it.stationId}` : "";
+    const targetName = it.targetId
+      ? ((window.PCAuth?.approvedTakeoffs || []).find(x => x.id === it.targetId)?.name || it.targetId)
+      : null;
+    const badge = it.targetId
+      ? `<span class="ts-result-badge" style="background:#a55">${t("to.suggestion_badge")} → ${escapeHtml(targetName)}</span> `
+      : "";
     card.innerHTML = `
-      <h3>${escapeHtml(it.name)}</h3>
+      <h3>${badge}${escapeHtml(it.name)}</h3>
       <div class="to-admin-meta">
         ${t("to.submitted_by")}: <strong>${escapeHtml(it.submittedByName || "?")}</strong><br>
         ${Number(it.lat).toFixed(5)}, ${Number(it.lon).toFixed(5)}${alt}${ori}${sta}
@@ -3278,6 +3437,7 @@ function _hookTakeoffStreams() {
   window.PCAuth.onFavoritesChange = () => {
     const panel = document.getElementById("tsPanel");
     if (panel && !panel.hidden) tsRunSearch();
+    renderCurrentTakeoffActions();
     startFavoriteAlertsPolling(); // re-arranca timer
   };
 }

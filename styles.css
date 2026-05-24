@@ -381,6 +381,21 @@ header.topbar .ts-current {
   flex-wrap: wrap;
 }
 .ts-current strong { color: #fff; font-weight: 600; }
+.ts-current-actions {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 4px;
+  align-items: center;
+}
+.ts-current-actions .ts-icon-btn,
+.ts-current .ts-current-compass {
+  font-size: 0.95rem;
+  padding: 0 2px;
+}
+.ts-current-compass.active {
+  color: var(--accent);
+  text-shadow: 0 0 6px rgba(78,161,255,0.6);
+}
 .ts-panel {
   margin-top: 10px;
   padding-top: 10px;
