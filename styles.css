@@ -1935,3 +1935,35 @@ footer {
 
 /* Avatar siempre como icono: bg neutral, no accent */
 .um-user-header .um-user-avatar { background: transparent; color: inherit; font-size: 1.2rem; }
+
+/* === Filtro de proveedores en panel de b\u00fasqueda === */
+.ts-providers {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+}
+.ts-prov {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: transparent;
+  user-select: none;
+}
+.ts-prov input { display: none; }
+.ts-prov:has(input:checked) {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(80,140,220,0.12);
+}
+.ts-prov:hover { border-color: var(--accent); }
+@media (max-width: 640px) {
+  .ts-providers { margin-left: 0; width: 100%; }
+}

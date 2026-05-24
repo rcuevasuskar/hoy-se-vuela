@@ -262,6 +262,7 @@ const I18N = {
     "ts.hint": "Pulsa 📍 para usar tu ubicación o escribe para filtrar.",
     "ts.loading": "Cargando estaciones…",
     "ts.empty": "No hay estaciones activas en este radio.",
+    "ts.empty_global": "No hay estaciones disponibles con los filtros actuales.",
     "ts.geo_denied": "No se pudo obtener tu ubicación. Permiso denegado.",
     "ts.geo_unavailable": "Geolocalización no disponible en este dispositivo.",
     "wh.title": "Últimas 2 h (km/h)",
@@ -509,6 +510,7 @@ const I18N = {
     "ts.hint": "Tap 📍 to use your location or type to filter.",
     "ts.loading": "Loading stations…",
     "ts.empty": "No active stations within this radius.",
+    "ts.empty_global": "No stations available with the current filters.",
     "ts.geo_denied": "Could not get your location. Permission denied.",
     "ts.geo_unavailable": "Geolocation not available on this device.",
     "wh.title": "Last 2 h (km/h)",
@@ -756,6 +758,7 @@ const I18N = {
     "ts.hint": "📍 tippen, um deinen Standort zu nutzen, oder filtern.",
     "ts.loading": "Stationen werden geladen…",
     "ts.empty": "Keine aktiven Stationen in diesem Radius.",
+    "ts.empty_global": "Keine Stationen mit den aktuellen Filtern.",
     "ts.geo_denied": "Standort nicht verfügbar. Berechtigung verweigert.",
     "ts.geo_unavailable": "Geolokalisierung auf diesem Gerät nicht verfügbar.",
     "wh.title": "Letzte 2 h (km/h)",
@@ -1003,6 +1006,7 @@ const I18N = {
     "ts.hint": "Appuyez sur 📍 pour utiliser votre position ou filtrez.",
     "ts.loading": "Chargement des stations…",
     "ts.empty": "Aucune station active dans ce rayon.",
+    "ts.empty_global": "Aucune station disponible avec les filtres actuels.",
     "ts.geo_denied": "Impossible d'obtenir votre position. Permission refusée.",
     "ts.geo_unavailable": "Géolocalisation non disponible sur cet appareil.",
     "wh.title": "2 dernières heures (km/h)",
@@ -1250,6 +1254,7 @@ const I18N = {
     "ts.hint": "Sakatu 📍 zure kokapena erabiltzeko edo idatzi iragazteko.",
     "ts.loading": "Estazioak kargatzen…",
     "ts.empty": "Ez dago estazio aktiborik erradio honetan.",
+    "ts.empty_global": "Ez dago estaziorik uneko iragazkiekin.",
     "ts.geo_denied": "Ezin izan da kokapena lortu. Baimena ukatuta.",
     "ts.geo_unavailable": "Geokokapena ez dago erabilgarri gailu honetan.",
     "wh.title": "Azken 2 h (km/h)",
@@ -1451,6 +1456,7 @@ const I18N = {
     "ts.hint": "Prem 📍 per usar la teva ubicació o escriu per filtrar.",
     "ts.loading": "Carregant estacions…",
     "ts.empty": "No hi ha estacions actives en aquest radi.",
+    "ts.empty_global": "No hi ha estacions disponibles amb els filtres actuals.",
     "ts.geo_denied": "No s'ha pogut obtenir la teva ubicació. Permís denegat.",
     "ts.geo_unavailable": "Geolocalització no disponible en aquest dispositiu.",
     "wh.title": "Últimes 2 h (km/h)",
@@ -3509,6 +3515,16 @@ function distCenter() {
 }
 let tsRadius = parseInt(localStorage.getItem("tsRadius") || "50", 10);
 let tsNoRadius = localStorage.getItem("tsNoRadius") === "1";
+const TS_PROVIDERS_ALL = ["community", "pioupiou", "ffvl", "aemet"];
+let tsProviders = (function() {
+  try {
+    const raw = localStorage.getItem("tsProviders");
+    if (!raw) return new Set(TS_PROVIDERS_ALL);
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || !arr.length) return new Set(TS_PROVIDERS_ALL);
+    return new Set(arr.filter(p => TS_PROVIDERS_ALL.includes(p)));
+  } catch { return new Set(TS_PROVIDERS_ALL); }
+})();
 
 function refreshAllForCurrentTakeoff() {
   // Limpia el mapa de marcadores Pioupiou y vuelve a pintar el despegue
@@ -3841,8 +3857,9 @@ async function tsRunSearch() {
   resultsEl.innerHTML = `<div class="ts-loading">${t("ts.loading")}</div>`;
   const all = await ensureAllStations();
   const maxDist = tsNoRadius ? Infinity : tsRadius;
+  const provOn = (p) => tsProviders.has(p);
 
-  let items = (all.pioupiou || [])
+  let items = !provOn("pioupiou") ? [] : (all.pioupiou || [])
     .map(stationFromPioupiou)
     .filter(Boolean)
     .filter(s => isStationRecent(s, 24))
@@ -3850,21 +3867,21 @@ async function tsRunSearch() {
     .filter(s => s.dist <= maxDist);
 
   // FFVL: añadimos solo balises con datos recientes en las últimas 24 h
-  const ffvlItems = (all.ffvl || [])
+  const ffvlItems = !provOn("ffvl") ? [] : (all.ffvl || [])
     .filter(s => isStationRecent(s, 24))
     .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
     .filter(s => s.dist <= maxDist);
   items = items.concat(ffvlItems);
 
   // AEMET: estaciones con datos en las últimas 24 h
-  const aemetItems = (all.aemet || [])
+  const aemetItems = !provOn("aemet") ? [] : (all.aemet || [])
     .filter(s => isStationRecent(s, 24))
     .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
     .filter(s => s.dist <= maxDist);
   items = items.concat(aemetItems);
 
   // Mezcla despegues comunitarios aprobados
-  const community = (window.PCAuth?.approvedTakeoffs || []).map(to => ({
+  const community = !provOn("community") ? [] : (window.PCAuth?.approvedTakeoffs || []).map(to => ({
     id: "to_" + to.id,
     provider: "community",
     name: to.name,
@@ -3957,7 +3974,8 @@ async function tsRunSearch() {
   const others = items.filter(s => !favKeys.has(favKey(s))).slice(0, 50);
 
   if (!favItems.length && !others.length) {
-    resultsEl.innerHTML = `<div class="ts-empty">${t("ts.empty")}</div>`;
+    const emptyKey = tsNoRadius ? "ts.empty_global" : "ts.empty";
+    resultsEl.innerHTML = `<div class="ts-empty">${t(emptyKey)}</div>`;
     return;
   }
   resultsEl.innerHTML = "";
@@ -4160,7 +4178,23 @@ function initTakeoffSelector() {
       localStorage.setItem("tsNoRadius", tsNoRadius ? "1" : "0");
       window.PCAuth?.savePref?.("tsNoRadius", tsNoRadius);
       if (radiusEl) radiusEl.disabled = tsNoRadius;
-      tsRunSearch();
+      tsRunSearch();    });
+  }
+
+  // Filtro de proveedores (servicios meteorol\u00f3gicos)
+  const provBox = document.getElementById("tsProviders");
+  if (provBox) {
+    provBox.querySelectorAll("input[type=checkbox][data-prov]").forEach(cb => {
+      const p = cb.dataset.prov;
+      cb.checked = tsProviders.has(p);
+      cb.addEventListener("change", () => {
+        if (cb.checked) tsProviders.add(p); else tsProviders.delete(p);
+        // Evita dejar todos desmarcados: si lo intenta, vuelve a activar
+        if (tsProviders.size === 0) { tsProviders.add(p); cb.checked = true; }
+        localStorage.setItem("tsProviders", JSON.stringify([...tsProviders]));
+        window.PCAuth?.savePref?.("tsProviders", [...tsProviders]);
+        tsRunSearch();
+      });
     });
   }
 
