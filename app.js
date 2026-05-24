@@ -102,6 +102,30 @@ const I18N = {
     "auth.err_email_in_use": "Ese email ya está registrado.",
     "auth.err_pwd_short": "La contraseña debe tener al menos 6 caracteres.",
     "auth.err_popup_blocked": "El navegador bloqueó la ventana. Intenta de nuevo.",
+    "to.propose": "+ Proponer despegue",
+    "to.submit_title": "Proponer nuevo despegue",
+    "to.submit_hint": "Tu propuesta será revisada por un administrador antes de publicarse.",
+    "to.name_ph": "Nombre del despegue",
+    "to.lat_ph": "Latitud",
+    "to.lon_ph": "Longitud",
+    "to.alt_ph": "Altitud (m)",
+    "to.orient_ph": "Orientaciones (N, NO, O…)",
+    "to.station_ph": "ID estación Pioupiou (opcional)",
+    "to.notes_ph": "Notas (acceso, peligros…)",
+    "to.pick_map": "📍 Usar coordenadas actuales del mapa",
+    "to.submit": "Enviar para revisión",
+    "to.submit_ok": "¡Enviado! Recibirás una respuesta tras la revisión.",
+    "to.submit_err": "No se pudo enviar la propuesta.",
+    "to.submit_login": "Debes iniciar sesión para proponer un despegue.",
+    "to.admin_open": "🛡️ Revisar despegues pendientes",
+    "to.admin_title": "Despegues pendientes de revisión",
+    "to.admin_empty": "No hay despegues pendientes.",
+    "to.approve": "Aprobar",
+    "to.reject": "Rechazar",
+    "to.reject_prompt": "Motivo del rechazo (opcional):",
+    "to.delete": "Eliminar",
+    "to.community_badge": "comunidad",
+    "to.submitted_by": "Propuesto por",
     "cmp.title": "Comparativa últimos días",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(amanecer +3 h → ocaso −1 h)",
@@ -286,6 +310,30 @@ const I18N = {
     "auth.err_email_in_use": "That email is already registered.",
     "auth.err_pwd_short": "Password must be at least 6 characters.",
     "auth.err_popup_blocked": "Popup blocked. Try again.",
+    "to.propose": "+ Propose takeoff",
+    "to.submit_title": "Propose a new takeoff",
+    "to.submit_hint": "Your proposal will be reviewed by an admin before publishing.",
+    "to.name_ph": "Takeoff name",
+    "to.lat_ph": "Latitude",
+    "to.lon_ph": "Longitude",
+    "to.alt_ph": "Altitude (m)",
+    "to.orient_ph": "Orientations (N, NW, W…)",
+    "to.station_ph": "Pioupiou station ID (optional)",
+    "to.notes_ph": "Notes (access, hazards…)",
+    "to.pick_map": "📍 Use current map coordinates",
+    "to.submit": "Submit for review",
+    "to.submit_ok": "Sent! You'll get a reply after review.",
+    "to.submit_err": "Could not submit the proposal.",
+    "to.submit_login": "You must sign in to propose a takeoff.",
+    "to.admin_open": "🛡️ Review pending takeoffs",
+    "to.admin_title": "Pending takeoffs to review",
+    "to.admin_empty": "No pending takeoffs.",
+    "to.approve": "Approve",
+    "to.reject": "Reject",
+    "to.reject_prompt": "Reason (optional):",
+    "to.delete": "Delete",
+    "to.community_badge": "community",
+    "to.submitted_by": "Proposed by",
     "cmp.title": "Last days comparison",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(sunrise +3 h → sunset −1 h)",
@@ -470,6 +518,30 @@ const I18N = {
     "auth.err_email_in_use": "E-Mail ist bereits registriert.",
     "auth.err_pwd_short": "Passwort muss mind. 6 Zeichen haben.",
     "auth.err_popup_blocked": "Popup blockiert. Erneut versuchen.",
+    "to.propose": "+ Startplatz vorschlagen",
+    "to.submit_title": "Neuen Startplatz vorschlagen",
+    "to.submit_hint": "Dein Vorschlag wird von einem Admin geprüft.",
+    "to.name_ph": "Name des Startplatzes",
+    "to.lat_ph": "Breitengrad",
+    "to.lon_ph": "Längengrad",
+    "to.alt_ph": "Höhe (m)",
+    "to.orient_ph": "Ausrichtungen (N, NW, W…)",
+    "to.station_ph": "Pioupiou-Stations-ID (optional)",
+    "to.notes_ph": "Notizen (Zugang, Gefahren…)",
+    "to.pick_map": "📍 Aktuelle Kartenkoordinaten verwenden",
+    "to.submit": "Zur Prüfung senden",
+    "to.submit_ok": "Gesendet! Antwort nach Prüfung.",
+    "to.submit_err": "Vorschlag konnte nicht gesendet werden.",
+    "to.submit_login": "Bitte zum Vorschlagen anmelden.",
+    "to.admin_open": "🛡️ Offene Startplätze prüfen",
+    "to.admin_title": "Offene Startplätze",
+    "to.admin_empty": "Keine offenen Startplätze.",
+    "to.approve": "Annehmen",
+    "to.reject": "Ablehnen",
+    "to.reject_prompt": "Begründung (optional):",
+    "to.delete": "Löschen",
+    "to.community_badge": "Community",
+    "to.submitted_by": "Vorgeschlagen von",
     "cmp.title": "Vergleich letzter Tage",
     "cmp.window": "({h1}:00–{h2}:00 Ortszeit)",
     "cmp.window_solar": "(Sonnenaufgang +3 h → Sonnenuntergang −1 h)",
@@ -654,6 +726,30 @@ const I18N = {
     "auth.err_email_in_use": "Cet email est déjà enregistré.",
     "auth.err_pwd_short": "Le mot de passe doit avoir au moins 6 caractères.",
     "auth.err_popup_blocked": "Fenêtre bloquée. Réessaie.",
+    "to.propose": "+ Proposer un déco",
+    "to.submit_title": "Proposer un nouveau déco",
+    "to.submit_hint": "Ta proposition sera examinée par un administrateur.",
+    "to.name_ph": "Nom du déco",
+    "to.lat_ph": "Latitude",
+    "to.lon_ph": "Longitude",
+    "to.alt_ph": "Altitude (m)",
+    "to.orient_ph": "Orientations (N, NO, O…)",
+    "to.station_ph": "ID station Pioupiou (optionnel)",
+    "to.notes_ph": "Notes (accès, dangers…)",
+    "to.pick_map": "📍 Utiliser les coordonnées de la carte",
+    "to.submit": "Envoyer pour validation",
+    "to.submit_ok": "Envoyé ! Tu auras une réponse après validation.",
+    "to.submit_err": "Envoi impossible.",
+    "to.submit_login": "Connecte-toi pour proposer un déco.",
+    "to.admin_open": "🛡️ Examiner les décos en attente",
+    "to.admin_title": "Décos en attente de validation",
+    "to.admin_empty": "Aucun déco en attente.",
+    "to.approve": "Approuver",
+    "to.reject": "Rejeter",
+    "to.reject_prompt": "Raison (optionnelle) :",
+    "to.delete": "Supprimer",
+    "to.community_badge": "communauté",
+    "to.submitted_by": "Proposé par",
     "cmp.title": "Comparatif derniers jours",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(lever +3 h → coucher −1 h)",
@@ -2518,6 +2614,19 @@ async function tsRunSearch() {
     .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
     .filter(s => s.dist <= tsRadius);
 
+  // Mezcla despegues comunitarios aprobados
+  const community = (window.PCAuth?.approvedTakeoffs || []).map(to => ({
+    id: "to_" + to.id,
+    provider: "community",
+    name: to.name,
+    lat: to.lat, lon: to.lon,
+    community: true,
+    stationId: to.stationId,
+    raw: to,
+    dist: haversineKm(center.lat, center.lon, to.lat, to.lon),
+  })).filter(s => s.dist <= tsRadius);
+  items = items.concat(community);
+
   if (query) {
     items = items.filter(s => s.name.toLowerCase().includes(query));
   }
@@ -2530,16 +2639,23 @@ async function tsRunSearch() {
   }
   resultsEl.innerHTML = "";
   for (const s of items) {
-    const enabled = ENABLED_STATION_IDS.has(s.id);
+    const isCommunity = !!s.community;
+    const enabled = isCommunity ? (s.stationId != null) : ENABLED_STATION_IDS.has(s.id);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "ts-result"
       + (s.id === currentStationId ? " selected" : "")
-      + (enabled ? "" : " disabled");
+      + (enabled ? "" : " disabled")
+      + (isCommunity ? " community" : "");
     if (!enabled) btn.disabled = true;
-    const tail = enabled
-      ? `<span class="ts-result-provider">${s.provider}</span>`
-      : `<span class="ts-result-soon">${t("ts.coming_soon")}</span>`;
+    let tail;
+    if (isCommunity) {
+      tail = `<span class="ts-result-badge">${t("to.community_badge")}</span>`;
+    } else if (enabled) {
+      tail = `<span class="ts-result-provider">${s.provider}</span>`;
+    } else {
+      tail = `<span class="ts-result-soon">${t("ts.coming_soon")}</span>`;
+    }
     btn.innerHTML = `
       <span class="ts-result-name">${escapeHtml(s.name)}</span>
       <span class="ts-result-dist">${s.dist.toFixed(1)} km</span>
@@ -2547,7 +2663,15 @@ async function tsRunSearch() {
     `;
     if (enabled) {
       btn.addEventListener("click", () => {
-        selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon });
+        if (isCommunity) {
+          selectStation({
+            id: s.stationId, provider: "pioupiou",
+            name: s.name, shortName: s.name,
+            lat: s.lat, lon: s.lon,
+          });
+        } else {
+          selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon });
+        }
         document.getElementById("tsPanel").hidden = true;
         document.getElementById("tsToggleBtn").setAttribute("aria-expanded", "false");
       });
@@ -2642,6 +2766,13 @@ document.querySelectorAll("#whRange button").forEach(b => {
 // Aplica prefs remotas cuando el usuario inicia sesión (Firestore → UI).
 window.addEventListener("pcuserchange", (e) => {
   const prefs = e.detail?.prefs;
+  const user = e.detail?.user;
+  const isAdmin = !!e.detail?.isAdmin;
+  // UI: muestra/oculta botones según estado.
+  const propose = document.getElementById("tsProposeBtn");
+  if (propose) propose.hidden = !(user && !user.isAnonymous);
+  const adminBtn = document.getElementById("authAdminBtn");
+  if (adminBtn) adminBtn.hidden = !isAdmin;
   if (!prefs) return;
   let changed = false;
   if (prefs.lang && prefs.lang !== currentLang) {
@@ -2673,3 +2804,127 @@ refreshForecast();
 renderCompare();
 renderNearby();
 setInterval(refreshLiveOnly, REFRESH_MS);
+
+// === Despegues comunitarios: submit + admin ===
+function openTakeoffSubmit() {
+  const u = window.PCAuth?.user;
+  if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
+  document.getElementById("toSubmitMsg").textContent = "";
+  ["toName","toLat","toLon","toAlt","toOrient","toStation","toNotes"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
+  });
+  // Pre-rellena con el centro actual (despegue seleccionado o ubicación del usuario)
+  const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
+  const lat = document.getElementById("toLat");
+  const lon = document.getElementById("toLon");
+  if (lat) lat.value = c.lat.toFixed(5);
+  if (lon) lon.value = c.lon.toFixed(5);
+  document.getElementById("takeoffSubmitModal").hidden = false;
+}
+function closeTakeoffSubmit() { document.getElementById("takeoffSubmitModal").hidden = true; }
+
+document.getElementById("tsProposeBtn")?.addEventListener("click", openTakeoffSubmit);
+document.getElementById("toSubmitClose")?.addEventListener("click", closeTakeoffSubmit);
+document.getElementById("takeoffSubmitModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "takeoffSubmitModal") closeTakeoffSubmit();
+});
+document.getElementById("toPickOnMapBtn")?.addEventListener("click", () => {
+  const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
+  document.getElementById("toLat").value = c.lat.toFixed(5);
+  document.getElementById("toLon").value = c.lon.toFixed(5);
+});
+document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
+  const msg = document.getElementById("toSubmitMsg");
+  msg.style.color = "";
+  msg.textContent = "";
+  try {
+    await window.PCAuth.submitTakeoff({
+      name: document.getElementById("toName").value,
+      lat: document.getElementById("toLat").value,
+      lon: document.getElementById("toLon").value,
+      alt: document.getElementById("toAlt").value,
+      orientations: document.getElementById("toOrient").value,
+      stationId: document.getElementById("toStation").value,
+      notes: document.getElementById("toNotes").value,
+    });
+    msg.style.color = "#2ecc71";
+    msg.textContent = t("to.submit_ok");
+    setTimeout(closeTakeoffSubmit, 1400);
+  } catch (e) {
+    console.error("[to] submit", e);
+    msg.textContent = t("to.submit_err") + " [" + (e?.code || e?.message || "?") + "]";
+  }
+});
+
+// Admin review modal
+function renderAdminList() {
+  const list = document.getElementById("toAdminList");
+  if (!list) return;
+  const items = window.PCAuth?.pendingTakeoffs || [];
+  if (!items.length) {
+    list.innerHTML = `<p class="auth-account-info">${t("to.admin_empty")}</p>`;
+    return;
+  }
+  list.innerHTML = "";
+  for (const it of items) {
+    const card = document.createElement("div");
+    card.className = "to-admin-item";
+    const ori = it.orientations ? ` · ${escapeHtml(it.orientations)}` : "";
+    const alt = it.alt != null ? ` · ${it.alt} m` : "";
+    const sta = it.stationId != null ? ` · Pioupiou ${it.stationId}` : "";
+    card.innerHTML = `
+      <h3>${escapeHtml(it.name)}</h3>
+      <div class="to-admin-meta">
+        ${t("to.submitted_by")}: <strong>${escapeHtml(it.submittedByName || "?")}</strong><br>
+        ${Number(it.lat).toFixed(5)}, ${Number(it.lon).toFixed(5)}${alt}${ori}${sta}
+        ${it.notes ? `<br><em>${escapeHtml(it.notes)}</em>` : ""}
+      </div>
+      <div class="to-admin-actions">
+        <button class="to-approve" data-id="${it.id}">${t("to.approve")}</button>
+        <button class="to-reject"  data-id="${it.id}">${t("to.reject")}</button>
+        <button class="to-delete"  data-id="${it.id}">${t("to.delete")}</button>
+      </div>
+    `;
+    list.appendChild(card);
+  }
+  list.querySelectorAll(".to-approve").forEach(b => b.addEventListener("click", async () => {
+    try { await window.PCAuth.approveTakeoff(b.dataset.id); }
+    catch (e) { alert("Error: " + (e?.message || e)); }
+  }));
+  list.querySelectorAll(".to-reject").forEach(b => b.addEventListener("click", async () => {
+    const reason = prompt(t("to.reject_prompt")) || "";
+    try { await window.PCAuth.rejectTakeoff(b.dataset.id, reason); }
+    catch (e) { alert("Error: " + (e?.message || e)); }
+  }));
+  list.querySelectorAll(".to-delete").forEach(b => b.addEventListener("click", async () => {
+    if (!confirm("¿Eliminar definitivamente?")) return;
+    try { await window.PCAuth.deleteTakeoff(b.dataset.id); }
+    catch (e) { alert("Error: " + (e?.message || e)); }
+  }));
+}
+
+document.getElementById("authAdminBtn")?.addEventListener("click", () => {
+  document.getElementById("authModal").setAttribute("hidden", "");
+  document.getElementById("takeoffAdminModal").hidden = false;
+  renderAdminList();
+});
+document.getElementById("toAdminClose")?.addEventListener("click", () => {
+  document.getElementById("takeoffAdminModal").hidden = true;
+});
+document.getElementById("takeoffAdminModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "takeoffAdminModal") document.getElementById("takeoffAdminModal").hidden = true;
+});
+
+// Cuando lleguen aprobados, refresca búsqueda y re-render admin si visible
+function _hookTakeoffStreams() {
+  if (!window.PCAuth) { setTimeout(_hookTakeoffStreams, 200); return; }
+  window.PCAuth.onApprovedTakeoffsChange = () => {
+    const panel = document.getElementById("tsPanel");
+    if (panel && !panel.hidden) tsRunSearch();
+  };
+  window.PCAuth.onPendingTakeoffsChange = () => {
+    const modal = document.getElementById("takeoffAdminModal");
+    if (modal && !modal.hidden) renderAdminList();
+  };
+}
+_hookTakeoffStreams();

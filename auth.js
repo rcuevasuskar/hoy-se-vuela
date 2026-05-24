@@ -12,7 +12,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp,
-  collection, addDoc, deleteDoc, onSnapshot, query, orderBy,
+  collection, addDoc, deleteDoc, onSnapshot, query, orderBy, where,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 // Exponemos un objeto global para que app.js (clásico) pueda interactuar.
@@ -21,9 +21,15 @@ window.PCAuth = {
   user: null,
   prefs: null,
   favorites: [],
+  isAdmin: false,
+  approvedTakeoffs: [],
+  pendingTakeoffs: [],
   onUserChange: null,   // callback(user|null, prefs)
   onPrefsChange: null,  // callback(prefs)
   onFavoritesChange: null, // callback([fav,…])
+  onApprovedTakeoffsChange: null, // callback([takeoff,…])
+  onPendingTakeoffsChange: null,  // callback([takeoff,…])
+  onAdminChange: null,  // callback(isAdmin)
 };
 
 if (!isConfigured()) {
@@ -133,6 +139,89 @@ if (!isConfigured()) {
     await deleteDoc(doc(db, "users", u.uid, "favorites", favId));
   };
 
+  // === Despegues comunitarios ===
+  let unsubPending = null;
+  async function checkAdmin(uid) {
+    try {
+      const snap = await getDoc(doc(db, "admins", uid));
+      return snap.exists();
+    } catch (e) { console.warn("[auth] checkAdmin", e); return false; }
+  }
+
+  // Escucha global de despegues aprobados (visibles para todos).
+  function listenApprovedTakeoffs() {
+    const qy = query(collection(db, "takeoffs"), where("status", "==", "approved"));
+    onSnapshot(qy, (qs) => {
+      const list = qs.docs.map(d => ({ id: d.id, ...d.data() }));
+      window.PCAuth.approvedTakeoffs = list;
+      window.PCAuth.onApprovedTakeoffsChange?.(list);
+    }, (e) => console.warn("[auth] approvedTakeoffs", e));
+  }
+
+  function listenPendingTakeoffs() {
+    if (unsubPending) { try { unsubPending(); } catch {} unsubPending = null; }
+    if (!window.PCAuth.isAdmin) {
+      window.PCAuth.pendingTakeoffs = [];
+      window.PCAuth.onPendingTakeoffsChange?.([]);
+      return;
+    }
+    const qy = query(collection(db, "takeoffs"), where("status", "==", "pending"));
+    unsubPending = onSnapshot(qy, (qs) => {
+      const list = qs.docs.map(d => ({ id: d.id, ...d.data() }));
+      window.PCAuth.pendingTakeoffs = list;
+      window.PCAuth.onPendingTakeoffsChange?.(list);
+    }, (e) => console.warn("[auth] pendingTakeoffs", e));
+  }
+
+  window.PCAuth.submitTakeoff = async (data) => {
+    const u = auth.currentUser;
+    if (!u || u.isAnonymous) throw new Error("login_required");
+    const payload = {
+      name: String(data.name || "").trim(),
+      lat: Number(data.lat),
+      lon: Number(data.lon),
+      alt: data.alt != null && data.alt !== "" ? Number(data.alt) : null,
+      orientations: String(data.orientations || "").trim(),
+      stationId: data.stationId != null && data.stationId !== "" ? Number(data.stationId) : null,
+      notes: String(data.notes || "").trim() || null,
+      status: "pending",
+      submittedBy: u.uid,
+      submittedByName: u.displayName || u.email || "anon",
+      submittedAt: serverTimestamp(),
+      reviewedBy: null,
+      reviewedAt: null,
+      rejectionReason: null,
+    };
+    if (!payload.name || !Number.isFinite(payload.lat) || !Number.isFinite(payload.lon)) {
+      throw new Error("invalid_fields");
+    }
+    return await addDoc(collection(db, "takeoffs"), payload);
+  };
+
+  window.PCAuth.approveTakeoff = async (id) => {
+    const u = auth.currentUser;
+    if (!u || !window.PCAuth.isAdmin) throw new Error("not_admin");
+    await updateDoc(doc(db, "takeoffs", id), {
+      status: "approved", reviewedBy: u.uid, reviewedAt: serverTimestamp(), rejectionReason: null,
+    });
+  };
+  window.PCAuth.rejectTakeoff = async (id, reason) => {
+    const u = auth.currentUser;
+    if (!u || !window.PCAuth.isAdmin) throw new Error("not_admin");
+    await updateDoc(doc(db, "takeoffs", id), {
+      status: "rejected", reviewedBy: u.uid, reviewedAt: serverTimestamp(),
+      rejectionReason: String(reason || "").trim() || null,
+    });
+  };
+  window.PCAuth.deleteTakeoff = async (id) => {
+    const u = auth.currentUser;
+    if (!u || !window.PCAuth.isAdmin) throw new Error("not_admin");
+    await deleteDoc(doc(db, "takeoffs", id));
+  };
+
+  // Arranca el listener global de aprobados (lectura abierta por reglas).
+  listenApprovedTakeoffs();
+
   // === onAuthStateChanged ===
   onAuthStateChanged(auth, async (user) => {
     window.PCAuth.user = user;
@@ -147,13 +236,20 @@ if (!isConfigured()) {
         if (prefs.tsRadius) localStorage.setItem("tsRadius", String(prefs.tsRadius));
         if (prefs.selectedStation) localStorage.setItem("selectedStation", prefs.selectedStation);
         listenFavorites(user.uid);
-        window.dispatchEvent(new CustomEvent("pcuserchange", { detail: { user, prefs } }));
+        const admin = await checkAdmin(user.uid);
+        window.PCAuth.isAdmin = admin;
+        window.PCAuth.onAdminChange?.(admin);
+        listenPendingTakeoffs();
+        window.dispatchEvent(new CustomEvent("pcuserchange", { detail: { user, prefs, isAdmin: admin } }));
         window.PCAuth.onUserChange?.(user, prefs);
       } catch (e) { console.warn("[auth] loadUserPrefs", e); }
     } else {
       window.PCAuth.prefs = null;
       window.PCAuth.favorites = [];
-      window.dispatchEvent(new CustomEvent("pcuserchange", { detail: { user, prefs: null } }));
+      window.PCAuth.isAdmin = false;
+      window.PCAuth.onAdminChange?.(false);
+      listenPendingTakeoffs();
+      window.dispatchEvent(new CustomEvent("pcuserchange", { detail: { user, prefs: null, isAdmin: false } }));
       window.PCAuth.onUserChange?.(user, null);
     }
   });

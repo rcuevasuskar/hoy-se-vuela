@@ -202,6 +202,55 @@ header.topbar .ts-current {
 .auth-account-info { margin: 0 0 10px; color: var(--muted); }
 .auth-account-info strong { color: var(--fg); display: block; margin-top: 4px; word-break: break-all; }
 
+/* Takeoff submit + admin modals */
+.auth-dialog-wide { max-width: 560px; }
+.auth-section textarea,
+#takeoffSubmitModal textarea,
+#takeoffSubmitModal input {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: .95rem;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+#takeoffSubmitModal .auth-dialog { display: flex; flex-direction: column; gap: 10px; max-width: 420px; }
+#takeoffSubmitModal h2 { margin-bottom: 4px; }
+.to-row { display: flex; gap: 8px; }
+.to-row > input { flex: 1; min-width: 0; }
+.ts-panel-actions { display: flex; justify-content: flex-end; padding: 6px 4px 2px; }
+.ts-propose {
+  background: transparent; color: var(--accent);
+  border: 1px dashed rgba(78,161,255,0.45);
+  padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: .82rem;
+}
+.ts-propose:hover { background: rgba(78,161,255,0.08); border-style: solid; }
+.ts-result.community { border-left: 3px solid var(--accent); }
+.ts-result-badge {
+  display: inline-block; font-size: .65rem; padding: 1px 6px;
+  border-radius: 999px; background: rgba(78,161,255,0.18); color: var(--accent);
+  margin-left: 4px;
+}
+.to-admin-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
+.to-admin-item {
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px;
+}
+.to-admin-item h3 { margin: 0 0 4px; font-size: 1rem; }
+.to-admin-meta { color: var(--muted); font-size: .8rem; margin-bottom: 8px; }
+.to-admin-meta strong { color: var(--fg); }
+.to-admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.to-admin-actions button {
+  border: 0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: .85rem;
+}
+.to-approve { background: #2ecc71; color: #fff; }
+.to-reject  { background: #e74c3c; color: #fff; }
+.to-delete  { background: transparent; color: var(--muted); border: 1px solid var(--border) !important; }
+.to-approve:hover, .to-reject:hover { filter: brightness(1.1); }
+
 .banner {
   margin: 0 auto 10px;
   padding: 6px 12px;

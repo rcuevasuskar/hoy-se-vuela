@@ -54,6 +54,9 @@
         <div class="ts-results" id="tsResults">
           <div class="ts-hint" data-i18n="ts.hint">Pulsa 📍 para usar tu ubicación o escribe para filtrar.</div>
         </div>
+        <div class="ts-panel-actions">
+          <button id="tsProposeBtn" class="ts-propose" type="button" hidden data-i18n="to.propose">+ Proponer despegue</button>
+        </div>
       </div>
     </div>
   </header>
@@ -296,10 +299,45 @@
           <span data-i18n="auth.signed_as">Conectado como</span>
           <strong id="authAccountName">—</strong>
         </p>
+        <button id="authAdminBtn" class="auth-link" hidden data-i18n="to.admin_open">🛡️ Revisar despegues pendientes</button>
         <button id="authLogoutBtn" class="auth-primary" data-i18n="auth.logout">Cerrar sesión</button>
       </section>
 
       <p id="authError" class="auth-error" role="alert"></p>
+    </div>
+  </div>
+
+  <!-- Modal: proponer despegue -->
+  <div id="takeoffSubmitModal" class="auth-modal" hidden>
+    <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="toTitle">
+      <button id="toSubmitClose" class="auth-close" title="Cerrar">✕</button>
+      <h2 id="toTitle" data-i18n="to.submit_title">Proponer despegue</h2>
+      <p class="auth-account-info" data-i18n="to.submit_hint">Tu propuesta será revisada por un administrador antes de publicarse.</p>
+      <input id="toName" type="text" placeholder="Nombre del despegue" data-i18n-placeholder="to.name_ph" />
+      <div class="to-row">
+        <input id="toLat" type="number" step="0.00001" placeholder="Latitud" data-i18n-placeholder="to.lat_ph" />
+        <input id="toLon" type="number" step="0.00001" placeholder="Longitud" data-i18n-placeholder="to.lon_ph" />
+      </div>
+      <div class="to-row">
+        <input id="toAlt" type="number" step="1" placeholder="Altitud (m)" data-i18n-placeholder="to.alt_ph" />
+        <input id="toOrient" type="text" placeholder="Orientaciones (N, NO, O…)" data-i18n-placeholder="to.orient_ph" />
+      </div>
+      <input id="toStation" type="number" step="1" placeholder="ID estación Pioupiou (opcional)" data-i18n-placeholder="to.station_ph" />
+      <textarea id="toNotes" rows="3" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
+      <button id="toPickOnMapBtn" class="auth-link" type="button" data-i18n="to.pick_map">📍 Usar coordenadas actuales del mapa</button>
+      <button id="toSubmitBtn" class="auth-primary" data-i18n="to.submit">Enviar para revisión</button>
+      <p id="toSubmitMsg" class="auth-error" role="alert"></p>
+    </div>
+  </div>
+
+  <!-- Modal: panel admin de revisión -->
+  <div id="takeoffAdminModal" class="auth-modal" hidden>
+    <div class="auth-dialog auth-dialog-wide" role="dialog" aria-modal="true" aria-labelledby="toAdminTitle">
+      <button id="toAdminClose" class="auth-close" title="Cerrar">✕</button>
+      <h2 id="toAdminTitle" data-i18n="to.admin_title">Despegues pendientes de revisión</h2>
+      <div id="toAdminList" class="to-admin-list">
+        <p class="auth-account-info" data-i18n="to.admin_empty">No hay despegues pendientes.</p>
+      </div>
     </div>
   </div>
 
