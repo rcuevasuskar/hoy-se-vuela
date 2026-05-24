@@ -264,6 +264,7 @@ const I18N = {
     "menu.notify": "Avisos",
     "menu.install": "Instalar app",
     "menu.help": "Ayuda",
+    "menu.admin_review": "Revisar despegues",
     "menu.account": "Cuenta",
     "ts.locate": "Usar mi ubicación",
     "ts.hint": "Pulsa 📍 para usar tu ubicación o escribe para filtrar.",
@@ -509,6 +510,7 @@ const I18N = {
     "menu.notify": "Alerts",
     "menu.install": "Install app",
     "menu.help": "Help",
+    "menu.admin_review": "Review takeoffs",
     "menu.account": "Account",
     "theme.auto": "Theme: automatic",
     "theme.dark": "Theme: dark",
@@ -757,6 +759,7 @@ const I18N = {
     "menu.notify": "Hinweise",
     "menu.install": "App installieren",
     "menu.help": "Hilfe",
+    "menu.admin_review": "Startplätze prüfen",
     "menu.account": "Konto",
     "theme.auto": "Design: automatisch",
     "theme.dark": "Design: dunkel",
@@ -1005,6 +1008,7 @@ const I18N = {
     "menu.notify": "Alertes",
     "menu.install": "Installer l'app",
     "menu.help": "Aide",
+    "menu.admin_review": "Examiner décos",
     "menu.account": "Compte",
     "theme.auto": "Thème : automatique",
     "theme.dark": "Thème : sombre",
@@ -1253,6 +1257,7 @@ const I18N = {
     "menu.notify": "Abisuak",
     "menu.install": "App-a instalatu",
     "menu.help": "Laguntza",
+    "menu.admin_review": "Berrikusi proposamenak",
     "menu.account": "Kontua",
     "theme.auto": "Gaia: automatikoa",
     "theme.dark": "Gaia: iluna",
@@ -1455,6 +1460,7 @@ const I18N = {
     "menu.notify": "Avisos",
     "menu.install": "Instal·la l'app",
     "menu.help": "Ajuda",
+    "menu.admin_review": "Revisar enlairaments",
     "menu.account": "Compte",
     "theme.auto": "Tema: automàtic",
     "theme.dark": "Tema: fosc",
@@ -4319,6 +4325,9 @@ window.addEventListener("pcuserchange", (e) => {
   // UI: muestra/oculta botones según estado.
   const adminBtn = document.getElementById("authAdminBtn");
   if (adminBtn) adminBtn.hidden = !isAdmin;
+  const adminReviewBtn = document.getElementById("adminReviewBtn");
+  if (adminReviewBtn) adminReviewBtn.hidden = !isAdmin;
+  updateAdminPendingBadge();
   if (!prefs) return;
   let changed = false;
   if (prefs.lang && prefs.lang !== currentLang) {
@@ -4622,6 +4631,21 @@ document.getElementById("authAdminBtn")?.addEventListener("click", () => {
   document.getElementById("takeoffAdminModal").hidden = false;
   renderAdminList();
 });
+document.getElementById("adminReviewBtn")?.addEventListener("click", () => {
+  document.getElementById("takeoffAdminModal").hidden = false;
+  renderAdminList();
+});
+function updateAdminPendingBadge() {
+  const isAdmin = !!(window.PCAuth && window.PCAuth.isAdmin);
+  const count = (window.PCAuth?.pendingTakeoffs || []).length;
+  const dot = document.getElementById("userMenuDot");
+  const badge = document.getElementById("adminReviewBadge");
+  if (dot) dot.hidden = !(isAdmin && count > 0);
+  if (badge) {
+    badge.hidden = !(isAdmin && count > 0);
+    badge.textContent = String(count);
+  }
+}
 document.getElementById("toAdminClose")?.addEventListener("click", () => {
   document.getElementById("takeoffAdminModal").hidden = true;
 });
@@ -4647,6 +4671,7 @@ function _hookTakeoffStreams() {
   window.PCAuth.onPendingTakeoffsChange = () => {
     const modal = document.getElementById("takeoffAdminModal");
     if (modal && !modal.hidden) renderAdminList();
+    updateAdminPendingBadge();
   };
   window.PCAuth.onFavoritesChange = () => {
     const panel = document.getElementById("tsPanel");

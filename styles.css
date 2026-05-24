@@ -1773,6 +1773,20 @@ footer {
 .user-menu-btn .um-label { font-weight: 600; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .user-menu-btn .um-caret { font-size: 0.7rem; opacity: 0.7; }
 .user-menu-btn[aria-expanded="true"] { border-color: var(--accent); }
+.user-menu-btn { position: relative; }
+.user-menu-btn .um-dot {
+  position: absolute; top: 2px; right: 2px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #e74c3c; border: 1.5px solid var(--panel);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+}
+.um-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 6px;
+  background: #e74c3c; color: #fff;
+  border-radius: 9px; font-size: 0.72rem; font-weight: 700; line-height: 1;
+  margin-left: auto;
+}
 
 .user-menu-panel {
   position: absolute; top: calc(100% + 6px); right: 0;

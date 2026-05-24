@@ -29,6 +29,7 @@
         <div class="user-menu" id="userMenu">
           <button id="userMenuBtn" class="user-menu-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Menú">
             <span class="um-avatar" aria-hidden="true">👤</span>
+            <span class="um-dot" id="userMenuDot" hidden aria-hidden="true"></span>
           </button>
           <div class="user-menu-panel" id="userMenuPanel" hidden role="menu">
             <div class="um-user-header" role="none">
@@ -57,6 +58,11 @@
             <button id="helpBtn" class="um-item" type="button" role="menuitem" data-i18n-title="help.title" aria-haspopup="dialog">
               <span class="um-item-icon" aria-hidden="true">❓</span>
               <span class="um-item-label" data-i18n="menu.help">Ayuda</span>
+            </button>
+            <button id="adminReviewBtn" class="um-item" type="button" role="menuitem" hidden data-i18n-title="to.admin_open">
+              <span class="um-item-icon" aria-hidden="true">🛡️</span>
+              <span class="um-item-label" data-i18n="menu.admin_review">Revisar despegues</span>
+              <span class="um-badge" id="adminReviewBadge" hidden>0</span>
             </button>
             <button id="userBtn" class="um-item" type="button" role="menuitem" title="Cuenta">
               <span class="um-item-icon" aria-hidden="true">👤</span>
