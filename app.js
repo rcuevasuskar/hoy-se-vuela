@@ -4301,9 +4301,10 @@ async function tsRunSearch() {
   // v113: en lugar de exigir stationId guardado, autovincula con la estacion mas
   // cercana (cualquier proveedor) dentro de LINK_KM. Asi el creador no necesita
   // especificar el id de la estacion; la fuente de viento se elige por proximidad.
-  const LINK_KM = 10;
+  const LINK_KM = 30;
   const findLinkedStation = (lat, lon) => {
     let best = null, bestKm = LINK_KM + 1;
+    let bestRecent = null, bestRecentKm = LINK_KM + 1;
     const pools = [
       (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
       (all.aemet || []),
@@ -4312,12 +4313,15 @@ async function tsRunSearch() {
     for (const pool of pools) {
       for (const st of pool) {
         if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
-        if (!isStationRecent(st, 24)) continue;
         const km = haversineKm(lat, lon, st.lat, st.lon);
         if (km < bestKm) { bestKm = km; best = st; }
+        if (isStationRecent(st, 24) && km < bestRecentKm) { bestRecentKm = km; bestRecent = st; }
       }
     }
-    return best;
+    // v116: preferimos estacion con datos recientes; si no la hay, usamos la
+    // mas cercana aunque no tenga datos frescos (la fila se queda habilitada y
+    // el panel mostrara "sin viento" si la API no responde).
+    return bestRecent || best;
   };
   const community = !provOn("community") ? [] : (window.PCAuth?.approvedTakeoffs || []).map(to => {
     const link = findLinkedStation(to.lat, to.lon);
@@ -5291,7 +5295,7 @@ async function resolveDefaultTakeoff() {
     if (chosen.source === "community" && (chosen.stationId == null || Number.isNaN(Number(chosen.stationId)))) {
       try {
         const all = await ensureAllStations();
-        const LINK_KM = 10;
+        const LINK_KM = 30;
         let best = null, bestKm = LINK_KM + 1;
         const pools = [
           (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
