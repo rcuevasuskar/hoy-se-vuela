@@ -2773,15 +2773,26 @@ function renderCurrentTakeoffActions() {
     host.appendChild(bell);
   }
 
-  // ✎ sugerir cambios (solo despegues comunitarios ya existentes)
-  if (currentTakeoffOriginId) {
-    const sug = document.createElement("button");
-    sug.type = "button"; sug.className = "ts-icon-btn";
-    sug.title = t("to.suggest");
-    sug.textContent = "✎";
-    sug.addEventListener("click", () => openTakeoffSuggest(currentTakeoffOriginId));
-    host.appendChild(sug);
-  }
+  // ✎ sugerir cambios — siempre visible para usuarios registrados.
+  // Si existe origen comunitario, edita ese doc; si no, propone alta del despegue actual.
+  const sug = document.createElement("button");
+  sug.type = "button"; sug.className = "ts-icon-btn";
+  sug.title = currentTakeoffOriginId ? t("to.suggest") : t("to.propose");
+  sug.textContent = "✎";
+  sug.addEventListener("click", () => {
+    if (currentTakeoffOriginId) {
+      openTakeoffSuggest(currentTakeoffOriginId);
+    } else {
+      openTakeoffSubmit({
+        name: currentStation.name,
+        lat: currentTakeoff.lat,
+        lon: currentTakeoff.lon,
+        stationId: currentStation.provider === "pioupiou" ? currentStationId : null,
+        criteria: currentTakeoffCriteria || null,
+      });
+    }
+  });
+  host.appendChild(sug);
 }
 
 function openTakeoffSuggest(originId) {
