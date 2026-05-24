@@ -30,6 +30,7 @@ function loadSavedStation() {
 }
 function saveSelectedStation(s) {
   try { localStorage.setItem("selectedStation", JSON.stringify(s)); } catch {}
+  window.PCAuth?.savePref?.("selectedStation", JSON.stringify(s));
 }
 
 const REFRESH_MS = 60_000;
@@ -2243,6 +2244,7 @@ function setWindHistoryHours(h) {
   WH_HOURS = h;
   WH_BUCKET_MIN = (WH_HOURS * 60) / WH_BUCKETS;
   localStorage.setItem("whHours", String(h));
+  window.PCAuth?.savePref?.("whHours", h);
   document.querySelectorAll("#whRange button").forEach(b => {
     b.classList.toggle("active", parseInt(b.dataset.h, 10) === h);
   });
@@ -2416,6 +2418,7 @@ if (langSel) {
   langSel.addEventListener("change", () => {
     currentLang = langSel.value;
     localStorage.setItem("lang", currentLang);
+    window.PCAuth?.savePref?.("lang", currentLang);
     applyStaticI18n();
     syncNotifyButtonInitial();
     const whTitleEl = document.getElementById("whTitle");
@@ -2569,6 +2572,7 @@ function initTakeoffSelector() {
       tsRadius = parseInt(radiusEl.value, 10);
       if (radiusValEl) radiusValEl.textContent = String(tsRadius);
       localStorage.setItem("tsRadius", String(tsRadius));
+      window.PCAuth?.savePref?.("tsRadius", tsRadius);
       tsRunSearch();
     });
   }
@@ -2633,6 +2637,34 @@ renderMap();
 // Sincroniza UI del selector de horas con el valor cargado
 document.querySelectorAll("#whRange button").forEach(b => {
   b.classList.toggle("active", parseInt(b.dataset.h, 10) === WH_HOURS);
+});
+
+// Aplica prefs remotas cuando el usuario inicia sesión (Firestore → UI).
+window.addEventListener("pcuserchange", (e) => {
+  const prefs = e.detail?.prefs;
+  if (!prefs) return;
+  let changed = false;
+  if (prefs.lang && prefs.lang !== currentLang) {
+    currentLang = prefs.lang;
+    const ls = document.getElementById("langSel");
+    if (ls) ls.value = currentLang;
+    applyStaticI18n();
+    changed = true;
+  }
+  if (prefs.whHours && prefs.whHours !== WH_HOURS) {
+    setWindHistoryHours(prefs.whHours);
+  }
+  if (prefs.tsRadius && prefs.tsRadius !== tsRadius) {
+    tsRadius = prefs.tsRadius;
+    const r = document.getElementById("tsRadius");
+    const rv = document.getElementById("tsRadiusValue");
+    if (r) r.value = String(tsRadius);
+    if (rv) rv.textContent = String(tsRadius);
+    changed = true;
+  }
+  if (changed) {
+    refreshObservations(); refreshForecast(); renderCompare(); renderNearby();
+  }
 });
 const _whTitleInit = document.getElementById("whTitle");
 if (_whTitleInit) _whTitleInit.textContent = t("wh.titleFmt").replace("{h}", WH_HOURS);

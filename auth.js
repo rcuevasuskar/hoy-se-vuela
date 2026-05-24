@@ -127,11 +127,13 @@ if (!isConfigured()) {
         if (prefs.tsRadius) localStorage.setItem("tsRadius", String(prefs.tsRadius));
         if (prefs.selectedStation) localStorage.setItem("selectedStation", prefs.selectedStation);
         listenFavorites(user.uid);
+        window.dispatchEvent(new CustomEvent("pcuserchange", { detail: { user, prefs } }));
         window.PCAuth.onUserChange?.(user, prefs);
       } catch (e) { console.warn("[auth] loadUserPrefs", e); }
     } else {
       window.PCAuth.prefs = null;
       window.PCAuth.favorites = [];
+      window.dispatchEvent(new CustomEvent("pcuserchange", { detail: { user, prefs: null } }));
       window.PCAuth.onUserChange?.(user, null);
     }
   });
