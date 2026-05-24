@@ -1665,18 +1665,24 @@ async function getAllStations() {
 }
 
 // === FFVL (Fédération Française de Vol Libre) — open data ===
-// Balises (metadatos) y relevés meteo (últimas medidas) son JSON públicos sin clave.
+// Desde 2025 FFVL exige API key para los JSON publicos (balises / relevesmeteo).
+// Hasta que tengamos clave, devolvemos vacio para no romper la busqueda.
 let _ffvlCache = null;
 async function getAllFfvlStations() {
   if (_ffvlCache) return _ffvlCache;
+  const key = (typeof window !== "undefined" && window.FFVL_API_KEY)
+    || localStorage.getItem("ffvlApiKey")
+    || null;
+  if (!key) { _ffvlCache = []; return _ffvlCache; }
+  const qs = `?key=${encodeURIComponent(key)}`;
   try {
     const [balises, releves] = await Promise.all([
-      fetchJson(CORS_PROXY + encodeURIComponent("https://data.ffvl.fr/json/balises.json")).catch(() => []),
-      fetchJson(CORS_PROXY + encodeURIComponent("https://data.ffvl.fr/json/relevesmeteo.json")).catch(() => []),
+      fetchJson("https://data.ffvl.fr/json/balises.json" + qs).catch(() => []),
+      fetchJson("https://data.ffvl.fr/json/relevesmeteo.json" + qs).catch(() => []),
     ]);
     // Mapa id → última fecha de relevé
     const lastByBalise = {};
-    for (const r of (releves || [])) {
+    for (const r of (Array.isArray(releves) ? releves : [])) {
       const id = String(r.idbalise ?? r.idBalise ?? "");
       const d  = r.date || r.heure || null;
       if (!id || !d) continue;
@@ -1684,7 +1690,7 @@ async function getAllFfvlStations() {
       if (!Number.isFinite(ts)) continue;
       if (!lastByBalise[id] || ts > lastByBalise[id]) lastByBalise[id] = ts;
     }
-    _ffvlCache = (balises || []).map(b => {
+    _ffvlCache = (Array.isArray(balises) ? balises : []).map(b => {
       const id = String(b.idBalise ?? b.idbalise ?? "");
       const lat = parseFloat(b.latitude);
       const lon = parseFloat(b.longitude);
@@ -1760,7 +1766,10 @@ async function getAllAemetStations() {
       return [];
     }
     const records = await fetchJson(meta.datos);
-    if (!Array.isArray(records)) return [];
+    if (!Array.isArray(records)) {
+      console.warn("AEMET: 'datos' no devolvio array", records);
+      return _aemetCache || [];
+    }
     // Conserva el registro más reciente por estación (idema).
     const byId = new Map();
     for (const r of records) {
