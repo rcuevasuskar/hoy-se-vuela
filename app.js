@@ -4714,16 +4714,20 @@ function renderDirRose(currentQualities, hostId) {
   host.innerHTML = "";
   host.classList.add("compass-rose-picker");
   const labels = DIR_16_BY_LANG[currentLang] || DIR_16_BY_LANG.es;
-  const q8 = _collapse16To8(currentQualities);
-  const CARDINAL_K = new Set([0, 2, 4, 6]); // N, E, S, O
+  // v109: editor de 16 sectores (antes 8). currentQualities ya viene en 16-bucket.
+  const q16 = Array.isArray(currentQualities) && currentQualities.length === 16
+    ? currentQualities.slice()
+    : new Array(16).fill(null);
+  const CARDINAL_K = new Set([0, 4, 8, 12]); // N, E, S, O
 
-  // Geometría del SVG: ring de 240×240, sectores de 45°
+  // Geometría del SVG: ring de 240×240, sectores de 22.5°
   const SIZE = 240, CX = SIZE / 2, CY = SIZE / 2;
   const R_OUT = 112, R_IN = 50;
+  const HALF = 11.25; // medio sector
   const SVG_NS = "http://www.w3.org/2000/svg";
   const arcPath = (angDeg) => {
-    const a1 = ((angDeg - 22.5) - 90) * Math.PI / 180;
-    const a2 = ((angDeg + 22.5) - 90) * Math.PI / 180;
+    const a1 = ((angDeg - HALF) - 90) * Math.PI / 180;
+    const a2 = ((angDeg + HALF) - 90) * Math.PI / 180;
     const x1o = CX + R_OUT * Math.cos(a1), y1o = CY + R_OUT * Math.sin(a1);
     const x2o = CX + R_OUT * Math.cos(a2), y2o = CY + R_OUT * Math.sin(a2);
     const x1i = CX + R_IN  * Math.cos(a1), y1i = CY + R_IN  * Math.sin(a1);
@@ -4740,15 +4744,14 @@ function renderDirRose(currentQualities, hostId) {
   svg.setAttribute("viewBox", `0 0 ${SIZE} ${SIZE}`);
   svg.setAttribute("class", "rose-svg");
 
-  for (let k = 0; k < 8; k++) {
-    const i16 = DIR8_INDICES[k];
-    const ang = k * 45;
+  for (let k = 0; k < 16; k++) {
+    const ang = k * 22.5;
     const path = document.createElementNS(SVG_NS, "path");
     path.setAttribute("d", arcPath(ang));
     path.setAttribute("class", "rose-sector" + (CARDINAL_K.has(k) ? " is-cardinal" : ""));
     path.dataset.idx = String(k);
-    path.dataset.i16 = String(i16);
-    path.dataset.q = q8[k] || "bad";
+    path.dataset.i16 = String(k);
+    path.dataset.q = q16[k] || "bad";
     path.addEventListener("click", () => {
       const cur = path.dataset.q;
       path.dataset.q = cur === "bad" ? "ok" : cur === "ok" ? "ideal" : "bad";
@@ -4762,19 +4765,19 @@ function renderDirRose(currentQualities, hostId) {
     txt.setAttribute("text-anchor", "middle");
     txt.setAttribute("dominant-baseline", "central");
     txt.setAttribute("class", "rose-label" + (CARDINAL_K.has(k) ? " is-cardinal" : ""));
-    txt.textContent = labels[i16];
+    txt.textContent = labels[k];
     svg.appendChild(txt);
   }
   host.appendChild(svg);
 }
 
 function collectDirRose(hostId) {
-  const q8 = new Array(8).fill("bad");
+  const q16 = new Array(16).fill("bad");
   document.querySelectorAll("#" + (hostId || "toDirRose") + " .rose-sector").forEach(b => {
     const k = parseInt(b.dataset.idx, 10);
-    if (Number.isFinite(k) && k >= 0 && k < 8) q8[k] = b.dataset.q || "bad";
+    if (Number.isFinite(k) && k >= 0 && k < 16) q16[k] = b.dataset.q || "bad";
   });
-  return _expand8To16(q8);
+  return q16;
 }
 
 function openTakeoffSubmit(prefill) {
