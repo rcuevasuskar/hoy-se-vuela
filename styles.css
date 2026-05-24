@@ -204,8 +204,7 @@ header.topbar .ts-current {
 .auth-account-info strong { color: var(--fg); display: block; margin-top: 4px; word-break: break-all; }
 
 /* Takeoff submit + admin modals */
-.auth-dialog-wide { max-width: 560px; }
-.auth-section textarea,
+.auth-dialog-wide { max-width: 560px; }.auth-section textarea,
 #takeoffSubmitModal textarea,
 #takeoffSubmitModal input {
   background: var(--panel-2);
@@ -424,7 +423,7 @@ header.topbar .ts-current {
   min-width: 0;
 }
 .ts-search::placeholder { color: var(--muted); }
-.ts-locate, .ts-toggle, .ts-refresh, .ts-notify, .ts-install {
+.ts-locate, .ts-toggle, .ts-refresh, .ts-notify, .ts-install, .ts-help {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.12);
   color: var(--muted);
@@ -436,7 +435,7 @@ header.topbar .ts-current {
   flex-shrink: 0;
 }
 .ts-locate:hover, .ts-toggle:hover, .ts-refresh:hover,
-.ts-notify:hover, .ts-install:hover {
+.ts-notify:hover, .ts-install:hover, .ts-help:hover {
   background: rgba(255,255,255,0.08); color: #fff;
 }
 .ts-locate.active { color: var(--accent); border-color: var(--accent); }
@@ -1541,3 +1540,12 @@ footer {
   color: #0b1320;
   border-color: rgba(255,255,255,0.4);
 }
+
+/* === Modal de Ayuda === */
+#helpModal .auth-dialog { max-width: 560px; }
+.help-quick { font-size: .95rem; line-height: 1.45; color: var(--fg); }
+.help-quick ul { padding-left: 18px; margin: 6px 0; }
+.help-quick li { margin: 4px 0; }
+.help-quick p { margin: 6px 0; }
+.help-actions { margin-top: 14px; display: flex; justify-content: flex-end; }
+.help-actions .auth-btn { text-decoration: none; display: inline-block; }

@@ -35,6 +35,7 @@
         <button id="notifyBtn" class="ts-notify" title="Avisarme si hay condiciones ideales" data-i18n-title="btn.notify_off">🔔</button>
         <button id="installBtn" class="ts-install" hidden title="Instalar app" data-i18n-title="btn.install">📲</button>
         <button id="refreshBtn" class="ts-refresh" title="Actualizar">⟳</button>
+        <button id="helpBtn" class="ts-help" type="button" title="Ayuda" data-i18n-title="help.title" aria-haspopup="dialog">?</button>
         <button id="userBtn" class="ts-user" type="button" title="Cuenta">
           <span class="ts-user-avatar" aria-hidden="true">👤</span>
           <span id="userBtnLabel" class="ts-user-label" data-i18n="auth.guest">Invitado</span>
@@ -353,6 +354,18 @@
       <h2 id="toAdminTitle" data-i18n="to.admin_title">Despegues pendientes de revisión</h2>
       <div id="toAdminList" class="to-admin-list">
         <p class="auth-account-info" data-i18n="to.admin_empty">No hay despegues pendientes.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ayuda -->
+  <div id="helpModal" class="auth-modal" hidden>
+    <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button id="helpClose" class="auth-close" title="Cerrar">✕</button>
+      <h2 id="helpTitle" data-i18n="help.title">Ayuda</h2>
+      <div id="helpQuick" class="help-quick" data-i18n="help.quick"></div>
+      <div class="help-actions">
+        <a id="helpDocsLink" class="auth-btn primary" href="docs/es.md" target="_blank" rel="noopener" data-i18n="help.full_docs">Ver documentación completa</a>
       </div>
     </div>
   </div>

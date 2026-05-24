@@ -192,6 +192,9 @@ const I18N = {
     "guide.range_min": ", desde {min} km/h",
     "guide.range_max": ", hasta {max} km/h",
     "guide.notes_title": "Notas del despegue",
+    "help.title": "Ayuda",
+    "help.quick": "<p><strong>Guía rápida:</strong></p><ul><li>🧭 La <strong>brújula</strong> muestra los sectores verde/amarillo/rojo del despegue actual y una flecha con el viento en vivo.</li><li>📍 Pulsa el botón de ubicación para que las distancias se midan desde tu posición real.</li><li>🔍 Escribe en el buscador para filtrar despegues; los favoritos salen primero.</li><li>★ marca favoritos, 👑 fija tu \"hogar\", 🔔 activa alertas cuando las condiciones sean ideales.</li><li>+ propone un despegue nuevo · ✎ sugiere cambios en uno ya registrado.</li><li>📲 instala la app como PWA para usarla offline.</li><li>⚠️ Los datos son orientativos. Valora siempre las condiciones in situ.</li></ul>",
+    "help.full_docs": "Ver documentación completa",
     "loading": "Cargando…",
     "footer": 'Datos en tiempo real: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Pronóstico: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Mapa: © OpenStreetMap. No oficial. Valora siempre las condiciones in situ.',
     "notify.title": "🪂 ¡Condiciones ideales en Cenes!",
@@ -422,6 +425,9 @@ const I18N = {
     "guide.ok": "<strong>Flyable:</strong> North (N) or Southwest (SW), or winds outside the ideal range but below the limit.",
     "guide.bad": "<strong>Bad:</strong> Easterly components (NE, E, SE) — worse the further east.",
     "guide.warn": "<strong>Too strong:</strong> avg ≥ 20 km/h or gusts ≥ 30 km/h.",
+    "help.title": "Help",
+    "help.quick": "<p><strong>Quick guide:</strong></p><ul><li>🧭 The <strong>compass</strong> shows the current takeoff's green/yellow/red sectors and a live wind arrow.</li><li>📍 Tap the location button so distances are measured from your real position.</li><li>🔍 Type in the search to filter takeoffs; favorites appear first.</li><li>★ marks favorites, 👑 sets your \"home\", 🔔 enables alerts for ideal conditions.</li><li>+ proposes a new takeoff · ✎ suggests changes to an existing one.</li><li>📲 install the app as a PWA to use it offline.</li><li>⚠️ Data is indicative. Always assess conditions on site.</li></ul>",
+    "help.full_docs": "View full documentation",
     "loading": "Loading…",
     "footer": 'Real-time data: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Forecast: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Map: © OpenStreetMap. Unofficial. Always assess conditions on site.',
     "notify.title": "🪂 Ideal conditions at Cenes!",
@@ -652,6 +658,9 @@ const I18N = {
     "guide.ok": "<strong>Fliegbar:</strong> Nord (N) oder Südwest (SW), oder Wind außerhalb des Idealbereichs aber unter dem Limit.",
     "guide.bad": "<strong>Schlecht:</strong> Ostkomponenten (NO, O, SO) — schlechter je östlicher.",
     "guide.warn": "<strong>Zu stark:</strong> Mittel ≥ 20 km/h oder Böen ≥ 30 km/h.",
+    "help.title": "Hilfe",
+    "help.quick": "<p><strong>Kurzanleitung:</strong></p><ul><li>🧭 Der <strong>Kompass</strong> zeigt die grün/gelb/rot Sektoren des aktuellen Startplatzes und einen Live-Pfeil mit dem Wind.</li><li>📍 Tippe auf den Standort-Button, damit Distanzen ab deiner echten Position gemessen werden.</li><li>🔍 Tippe im Suchfeld, um Startplätze zu filtern; Favoriten zuerst.</li><li>★ markiert Favoriten, 👑 setzt \"Zuhause\", 🔔 aktiviert Benachrichtigungen bei idealen Bedingungen.</li><li>+ schlägt einen neuen Startplatz vor · ✎ schlägt Änderungen vor.</li><li>📲 App als PWA installieren für Offline-Nutzung.</li><li>⚠️ Daten sind Richtwerte. Bedingungen immer vor Ort prüfen.</li></ul>",
+    "help.full_docs": "Vollständige Dokumentation anzeigen",
     "loading": "Lädt…",
     "footer": 'Echtzeitdaten: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Vorhersage: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Karte: © OpenStreetMap. Inoffiziell. Bedingungen immer vor Ort bewerten.',
     "notify.title": "🪂 Ideale Bedingungen in Cenes!",
@@ -882,6 +891,9 @@ const I18N = {
     "guide.ok": "<strong>Volable :</strong> Nord (N) ou Sud-Ouest (SO), ou vents hors plage idéale mais sous la limite.",
     "guide.bad": "<strong>Mauvais :</strong> composantes Est (NE, E, SE) — pire vers l'est.",
     "guide.warn": "<strong>Trop fort :</strong> moy. ≥ 20 km/h ou rafales ≥ 30 km/h.",
+    "help.title": "Aide",
+    "help.quick": "<p><strong>Guide rapide :</strong></p><ul><li>🧭 La <strong>boussole</strong> affiche les secteurs vert/jaune/rouge du déco actuel et une flèche du vent en direct.</li><li>📍 Appuie sur le bouton de localisation pour que les distances soient mesurées depuis ta position réelle.</li><li>🔍 Tape dans la recherche pour filtrer ; les favoris apparaissent en premier.</li><li>★ marque les favoris, 👑 définit ton \"déco habituel\", 🔔 active les alertes en conditions idéales.</li><li>+ propose un nouveau déco · ✎ suggère des modifications.</li><li>📲 installe l'app en PWA pour l'utiliser hors ligne.</li><li>⚠️ Données indicatives. Évalue toujours les conditions sur place.</li></ul>",
+    "help.full_docs": "Voir la documentation complète",
     "loading": "Chargement…",
     "footer": 'Données temps réel : <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Prévision : <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Carte : © OpenStreetMap. Non officiel. Évaluez toujours les conditions sur site.',
     "notify.title": "🪂 Conditions idéales à Cenes !",
@@ -1112,6 +1124,9 @@ const I18N = {
     "guide.ok": "<strong>Hegagarria:</strong> Ipar (I) edo Hego-Mendebal (HM), edo tarte aproposetik kanpoko haizeak baina mugaren azpitik.",
     "guide.bad": "<strong>Txarra:</strong> Ekialdeko osagaiak (IE, E, HE) — okerragoa ekialderago.",
     "guide.warn": "<strong>Indartsuegia:</strong> batez beste ≥ 20 km/h edo boladak ≥ 30 km/h.",
+    "help.title": "Laguntza",
+    "help.quick": "<p><strong>Gida azkarra:</strong></p><ul><li>🧭 <strong>Iparrorratzak</strong> uneko irteguiaren sektore berde/hori/gorriak eta haizearen gezia zuzenean erakusten ditu.</li><li>📍 Sakatu kokapen botoia distantziak zure benetako kokapenetik neur daitezen.</li><li>🔍 Bilaketa kutxan idatzi irteguiak iragazteko; gogokoak lehenengo agertzen dira.</li><li>★ gogokoak markatu, 👑 zure \"etxea\" finkatu, 🔔 abisuak aktibatu baldintza ezin hobeetan.</li><li>+ irtegui berria proposatu · ✎ aldaketak iradoki.</li><li>📲 PWA gisa instalatu konexiorik gabe erabiltzeko.</li><li>⚠️ Datuak orientagarriak dira. Beti ebaluatu baldintzak lekuan bertan.</li></ul>",
+    "help.full_docs": "Ikusi dokumentazio osoa",
     "loading": "Kargatzen…",
     "footer": 'Denbora errealeko datuak: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Iragarpena: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Mapa: © OpenStreetMap. Ez ofiziala. Beti egiaztatu baldintzak in situ.',
     "notify.title": "🪂 Baldintza ezin hobeak Cenes-en!",
@@ -1296,6 +1311,9 @@ const I18N = {
     "guide.ok": "<strong>Volable:</strong> Nord (N) o Sud-oest (SO), o vents fora del rang ideal però sota el límit.",
     "guide.bad": "<strong>Dolent:</strong> components Est (NE, E, SE) — pitjor com més a l'est.",
     "guide.warn": "<strong>Massa fort:</strong> mitjana ≥ 20 km/h o ratxes ≥ 30 km/h.",
+    "help.title": "Ajuda",
+    "help.quick": "<p><strong>Guia ràpida:</strong></p><ul><li>🧭 La <strong>brúuixola</strong> mostra els sectors verd/groc/vermell de l'enlairament actual i una fletxa amb el vent en directe.</li><li>📍 Prem el botó d'ubicació perquè les distàncies es mesurin des de la teva posició real.</li><li>🔍 Escriu al cercador per filtrar; els preferits surten primer.</li><li>★ marca preferits, 👑 fixa la \"llar\", 🔔 activa alertes en condicions ideals.</li><li>+ proposa un enlairament nou · ✎ suggereix canvis.</li><li>📲 instal·la l'app com a PWA per usar-la sense connexió.</li><li>⚠️ Dades orientatives. Avalua sempre les condicions in situ.</li></ul>",
+    "help.full_docs": "Veure documentació completa",
     "loading": "Carregant…",
     "footer": 'Dades en temps real: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Pronòstic: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Mapa: © OpenStreetMap. No oficial. Valora sempre les condicions in situ.',
     "notify.title": "🪂 Condicions ideals a Cenes!",
@@ -3030,6 +3048,31 @@ document.querySelectorAll("#forecastButtons button").forEach(btn => {
 });
 
 document.getElementById("notifyBtn").addEventListener("click", toggleNotifications);
+
+// === Ayuda ===
+const HELP_DOCS_BY_LANG = {
+  es: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/es.md",
+  en: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/en.md",
+  de: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/en.md",
+  fr: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/en.md",
+  ca: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/es.md",
+  eu: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/es.md",
+};
+function openHelp() {
+  const modal = document.getElementById("helpModal");
+  const link = document.getElementById("helpDocsLink");
+  if (link) link.href = HELP_DOCS_BY_LANG[currentLang] || HELP_DOCS_BY_LANG.es;
+  if (modal) modal.hidden = false;
+}
+function closeHelp() {
+  const modal = document.getElementById("helpModal");
+  if (modal) modal.hidden = true;
+}
+document.getElementById("helpBtn")?.addEventListener("click", openHelp);
+document.getElementById("helpClose")?.addEventListener("click", closeHelp);
+document.getElementById("helpModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "helpModal") closeHelp();
+});
 
 document.querySelectorAll("#whRange button").forEach(btn => {
   btn.addEventListener("click", () => setWindHistoryHours(parseInt(btn.dataset.h, 10)));
