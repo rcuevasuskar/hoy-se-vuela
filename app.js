@@ -7,12 +7,28 @@ const DEFAULT_STATION = {
   lat: 37.1406,
   lon: -3.5124,
 };
+// v103: modelo "takeoff-centric".
+//   currentTakeoff = el LUGAR donde se vuela (lat/lon de la ladera, criterios, notas).
+//   currentStation = la FUENTE DE DATOS de viento (estación AEMET/Holfuy/Pioupiou) asociada.
+// Una estación elegida sin despegue comunitario produce un takeoff "ligero" sin criterios
+// → el veredicto cae a NEUTRAL, no a los criterios de Cenes (evita falsos "ideal").
 let currentStation = loadSavedStation() || { ...DEFAULT_STATION };
-// Compat: alias mutables usados en el resto del código
 let currentStationId = currentStation.id;
-let currentTakeoff = { lat: currentStation.lat, lon: currentStation.lon, name: currentStation.name };
-let currentTakeoffCriteria = null; // {qualityByIndex:[16], windMin, windMax, gustMax} - sustituye verdict global cuando hay valores
-let currentTakeoffOriginId = null; // id del documento takeoffs si el despegue actual viene de la comunidad
+let currentTakeoff = {
+  id: null,                    // doc id en `takeoffs` (Firestore) si viene de la comunidad
+  name: currentStation.name,
+  shortName: currentStation.shortName || currentStation.name,
+  lat: currentStation.lat,
+  lon: currentStation.lon,
+  alt: currentStation.alt ?? null,
+  criteria: null,              // {qualityByIndex:[16], windMin, windMax, gustMax}
+  orientations: "",
+  notes: "",
+};
+// Aliases mantenidos por retro-compatibilidad con el resto del código. Se sincronizan
+// con currentTakeoff a través de setCurrent(...). NO escribir directamente.
+let currentTakeoffCriteria = null;
+let currentTakeoffOriginId = null;
 
 // Despegues con criterios de volabilidad ya definidos.
 // Hasta definir el resto, sólo estos serán seleccionables en el buscador.
@@ -1559,13 +1575,19 @@ function dirName(deg) {
   return arr[Math.round(d / 22.5) % 16];
 }
 
+// v103: cuando el despegue activo NO tiene criterios propios (estación cruda,
+// p.ej. AEMET sin doc comunitario), devolvemos "ok" neutro en lugar de caer en
+// los criterios hardcodeados de Cenes (que marcaban W/NW como ideal y producían
+// falsos "ideal" en, p.ej., Sopelana). Sin criterios → veredicto neutro.
+const NEUTRAL_QUALITY_BY_INDEX = Array(16).fill("ok");
+
 function classifyDirection(deg) {
   if (deg == null || isNaN(deg)) return { name: "—", quality: "unknown", deg: null };
   const d = ((deg % 360) + 360) % 360;
   const idx = Math.round(d / 22.5) % 16;
   const arr = (currentTakeoffCriteria?.qualityByIndex && currentTakeoffCriteria.qualityByIndex.some(Boolean))
     ? currentTakeoffCriteria.qualityByIndex.map(q => q || "ok")
-    : QUALITY_BY_INDEX;
+    : NEUTRAL_QUALITY_BY_INDEX;
   return { name: dirName(d), quality: arr[idx] || "unknown", deg: d };
 }
 
@@ -3679,9 +3701,10 @@ function renderTakeoffPanel() {
     || (doc && doc.criteria)
     || null;
   // Calidades efectivas por índice (16). Si el despegue tiene criterios definidos, los usamos.
+  // Sin criterios → neutro (todo "ok"); evita pintar la roseta con sesgo Cenes.
   const q16 = (crit && Array.isArray(crit.qualityByIndex) && crit.qualityByIndex.some(Boolean))
     ? crit.qualityByIndex.map(q => q || "bad")
-    : QUALITY_BY_INDEX.slice();
+    : NEUTRAL_QUALITY_BY_INDEX.slice();
 
   // --- 1) Sectores de la brújula principal ---
   const host = document.getElementById("sectorsHost");
@@ -3877,31 +3900,21 @@ function openTakeoffSuggest(originId) {
 let _suggestTargetId = null;
 
 function resolveCurrentTakeoffOrigin() {
-  if (currentTakeoffOriginId) return;
+  if (currentTakeoff.id) return;
   const list = window.PCAuth?.approvedTakeoffs || [];
   if (!list.length) return;
   // 1) Coincidencia por stationId.
   if (currentStationId != null) {
     const byStation = list.find(t => t.stationId != null && Number(t.stationId) === Number(currentStationId));
-    if (byStation) {
-      currentTakeoffOriginId = byStation.id;
-      if (!currentTakeoffCriteria && byStation.criteria) currentTakeoffCriteria = byStation.criteria;
-      return;
-    }
+    if (byStation) { _attachTakeoffDoc(byStation); return; }
   }
   // 2) Coincidencia por nombre (case-insensitive, trim).
   const curName = (currentStation?.name || currentTakeoff?.name || "").trim().toLowerCase();
   if (curName) {
     const byName = list.find(t => (t.name || "").trim().toLowerCase() === curName);
-    if (byName) {
-      currentTakeoffOriginId = byName.id;
-      if (!currentTakeoffCriteria && byName.criteria) currentTakeoffCriteria = byName.criteria;
-      return;
-    }
+    if (byName) { _attachTakeoffDoc(byName); return; }
   }
   // 3) Coincidencia por coordenadas: despegue comunitario más cercano dentro de 3 km (v101).
-  //    Antes solo aceptaba ≤ 200 m, lo que dejaba estaciones AEMET cercanas (a 1-3 km) sin
-  //    aplicar los criterios del despegue (verdict con valores por defecto, no específicos).
   const lat = currentTakeoff?.lat, lon = currentTakeoff?.lon;
   if (lat == null || lon == null) return;
   let bestT = null, bestKm = Infinity;
@@ -3909,19 +3922,79 @@ function resolveCurrentTakeoffOrigin() {
     const km = haversineKm(lat, lon, t.lat, t.lon);
     if (km < bestKm && km <= 3) { bestKm = km; bestT = t; }
   }
-  if (bestT) {
-    currentTakeoffOriginId = bestT.id;
-    if (!currentTakeoffCriteria && bestT.criteria) currentTakeoffCriteria = bestT.criteria;
+  if (bestT) _attachTakeoffDoc(bestT);
+}
+
+// v103: aplica los datos de un documento `takeoffs` al currentTakeoff actual
+// (sin tocar currentStation, que es la fuente de datos elegida por el usuario).
+function _attachTakeoffDoc(doc) {
+  currentTakeoff.id = doc.id;
+  currentTakeoff.name = doc.name || currentTakeoff.name;
+  currentTakeoff.shortName = doc.shortName || doc.name || currentTakeoff.shortName;
+  if (doc.lat != null) currentTakeoff.lat = doc.lat;
+  if (doc.lon != null) currentTakeoff.lon = doc.lon;
+  if (doc.alt != null) currentTakeoff.alt = doc.alt;
+  currentTakeoff.criteria = doc.criteria || null;
+  currentTakeoff.orientations = doc.orientations || "";
+  currentTakeoff.notes = doc.notes || "";
+  // Aliases compat
+  currentTakeoffOriginId = doc.id;
+  currentTakeoffCriteria = doc.criteria || null;
+}
+
+// v103: API canónica para cambiar el lugar/fuente de datos. Asegura coherencia
+// entre currentTakeoff (lugar), currentStation (fuente) y los aliases compat.
+function setCurrent({ takeoff, station }) {
+  if (station) {
+    currentStation = station;
+    currentStationId = station.id;
   }
+  if (takeoff) {
+    currentTakeoff = {
+      id: takeoff.id || null,
+      name: takeoff.name || station?.name || "",
+      shortName: takeoff.shortName || takeoff.name || station?.shortName || station?.name || "",
+      lat: takeoff.lat != null ? takeoff.lat : station?.lat,
+      lon: takeoff.lon != null ? takeoff.lon : station?.lon,
+      alt: takeoff.alt ?? station?.alt ?? null,
+      criteria: takeoff.criteria || null,
+      orientations: takeoff.orientations || "",
+      notes: takeoff.notes || "",
+    };
+  } else if (station) {
+    // Estación cruda sin doc comunitario: el "lugar" coincide con la estación,
+    // pero sin criterios → veredicto neutro.
+    currentTakeoff = {
+      id: null,
+      name: station.name,
+      shortName: station.shortName || station.name,
+      lat: station.lat,
+      lon: station.lon,
+      alt: station.alt ?? null,
+      criteria: null,
+      orientations: "",
+      notes: "",
+    };
+  }
+  currentTakeoffOriginId = currentTakeoff.id;
+  currentTakeoffCriteria = currentTakeoff.criteria;
 }
 
 function selectStation(station, opts) {
   if (opts && opts.userPicked) _userPickedStation = true;
-  currentStation = station;
-  currentStationId = station.id;
-  currentTakeoff = { lat: station.lat, lon: station.lon, name: station.name };
-  currentTakeoffCriteria = (opts && opts.criteria) ? opts.criteria : null;
-  currentTakeoffOriginId = (opts && opts.originId) ? opts.originId : null;
+  // Si llega un opts.takeoff explícito (click en despegue comunitario),
+  // lo usamos como lugar; si no, sintetizamos uno a partir de la estación.
+  const takeoff = (opts && opts.takeoff) ? opts.takeoff
+                 : (opts && (opts.originId || opts.criteria))
+                   ? {
+                       id: opts.originId || null,
+                       name: station.name,
+                       shortName: station.shortName || station.name,
+                       lat: station.lat, lon: station.lon,
+                       criteria: opts.criteria || null,
+                     }
+                   : null;
+  setCurrent({ takeoff, station });
   saveSelectedStation(station);
   applyCurrentTakeoffLabel();
   refreshAllForCurrentTakeoff();
@@ -4847,7 +4920,7 @@ async function pollFavoriteAlerts() {
       const c = f.criteria;
       const arr = (c?.qualityByIndex && c.qualityByIndex.some(Boolean))
         ? c.qualityByIndex.map(q => q || "ok")
-        : QUALITY_BY_INDEX;
+        : NEUTRAL_QUALITY_BY_INDEX;
       const idx = Math.round((((dir % 360) + 360) % 360) / 22.5) % 16;
       const dirQ = arr[idx] || "unknown";
       const wmin = (c && Number.isFinite(c.windMin)) ? c.windMin : 5;
