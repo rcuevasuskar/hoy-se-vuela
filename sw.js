@@ -1,5 +1,5 @@
 // Service Worker básico para PWA: cache-first del shell, network-first de datos.
-const CACHE = "viento-cenes-v95";
+const CACHE = "viento-cenes-v96";
 const SHELL = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const SHELL = [
   "./auth.js",
   "./firebase-config.js",
   "./aemet-config.js",
+  "./holfuy-config.js",
   "./manifest.webmanifest",
   "./icon.svg",
   "./bg.png",
@@ -43,6 +44,7 @@ self.addEventListener("fetch", (e) => {
       url.hostname.includes("allorigins.win") ||
       url.hostname.includes("codetabs.com") ||
       url.hostname.includes("aemet.es") ||
+      url.hostname.includes("holfuy.com") ||
       url.hostname.includes("ffvl.fr") ||
       url.hostname.includes("aviationweather.gov") ||
       url.hostname.includes("tile.openstreetmap.org") ||

@@ -1664,61 +1664,57 @@ async function getAllStations() {
   return data?.data || [];
 }
 
-// === FFVL (Fédération Française de Vol Libre) — open data ===
-// Desde 2025 FFVL exige API key para los JSON publicos (balises / relevesmeteo).
-// Hasta que tengamos clave, devolvemos vacio para no romper la busqueda.
-let _ffvlCache = null;
-async function getAllFfvlStations() {
-  if (_ffvlCache) return _ffvlCache;
-  const key = (typeof window !== "undefined" && window.FFVL_API_KEY)
-    || localStorage.getItem("ffvlApiKey")
-    || null;
-  if (!key) { _ffvlCache = []; return _ffvlCache; }
-  const qs = `?key=${encodeURIComponent(key)}`;
-  try {
-    const [balises, releves] = await Promise.all([
-      fetchJson("https://data.ffvl.fr/json/balises.json" + qs).catch(() => []),
-      fetchJson("https://data.ffvl.fr/json/relevesmeteo.json" + qs).catch(() => []),
-    ]);
-    // Mapa id → última fecha de relevé
-    const lastByBalise = {};
-    for (const r of (Array.isArray(releves) ? releves : [])) {
-      const id = String(r.idbalise ?? r.idBalise ?? "");
-      const d  = r.date || r.heure || null;
-      if (!id || !d) continue;
-      const ts = new Date(d.replace(" ", "T")).getTime();
-      if (!Number.isFinite(ts)) continue;
-      if (!lastByBalise[id] || ts > lastByBalise[id]) lastByBalise[id] = ts;
-    }
-    _ffvlCache = (Array.isArray(balises) ? balises : []).map(b => {
-      const id = String(b.idBalise ?? b.idbalise ?? "");
-      const lat = parseFloat(b.latitude);
-      const lon = parseFloat(b.longitude);
-      if (!id || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-      const lastTs = lastByBalise[id] || null;
+// === Holfuy ===
+// API live por estacion (necesita "API password" emitida por info@holfuy.hu).
+// Las estaciones autorizadas se configuran en holfuy-config.js (id + lat/lon).
+let _holfuyCache = null;
+let _holfuyCacheTs = 0;
+const HOLFUY_CACHE_MS = 5 * 60 * 1000;
+
+async function getAllHolfuyStations() {
+  if (_holfuyCache && (Date.now() - _holfuyCacheTs) < HOLFUY_CACHE_MS) return _holfuyCache;
+  const pw = (typeof window !== "undefined" && window.HOLFUY_API_PASSWORD) || "";
+  const list = (typeof window !== "undefined" && Array.isArray(window.HOLFUY_STATIONS))
+    ? window.HOLFUY_STATIONS : [];
+  if (!pw || !list.length) { _holfuyCache = []; _holfuyCacheTs = Date.now(); return _holfuyCache; }
+  const results = await Promise.all(list.map(async (cfg) => {
+    if (!cfg || cfg.id == null || !Number.isFinite(+cfg.lat) || !Number.isFinite(+cfg.lon)) return null;
+    try {
+      const url = `https://api.holfuy.com/live/?s=${encodeURIComponent(cfg.id)}&pw=${encodeURIComponent(pw)}&m=JSON&tu=C&su=km/h`;
+      const j = await fetchJson(url);
+      // dateTime suele venir como "YYYY-MM-DD HH:MM:SS" UTC.
+      let lastDate = null;
+      if (j?.dateTime) {
+        const t = new Date(j.dateTime.replace(" ", "T") + "Z").getTime();
+        if (Number.isFinite(t)) lastDate = new Date(t).toISOString();
+      }
       return {
-        id: "ffvl_" + id,
-        rawId: id,
-        provider: "ffvl",
-        name: b.nom || b.name || ("FFVL " + id),
-        lat, lon,
-        alt: b.altitude ? parseInt(b.altitude, 10) : null,
-        orientations: b.orientations || b.orientation || "",
-        lastDate: lastTs ? new Date(lastTs).toISOString() : null,
+        id: "holfuy_" + cfg.id,
+        rawId: String(cfg.id),
+        provider: "holfuy",
+        name: cfg.name || j?.stationName || ("Holfuy " + cfg.id),
+        lat: +cfg.lat, lon: +cfg.lon,
+        lastDate,
+        wind_speed_min: j?.wind?.min ?? null,
+        wind_speed_avg: j?.wind?.speed ?? null,
+        wind_speed_max: j?.wind?.gust ?? null,
+        wind_heading:   j?.wind?.direction ?? null,
+        temperature:    j?.temperature ?? null,
       };
-    }).filter(Boolean);
-    return _ffvlCache;
-  } catch (e) {
-    console.warn("getAllFfvlStations:", e);
-    _ffvlCache = [];
-    return _ffvlCache;
-  }
+    } catch (e) {
+      console.warn("getAllHolfuyStations(" + cfg.id + "):", e);
+      return null;
+    }
+  }));
+  _holfuyCache = results.filter(Boolean);
+  _holfuyCacheTs = Date.now();
+  return _holfuyCache;
 }
 
 // === AEMET (Agencia Estatal de Meteorología, España) — OpenData ===
 // Requiere API key personal de https://opendata.aemet.es/centrodedescargas/altaUsuario
 // Se lee de window.AEMET_API_KEY o de localStorage.getItem("aemetApiKey").
-// La API no soporta CORS, así que se enruta por el mismo CORS_PROXY que FFVL.
+// La API no soporta CORS, así que se enruta por la cadena de proxies CORS_PROXIES.
 let _aemetCache = null;
 let _aemetCacheTs = 0;
 const AEMET_CACHE_MS = 15 * 60 * 1000;
@@ -3564,7 +3560,7 @@ function distCenter() {
 }
 let tsRadius = parseInt(localStorage.getItem("tsRadius") || "50", 10);
 let tsNoRadius = localStorage.getItem("tsNoRadius") === "1";
-const TS_PROVIDERS_ALL = ["community", "pioupiou", "ffvl", "aemet"];
+const TS_PROVIDERS_ALL = ["community", "pioupiou", "aemet", "holfuy"];
 let tsProviders = (function() {
   try {
     const raw = localStorage.getItem("tsProviders");
@@ -3866,15 +3862,15 @@ function selectStation(station, opts) {
 async function ensureAllStations() {
   if (allStationsCache) return allStationsCache;
   try {
-    const [pioupiou, ffvl, aemet] = await Promise.all([
+    const [pioupiou, aemet, holfuy] = await Promise.all([
       getAllStations().catch(() => []),
-      getAllFfvlStations().catch(() => []),
       getAllAemetStations().catch(() => []),
+      getAllHolfuyStations().catch(() => []),
     ]);
-    allStationsCache = { pioupiou, ffvl, aemet };
+    allStationsCache = { pioupiou, aemet, holfuy };
   } catch (e) {
     console.warn("ensureAllStations:", e);
-    allStationsCache = { pioupiou: [], ffvl: [], aemet: [] };
+    allStationsCache = { pioupiou: [], aemet: [], holfuy: [] };
   }
   return allStationsCache;
 }
@@ -3915,19 +3911,19 @@ async function tsRunSearch() {
     .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
     .filter(s => s.dist <= maxDist);
 
-  // FFVL: añadimos solo balises con datos recientes en las últimas 24 h
-  const ffvlItems = !provOn("ffvl") ? [] : (all.ffvl || [])
-    .filter(s => isStationRecent(s, 24))
-    .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
-    .filter(s => s.dist <= maxDist);
-  items = items.concat(ffvlItems);
-
   // AEMET: estaciones con datos en las últimas 24 h
   const aemetItems = !provOn("aemet") ? [] : (all.aemet || [])
     .filter(s => isStationRecent(s, 24))
     .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
     .filter(s => s.dist <= maxDist);
   items = items.concat(aemetItems);
+
+  // Holfuy: estaciones autorizadas (configuradas en holfuy-config.js)
+  const holfuyItems = !provOn("holfuy") ? [] : (all.holfuy || [])
+    .filter(s => isStationRecent(s, 24))
+    .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
+    .filter(s => s.dist <= maxDist);
+  items = items.concat(holfuyItems);
 
   // Mezcla despegues comunitarios aprobados
   const community = !provOn("community") ? [] : (window.PCAuth?.approvedTakeoffs || []).map(to => ({
@@ -4053,8 +4049,9 @@ function renderSearchRow(s, ctx) {
   const isCommunity = !!s.community;
   const isFfvl = s.provider === "ffvl";
   const isAemet = s.provider === "aemet";
+  const isHolfuy = s.provider === "holfuy";
   const enabled = isCommunity ? (s.stationId != null)
-                  : (isFfvl || isAemet) ? false
+                  : (isFfvl || isAemet || isHolfuy) ? false
                   : ENABLED_STATION_IDS.has(s.id);
   const btn = document.createElement("button");
   btn.type = "button";
@@ -4063,7 +4060,8 @@ function renderSearchRow(s, ctx) {
     + (enabled ? "" : " disabled")
     + (isCommunity ? " community" : "")
     + (isFfvl ? " ffvl" : "")
-    + (isAemet ? " aemet" : "");
+    + (isAemet ? " aemet" : "")
+    + (isHolfuy ? " holfuy" : "");
   if (!enabled) btn.disabled = true;
   let tail;
   if (isCommunity) {
@@ -4072,6 +4070,8 @@ function renderSearchRow(s, ctx) {
     tail = `<span class="ts-result-provider ffvl">FFVL</span>`;
   } else if (isAemet) {
     tail = `<span class="ts-result-provider aemet">AEMET</span>`;
+  } else if (isHolfuy) {
+    tail = `<span class="ts-result-provider holfuy">Holfuy</span>`;
   } else if (enabled) {
     tail = `<span class="ts-result-provider">${s.provider}</span>`;
   } else {
