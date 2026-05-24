@@ -1556,7 +1556,28 @@ window.addEventListener("beforeinstallprompt", (e) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(err => console.warn("SW:", err));
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      // Comprueba si hay actualización al cargar
+      reg.update().catch(() => {});
+      // Si hay un SW esperando, pídele que tome el control ya
+      if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) {
+            nw.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    }).catch(err => console.warn("SW:", err));
+    // Cuando el nuevo SW toma el control, recarga una vez para servir los nuevos assets
+    let _reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (_reloaded) return;
+      _reloaded = true;
+      location.reload();
+    });
   });
 }
 
