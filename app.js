@@ -76,7 +76,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronóstico (Open-Meteo)",
     "fc.today": "Hoy",
-    "fc.night": "Noche (omitida)",
+    "fc.night": "Noche",
     "fc.show": "Mostrar en el gráfico:",
     "auth.title": "Cuenta",
     "auth.guest": "Invitado",
@@ -326,7 +326,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Forecast (Open-Meteo)",
     "fc.today": "Today",
-    "fc.night": "Night (skipped)",
+    "fc.night": "Night",
     "fc.show": "Show on chart:",
     "auth.title": "Account",
     "auth.guest": "Guest",
@@ -561,7 +561,7 @@ const I18N = {
     "chart.dir_tooltip": "Richt.: {name} ({deg}°)",
     "fc.title": "Vorhersage (Open-Meteo)",
     "fc.today": "Heute",
-    "fc.night": "Nacht (übersprungen)",
+    "fc.night": "Nacht",
     "fc.show": "Im Diagramm anzeigen:",
     "auth.title": "Konto",
     "auth.guest": "Gast",
@@ -796,7 +796,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir : {name} ({deg}°)",
     "fc.title": "Prévision (Open-Meteo)",
     "fc.today": "Aujourd'hui",
-    "fc.night": "Nuit (ignorée)",
+    "fc.night": "Nuit",
     "fc.show": "Afficher sur le graphique :",
     "auth.title": "Compte",
     "auth.guest": "Invité",
@@ -1031,7 +1031,7 @@ const I18N = {
     "chart.dir_tooltip": "Norab.: {name} ({deg}°)",
     "fc.title": "Iragarpena (Open-Meteo)",
     "fc.today": "Gaur",
-    "fc.night": "Gaua (alde batera)",
+    "fc.night": "Gaua",
     "fc.show": "Erakutsi grafikoan:",
     "auth.title": "Kontua",
     "auth.guest": "Gonbidatua",
@@ -1220,7 +1220,7 @@ const I18N = {
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronòstic (Open-Meteo)",
     "fc.today": "Avui",
-    "fc.night": "Nit (omèsa)",
+    "fc.night": "Nit",
     "fc.show": "Mostra al gràfic:",
     "auth.title": "Compte",
     "auth.guest": "Convidat",
@@ -2151,17 +2151,20 @@ let currentForecastDays = 1;
 // Plugin: separadores verticales de día en el gráfico de pronóstico (eje categórico).
 const forecastDaySepPlugin = {
   id: "forecastDaySep",
-  afterDraw(chart) {
+  afterDatasetsDraw(chart) {
     const seps = chart.$daySep;
     if (!seps || !seps.length) return;
-    const { ctx, chartArea, scales } = chart;
-    const xs = scales.x;
-    const labels = chart.data.labels || [];
+    const { ctx, chartArea } = chart;
+    // Usamos las posiciones de los elementos del dataset 0 para evitar colisiones
+    // por etiquetas duplicadas (mismo "HH:00" en hoy y mañana) en el eje categórico.
+    const meta = chart.getDatasetMeta(0);
+    const pts = meta?.data || [];
     ctx.save();
     seps.forEach(({ index, label }) => {
-      if (index <= 0 || index >= labels.length) return;
-      const xPrev = xs.getPixelForValue(labels[index - 1]);
-      const xCur = xs.getPixelForValue(labels[index]);
+      if (index <= 0 || index >= pts.length) return;
+      const xPrev = pts[index - 1]?.x;
+      const xCur = pts[index]?.x;
+      if (xPrev == null || xCur == null) return;
       const x = Math.round((xPrev + xCur) / 2) + 0.5;
       // Línea vertical bien visible (sólida, gruesa, color cálido).
       ctx.strokeStyle = "rgba(255,170,60,0.95)";
@@ -2171,9 +2174,9 @@ const forecastDaySepPlugin = {
       ctx.lineTo(x, chartArea.bottom);
       ctx.stroke();
       // Etiqueta con fondo tipo "pill" arriba.
-      const txt = label;
+      const txt = String(label);
       ctx.font = "bold 11px sans-serif";
-      const padX = 6, padY = 3;
+      const padX = 6;
       const m = ctx.measureText(txt);
       const w = Math.ceil(m.width) + padX * 2;
       const h = 16;
