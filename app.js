@@ -2543,7 +2543,7 @@ function drawTakeoffOnMap() {
   const lon = Number(currentTakeoff.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
   const marker = L.marker([lat, lon]).addTo(map)
-    .bindPopup(`<b>${currentTakeoff.name}</b><br/>${t("popup.takeoff_sub")}`)
+    .bindPopup(`<b>${currentTakeoff.name}</b><br/>${currentStation?.shortName || currentStation?.name || ""}`)
     .bindTooltip(String(currentTakeoff.name || "").replace(/^Despegue\s+/i, ""), {
       permanent: true, direction: "top", offset: [0, -8], className: "station-label takeoff"
     })
