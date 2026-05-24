@@ -709,7 +709,6 @@ header.topbar .ts-current {
 }
 .ts-result .ts-result-soon {
   font-size: 0.65rem;
-  text-transform: uppercase;
   padding: 1px 5px;
   border-radius: 3px;
   background: rgba(255,193,7,0.15);

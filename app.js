@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.129";
+const APP_VERSION = "v0.130";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -323,7 +323,7 @@ const I18N = {
     "wh.title": "Últimas 2 h (km/h)",
     "wh.titleFmt": "Últimas {h} h (km/h)",
     "wh.legend": "flecha = hacia dónde sopla · altura = velocidad",
-    "ts.coming_soon": "próximamente",
+    "ts.coming_soon": "No añadido",
     "verdict.rain_suffix": "Probabilidad de precipitación significativa.",
     "verdict.speed.calm": "Viento muy flojo, prácticamente en calma.",
     "verdict.speed.low": "Viento por debajo del rango ideal (<5 km/h).",
@@ -598,7 +598,7 @@ const I18N = {
     "wh.title": "Last 2 h (km/h)",
     "wh.titleFmt": "Last {h} h (km/h)",
     "wh.legend": "arrow = where the wind blows to · height = speed",
-    "ts.coming_soon": "coming soon",
+    "ts.coming_soon": "Not added",
     "verdict.rain_suffix": "Significant precipitation probability.",
     "verdict.speed.calm": "Wind is very light, almost calm.",
     "verdict.speed.low": "Wind below the ideal range (<5 km/h).",
@@ -873,7 +873,7 @@ const I18N = {
     "wh.title": "Letzte 2 h (km/h)",
     "wh.titleFmt": "Letzte {h} h (km/h)",
     "wh.legend": "Pfeil = Windrichtung (wohin) · Höhe = Geschwindigkeit",
-    "ts.coming_soon": "in Kürze",
+    "ts.coming_soon": "Nicht hinzugefügt",
     "verdict.rain_suffix": "Erhebliche Niederschlagswahrscheinlichkeit.",
     "verdict.speed.calm": "Wind sehr schwach, fast Windstille.",
     "verdict.speed.low": "Wind unter dem Idealbereich (<5 km/h).",
@@ -1148,7 +1148,7 @@ const I18N = {
     "wh.title": "2 dernières heures (km/h)",
     "wh.titleFmt": "{h} dernières heures (km/h)",
     "wh.legend": "flèche = vers où souffle le vent · hauteur = vitesse",
-    "ts.coming_soon": "bientôt",
+    "ts.coming_soon": "Non ajouté",
     "verdict.rain_suffix": "Probabilité significative de précipitations.",
     "verdict.speed.calm": "Vent très faible, presque calme.",
     "verdict.speed.low": "Vent en dessous de la plage idéale (<5 km/h).",
@@ -1423,7 +1423,7 @@ const I18N = {
     "wh.title": "Azken 2 h (km/h)",
     "wh.titleFmt": "Azken {h} h (km/h)",
     "wh.legend": "gezia = norantz dabilen haizea · altuera = abiadura",
-    "ts.coming_soon": "laster",
+    "ts.coming_soon": "Gehitu gabe",
     "verdict.rain_suffix": "Prezipitazio probabilitate esanguratsua.",
     "verdict.speed.calm": "Haize oso ahula, ia geldia.",
     "verdict.speed.low": "Haizea tarte aproposaren azpitik (<5 km/h).",
@@ -1652,7 +1652,7 @@ const I18N = {
     "wh.title": "Últimes 2 h (km/h)",
     "wh.titleFmt": "Últimes {h} h (km/h)",
     "wh.legend": "fletxa = cap a on bufa · altura = velocitat",
-    "ts.coming_soon": "ben aviat",
+    "ts.coming_soon": "No afegit",
     "verdict.rain_suffix": "Probabilitat significativa de precipitació.",
     "verdict.speed.calm": "Vent molt fluix, pràcticament en calma.",
     "verdict.speed.low": "Vent per sota del rang ideal (<5 km/h).",
@@ -1829,6 +1829,28 @@ async function fetchJson(url) {
   }
 }
 
+// v129: AEMET sirve los ficheros 'datos' en ISO-8859-15 sin charset en el
+// header; r.json() los decodifica como UTF-8 y rompe acentos/ñ ("?").
+// Bajamos bytes y los decodificamos como latin1 antes de JSON.parse.
+async function fetchJsonLatin1(url) {
+  const decode = (buf) => new TextDecoder("iso-8859-15").decode(buf);
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return JSON.parse(decode(await r.arrayBuffer()));
+  } catch (e) {
+    let lastErr = e;
+    for (const wrap of CORS_PROXIES) {
+      try {
+        const r = await fetch(wrap(url));
+        if (!r.ok) { lastErr = new Error("HTTP " + r.status + " (proxy)"); continue; }
+        return JSON.parse(decode(await r.arrayBuffer()));
+      } catch (err) { lastErr = err; }
+    }
+    throw lastErr;
+  }
+}
+
 async function getLive() {
   // v100: estaciones no-Pioupiou (AEMET / Holfuy) usan su propio fetch y
   // devolvemos un objeto con el mismo shape `{ measurements: {...} }`.
@@ -1957,7 +1979,7 @@ async function getAllHolfuyStations() {
 let _aemetCache = null;
 let _aemetCacheTs = 0;
 const AEMET_CACHE_MS = 15 * 60 * 1000;
-const AEMET_LS_KEY = "aemetStationsCache";
+const AEMET_LS_KEY = "aemetStationsCache_v2";
 const AEMET_LS_TTL = 24 * 60 * 60 * 1000;
 
 function _aemetLoadLs() {
@@ -2001,7 +2023,7 @@ async function getAllAemetStations() {
       console.warn("AEMET: respuesta sin 'datos'", meta);
       return [];
     }
-    const records = await fetchJson(meta.datos);
+    const records = await fetchJsonLatin1(meta.datos);
     if (!Array.isArray(records)) {
       console.warn("AEMET: 'datos' no devolvio array", records);
       return _aemetCache || [];
@@ -3068,6 +3090,11 @@ async function renderNearby() {
   const myToken = (++_nearbyRenderToken);
   nearbyLatLngs = [];
   try {
+    if (!currentTakeoff || !Number.isFinite(currentTakeoff.lat) || !Number.isFinite(currentTakeoff.lon)) {
+      // Sin despegue seleccionado todavía: no mostramos error, solo placeholder.
+      grid.innerHTML = `<div class="compare-loading">${t("near.none")}</div>`;
+      return;
+    }
     // v126: incluimos TODOS los feeds disponibles (Pioupiou + AEMET + Holfuy)
     // y descartamos cualquiera que no devuelva datos, pasando a la siguiente.
     const [allP, allA, allH] = await Promise.all([
