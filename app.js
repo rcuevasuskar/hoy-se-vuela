@@ -181,6 +181,8 @@ const I18N = {
     "to.gust_max": "Racha máx. segura (km/h)",
     "to.suggest": "Sugerir cambios",
     "co.btn": "Mis criterios",
+    "to.propose_tip": "Esta estación no tiene datos de despegue registrados aún. Pulsa para proponer su alta (nombre, orientaciones y criterios). Lo revisará un administrador.",
+    "to.suggest_tip": "Este despegue ya está en la comunidad. Pulsa para sugerir cambios (nombre, coords, orientaciones o criterios).",
     "co.title": "Mis criterios para este despegue",
     "co.hint": "Estos criterios se guardan solo en tu dispositivo y sustituyen al veredicto por defecto del despegue.",
     "co.save": "Guardar",
@@ -453,6 +455,8 @@ const I18N = {
     "to.gust_max": "Max safe gust (km/h)",
     "to.suggest": "Suggest changes",
     "co.btn": "My criteria",
+    "to.propose_tip": "This station has no takeoff data yet. Click to propose adding it (name, orientations and criteria). An admin will review it.",
+    "to.suggest_tip": "This takeoff is already in the community. Click to suggest changes (name, coords, orientations or criteria).",
     "co.title": "My criteria for this takeoff",
     "co.hint": "These criteria are stored only on your device and override the takeoff default verdict.",
     "co.save": "Save",
@@ -710,6 +714,8 @@ const I18N = {
     "to.gust_max": "Max. sichere Böe (km/h)",
     "to.suggest": "Änderungen vorschlagen",
     "co.btn": "Meine Kriterien",
+    "to.propose_tip": "Diese Station hat noch keine Startplatzdaten. Klicke, um sie vorzuschlagen (Name, Ausrichtungen, Kriterien). Ein Admin prüft.",
+    "to.suggest_tip": "Dieser Startplatz ist bereits in der Community. Klicke, um Änderungen vorzuschlagen.",
     "co.title": "Meine Kriterien für diesen Startplatz",
     "co.hint": "Diese Kriterien werden nur auf deinem Gerät gespeichert und ersetzen das Standardurteil.",
     "co.save": "Speichern",
@@ -967,6 +973,8 @@ const I18N = {
     "to.gust_max": "Rafale max sûre (km/h)",
     "to.suggest": "Suggérer des modifications",
     "co.btn": "Mes critères",
+    "to.propose_tip": "Cette station n'a pas encore de données de déco. Cliquez pour proposer son ajout. Un admin l'examinera.",
+    "to.suggest_tip": "Ce déco est déjà dans la communauté. Cliquez pour suggérer des modifications.",
     "co.title": "Mes critères pour ce déco",
     "co.hint": "Ces critères sont stockés uniquement sur votre appareil et remplacent le verdict par défaut.",
     "co.save": "Enregistrer",
@@ -1224,6 +1232,8 @@ const I18N = {
     "to.gust_max": "Bolada max. segurua (km/h)",
     "to.suggest": "Aldaketak proposatu",
     "co.btn": "Nire irizpideak",
+    "to.propose_tip": "Estazio honek ez du oraindik irteguia daturik. Sakatu proposatzeko (izena, orientazioak, irizpideak). Administratzaileak berrikusiko du.",
+    "to.suggest_tip": "Irteguia hau jada komunitatean dago. Sakatu aldaketak proposatzeko.",
     "co.title": "Nire irizpideak irteguia honetarako",
     "co.hint": "Irizpide hauek zure gailuan bakarrik gordeko dira eta lehenetsitako epaia ordezkatzen dute.",
     "co.save": "Gorde",
@@ -1435,6 +1445,8 @@ const I18N = {
     "to.gust_max": "Ratxa màx. segura (km/h)",
     "to.suggest": "Suggereix canvis",
     "co.btn": "Els meus criteris",
+    "to.propose_tip": "Aquesta estació encara no té dades d'enlairament. Prem per proposar-ne l'alta. Un administrador ho revisarà.",
+    "to.suggest_tip": "Aquest enlairament ja està a la comunitat. Prem per suggerir canvis.",
     "co.title": "Els meus criteris per a aquest enlairament",
     "co.hint": "Aquests criteris es desen només al teu dispositiu i substitueixen el veredicte per defecte.",
     "co.save": "Desa",
@@ -4391,7 +4403,7 @@ function renderSearchRow(s, ctx) {
       const edit = document.createElement("button");
       edit.type = "button";
       edit.className = "ts-result-propose";
-      edit.title = t("to.suggest");
+      edit.title = t("to.suggest_tip");
       edit.textContent = "✎";
       edit.addEventListener("click", (ev) => {
         ev.stopPropagation();
@@ -4403,7 +4415,7 @@ function renderSearchRow(s, ctx) {
       const prop = document.createElement("button");
       prop.type = "button";
       prop.className = "ts-result-propose";
-      prop.title = t("to.propose");
+      prop.title = t("to.propose_tip");
       prop.textContent = "+";
       prop.addEventListener("click", (ev) => {
         ev.stopPropagation();
