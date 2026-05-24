@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.126";
+const APP_VERSION = "v0.127";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -3062,43 +3062,73 @@ async function renderNearby() {
   const myToken = (++_nearbyRenderToken);
   nearbyLatLngs = [];
   try {
-    const all = await getAllStations();
+    // v126: incluimos TODOS los feeds disponibles (Pioupiou + AEMET + Holfuy)
+    // y descartamos cualquiera que no devuelva datos, pasando a la siguiente.
+    const [allP, allA, allH] = await Promise.all([
+      getAllStations().catch(() => []),
+      getAllAemetStations().catch(() => []),
+      getAllHolfuyStations().catch(() => []),
+    ]);
     if (myToken !== _nearbyRenderToken) return;
     const now = Date.now();
-    // v123: las estaciones cercanas se miden respecto al DESPEGUE actual,
-    // no respecto a la ubicacion del usuario; si el usuario esta en Granada
-    // mirando Sopelana no queremos ver aeropuertos de Granada en "cercanas".
     const c = { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
-    // v125: radio adaptativo. Buscamos un minimo de 4 estaciones cercanas
-    // (Pioupiou + aeropuertos METAR conjuntamente) y un maximo de 8. Ampliamos
-    // el radio progresivamente hasta llegar al minimo.
+
+    // Normaliza Pioupiou al mismo shape que AEMET/Holfuy.
+    const pioupiouNorm = (allP || []).map(s => {
+      const lat = s.location?.latitude, lon = s.location?.longitude;
+      if (lat == null || lon == null) return null;
+      return {
+        provider: "pioupiou",
+        id: "pioupiou_" + s.id,
+        rawId: String(s.id),
+        name: s.meta?.name || ("Pioupiou " + s.id),
+        lat, lon,
+        lastDate: s.measurements?.date || null,
+        wind_speed_avg: s.measurements?.wind_speed_avg ?? null,
+        wind_speed_max: s.measurements?.wind_speed_max ?? null,
+        wind_heading: s.measurements?.wind_heading ?? null,
+      };
+    }).filter(Boolean);
+
+    const pool = [...pioupiouNorm, ...(allA || []), ...(allH || [])];
+
+    // Filtra: descarta estacion actual, descarta sin datos validos (sin viento
+    // ni direccion) y descarta no recientes (>24h).
+    const isCurrent = (n) => {
+      if (currentStation?.provider === "pioupiou" && n.provider === "pioupiou") {
+        return String(n.rawId) === String(currentStation.id);
+      }
+      if (n.provider === currentStation?.provider) {
+        return String(n.rawId) === String(currentStation.id)
+            || String(n.id)    === String(currentStation.id);
+      }
+      return false;
+    };
+    const candidates = pool
+      .filter(n => Number.isFinite(n.lat) && Number.isFinite(n.lon))
+      .filter(n => !isCurrent(n))
+      .filter(n => n.wind_speed_avg != null || n.wind_heading != null)
+      .filter(n => {
+        if (!n.lastDate) return false;
+        return (now - new Date(n.lastDate).getTime()) < 24 * 3600 * 1000;
+      })
+      .map(n => ({ ...n, dist: haversineKm(c.lat, c.lon, n.lat, n.lon) }))
+      .sort((a, b) => a.dist - b.dist);
+
+    // Radio adaptativo: buscamos minimo 4 entre todas las fuentes (incluyendo
+    // METAR de aeropuertos) y maximo 8 visibles.
     const NEARBY_MIN = 4;
     const NEARBY_MAX = 8;
     const NEARBY_RADII = [50, 100, 200, 400, 800];
-    const candidates = all
-      .map(s => {
-        const lat = s.location?.latitude, lon = s.location?.longitude;
-        if (lat == null || lon == null) return null;
-        const dist = haversineKm(c.lat, c.lon, lat, lon);
-        return { s, dist, lat, lon };
-      })
-      .filter(x => x && x.s.id !== currentStationId)
-      .filter(x => {
-        const d = x.s.measurements?.date;
-        if (!d) return false;
-        return (now - new Date(d).getTime()) < 24 * 3600 * 1000;
-      })
-      .sort((a, b) => a.dist - b.dist);
-    // Tambien contamos los aeropuertos METAR a esa distancia para decidir el radio.
     const airportDists = METAR_AIRPORTS
       .map(a => haversineKm(c.lat, c.lon, a.lat, a.lon))
       .sort((a, b) => a - b);
     let nearbyRadius = NEARBY_RADII[0];
     for (const r of NEARBY_RADII) {
-      const piou = candidates.filter(x => x.dist <= r).length;
-      const ap = airportDists.filter(d => d <= r).length;
+      const stCount = candidates.filter(x => x.dist <= r).length;
+      const apCount = airportDists.filter(d => d <= r).length;
       nearbyRadius = r;
-      if (piou + ap >= NEARBY_MIN) break;
+      if (stCount + apCount >= NEARBY_MIN) break;
     }
     _nearbyResolvedRadius = nearbyRadius;
     const within = candidates.filter(x => x.dist <= nearbyRadius).slice(0, NEARBY_MAX);
@@ -3107,20 +3137,25 @@ async function renderNearby() {
     grid.innerHTML = "";
     if (!within.length) {
       grid.innerHTML = `<div class="compare-loading">${t("near.none")}</div>`;
-      // No hacemos return: dejamos que las estaciones METAR (aeropuertos) se añadan a continuación.
+      // No hacemos return: dejamos que METAR (aeropuertos) se anada despues.
     } else {
 
     // Pintar primero placeholders y marcadores en el mapa
-    const cards = within.map(({ s, dist }) => {
+    const cards = within.map((n) => {
       const card = document.createElement("div");
       card.className = "nearby-card";
-      const stationUrl = `https://www.openwindmap.org/windbird-${s.id}`;
+      const linkOpen = n.provider === "pioupiou"
+        ? `<a href="https://www.openwindmap.org/windbird-${n.rawId}" target="_blank" rel="noopener">`
+        : `<span>`;
+      const linkClose = n.provider === "pioupiou" ? `</a>` : `</span>`;
+      const providerBadge = n.provider === "pioupiou" ? ""
+        : ` <small class="nearby-provider">· ${n.provider.toUpperCase()}</small>`;
       card.innerHTML = `
         <h3>
-          <a href="${stationUrl}" target="_blank" rel="noopener">${escapeHtml(s.meta?.name || ('Pioupiou ' + s.id))}</a>
-          <small>${dist.toFixed(1)} km</small>
+          ${linkOpen}${escapeHtml(n.name)}${linkClose}
+          <small>${n.dist.toFixed(1)} km</small>${providerBadge}
         </h3>
-        <div class="mini-compass" data-station="${s.id}">
+        <div class="mini-compass" data-station="${escapeHtml(n.id)}">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <circle cx="50" cy="50" r="46" fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
             <text x="50" y="14" text-anchor="middle" class="mc-card">N</text>
@@ -3139,78 +3174,87 @@ async function renderNearby() {
         </div>
       `;
       grid.appendChild(card);
-      return { s, dist, card };
+      return { n, card };
     });
 
-    // Marcadores en el mapa (un color neutral; sin veredicto)
+    // Marcadores en el mapa
     if (map) {
-      for (const { s, dist } of within) {
-        const stName = s.meta?.name || ('Pioupiou ' + s.id);
-        L.circleMarker([s.location.latitude, s.location.longitude], {
+      for (const { n } of within) {
+        nearbyLatLngs.push([n.lat, n.lon]);
+        const popupBody = n.provider === "pioupiou"
+          ? `<a href="https://www.openwindmap.org/windbird-${n.rawId}" target="_blank">${t("near.popup_view")}</a>`
+          : `<small>${n.provider.toUpperCase()}</small>`;
+        L.circleMarker([n.lat, n.lon], {
           radius: 6, color: "#fff", weight: 1, fillColor: "#4ea1ff", fillOpacity: 0.85,
         }).addTo(map)
           .bindPopup(
-            `<b>${escapeHtml(stName)}</b><br/>` +
-            `${dist.toFixed(1)} km · ${t("near.popup_last")}: ${fmtTime(s.measurements?.date)}<br/>` +
-            `<a href="https://www.openwindmap.org/windbird-${s.id}" target="_blank">${t("near.popup_view")}</a>`
+            `<b>${escapeHtml(n.name)}</b><br/>` +
+            `${n.dist.toFixed(1)} km · ${t("near.popup_last")}: ${fmtTime(n.lastDate)}<br/>` +
+            popupBody
           )
-          .bindTooltip(stName, {
+          .bindTooltip(n.name, {
             permanent: true, direction: "right", offset: [8, 0], className: "station-label"
           });
       }
     }
 
-    // Cargar archivo de últimas N horas en paralelo y rellenar cada tarjeta
+    // Carga datos por tarjeta: Pioupiou usa archive 3h; AEMET/Holfuy usan
+    // snapshot. Si Pioupiou falla, cae al snapshot. Si tras todo no hay
+    // datos, ocultamos la tarjeta (ya filtramos arriba pero por si acaso).
     const stop = new Date();
     const start = new Date(stop.getTime() - NEARBY_AVG_HOURS * 3600 * 1000);
     const fmt = (d) => d.toISOString().replace(/\.\d{3}Z$/, "Z");
 
-    await Promise.all(cards.map(async ({ s, card }) => {
-      try {
-        const url = `${API_BASE}/archive/${s.id}?start=${fmt(start)}&stop=${fmt(stop)}`;
-        const data = await fetchJson(url);
-        const arch = normalizeArchive(data?.data);
-        let avgSpd = null, meanDir = null;
-        if (arch?.date?.length) {
-          avgSpd = avgOf(arch.wind_speed_avg);
-          meanDir = meanAngle(arch.wind_heading);
+    await Promise.all(cards.map(async ({ n, card }) => {
+      let avgSpd = n.wind_speed_avg ?? null;
+      let meanDir = n.wind_heading ?? null;
+      if (n.provider === "pioupiou") {
+        try {
+          const url = `${API_BASE}/archive/${n.rawId}?start=${fmt(start)}&stop=${fmt(stop)}`;
+          const data = await fetchJson(url);
+          const arch = normalizeArchive(data?.data);
+          if (arch?.date?.length) {
+            const a = avgOf(arch.wind_speed_avg);
+            const d = meanAngle(arch.wind_heading);
+            if (a != null) avgSpd = a;
+            if (d != null) meanDir = d;
+          }
+        } catch (e) {
+          console.warn("nearby archive:", n.id, e);
         }
-        // Fallback al snapshot live si no hay archive
-        if (avgSpd == null) avgSpd = s.measurements?.wind_speed_avg;
-        if (meanDir == null) meanDir = s.measurements?.wind_heading;
-
-        const dirInfo = classifyDirection(meanDir);
-        // Color de la flecha por velocidad media (verde ≤15, amarillo ≤22, rojo >22).
-        const spdBand = avgSpd == null ? "unknown"
-          : avgSpd <= 15 ? "ideal"
-          : avgSpd <= 22 ? "ok"
-          : "bad";
-        const arrowG = card.querySelector(".mc-arrow-g");
-        const arrowPoly = card.querySelector(".mc-arrow");
-        if (arrowG && meanDir != null) {
-          arrowG.setAttribute("transform", `rotate(${meanDir} 50 50)`);
-        }
-        if (arrowPoly && spdBand !== "unknown") {
-          arrowPoly.classList.remove("quality-ideal", "quality-ok", "quality-bad");
-          arrowPoly.classList.add("quality-" + spdBand);
-        }
-        card.querySelector(".nearby-dir").textContent =
-          meanDir != null ? `${dirInfo.name} · ${Math.round(meanDir)}°` : "—";
-        card.querySelector(".nearby-avg").innerHTML =
-          `<b>${fmtNum(avgSpd)}</b> <span>${t("near.avg_unit", { h: NEARBY_AVG_HOURS })}</span>`;
-      } catch (e) {
-        console.warn("nearby station archive:", s.id, e);
       }
+      if (avgSpd == null && meanDir == null) {
+        // sin datos: ocultar tarjeta
+        card.remove();
+        return;
+      }
+      const dirInfo = classifyDirection(meanDir);
+      const spdBand = avgSpd == null ? "unknown"
+        : avgSpd <= 15 ? "ideal"
+        : avgSpd <= 22 ? "ok"
+        : "bad";
+      const arrowG = card.querySelector(".mc-arrow-g");
+      const arrowPoly = card.querySelector(".mc-arrow");
+      if (arrowG && meanDir != null) {
+        arrowG.setAttribute("transform", `rotate(${meanDir} 50 50)`);
+      }
+      if (arrowPoly && spdBand !== "unknown") {
+        arrowPoly.classList.remove("quality-ideal", "quality-ok", "quality-bad");
+        arrowPoly.classList.add("quality-" + spdBand);
+      }
+      card.querySelector(".nearby-dir").textContent =
+        meanDir != null ? `${dirInfo.name} · ${Math.round(meanDir)}°` : "—";
+      card.querySelector(".nearby-avg").innerHTML =
+        `<b>${fmtNum(avgSpd)}</b> <span>${t("near.avg_unit", { h: NEARBY_AVG_HOURS })}</span>`;
     }));
-    } // fin del else (había estaciones Pioupiou cercanas)
+    } // fin del else (habia estaciones cercanas con datos)
   } catch (e) {
     console.error("nearby:", e);
     grid.innerHTML = `<div class="compare-loading">${t("near.error")}</div>`;
   }
 
-  // Añadir la estación del Aeropuerto de Granada (Open-Meteo en sus coordenadas)
+  // Anadir las estaciones METAR (aeropuertos) hasta completar 8.
   await renderMetarStations();
-  // Mapa centrado en el despegue (sin estaciones).
 }
 
 // === Estaciones METAR de aeropuertos cercanos ===
