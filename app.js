@@ -3685,22 +3685,21 @@ function renderDirRose(currentQualities) {
     b.dataset.i16 = String(i16);  // equivalente en el array de 16
     const angle = k * 45;          // grados desde N en sentido horario
     b.style.setProperty("--angle", `${angle}deg`);
-    const q = q8[k] || "";
-    if (q) b.dataset.q = q;
+    // Por defecto todas en "bad". Ciclo de clic: bad → ok → ideal → bad (sin nulos).
+    b.dataset.q = q8[k] || "bad";
     b.addEventListener("click", () => {
-      const cur = b.dataset.q || "";
-      const next = cur === "" ? "ideal" : cur === "ideal" ? "ok" : cur === "ok" ? "bad" : "";
-      if (next) b.dataset.q = next; else delete b.dataset.q;
+      const cur = b.dataset.q;
+      b.dataset.q = cur === "bad" ? "ok" : cur === "ok" ? "ideal" : "bad";
     });
     host.appendChild(b);
   }
 }
 
 function collectDirRose() {
-  const q8 = new Array(8).fill(null);
+  const q8 = new Array(8).fill("bad");
   document.querySelectorAll("#toDirRose .to-dir-btn").forEach(b => {
     const k = parseInt(b.dataset.idx, 10);
-    if (Number.isFinite(k) && k >= 0 && k < 8) q8[k] = b.dataset.q || null;
+    if (Number.isFinite(k) && k >= 0 && k < 8) q8[k] = b.dataset.q || "bad";
   });
   return _expand8To16(q8);
 }

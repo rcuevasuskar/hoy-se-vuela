@@ -223,18 +223,29 @@ if (!isConfigured()) {
       notes: String(data.notes || "").trim() || null,
       criteria: data.criteria || null,
       targetId: data.targetId || null,
-      status: isAdminUser ? "approved" : "pending",
+      status: "pending", // las reglas exigen 'pending' en creación; si admin, se aprueba justo después.
       submittedBy: u.uid,
       submittedByName: u.displayName || u.email || "anon",
       submittedAt: serverTimestamp(),
-      reviewedBy: isAdminUser ? u.uid : null,
-      reviewedAt: isAdminUser ? serverTimestamp() : null,
+      reviewedBy: null,
+      reviewedAt: null,
       rejectionReason: null,
     };
     if (!payload.name || !Number.isFinite(payload.lat) || !Number.isFinite(payload.lon)) {
       throw new Error("invalid_fields");
     }
-    return await addDoc(collection(db, "takeoffs"), payload);
+    const ref = await addDoc(collection(db, "takeoffs"), payload);
+    // Admin: aprueba automáticamente tras crear (update sí permitido por reglas).
+    if (isAdminUser) {
+      try {
+        await updateDoc(ref, {
+          status: "approved",
+          reviewedBy: u.uid,
+          reviewedAt: serverTimestamp(),
+        });
+      } catch (e) { console.warn("[auth] auto-approve failed:", e); }
+    }
+    return ref;
   };
 
   window.PCAuth.approveTakeoff = async (id) => {
