@@ -20,6 +20,13 @@ const ENABLED_STATION_IDS = new Set([1638]);
 
 const API_BASE = "https://api.pioupiou.fr/v1";
 const CORS_PROXY = "https://corsproxy.io/?";
+// Proxies CORS alternativos para reintentar si el primario falla (AEMET y otras APIs
+// sin CORS suelen dar 5xx o ERR_EMPTY_RESPONSE de forma intermitente).
+const CORS_PROXIES = [
+  (u) => "https://corsproxy.io/?" + encodeURIComponent(u),
+  (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+  (u) => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u),
+];
 
 // === Tema (claro / oscuro / auto) ===
 const THEME_VALUES = ["auto", "dark", "light"];
@@ -1591,9 +1598,15 @@ async function fetchJson(url) {
     if (!r.ok) throw new Error("HTTP " + r.status);
     return await r.json();
   } catch (e) {
-    const r = await fetch(CORS_PROXY + encodeURIComponent(url));
-    if (!r.ok) throw new Error("HTTP " + r.status + " (proxy)");
-    return await r.json();
+    let lastErr = e;
+    for (const wrap of CORS_PROXIES) {
+      try {
+        const r = await fetch(wrap(url));
+        if (!r.ok) { lastErr = new Error("HTTP " + r.status + " (proxy)"); continue; }
+        return await r.json();
+      } catch (err) { lastErr = err; }
+    }
+    throw lastErr;
   }
 }
 
@@ -1703,6 +1716,21 @@ async function getAllFfvlStations() {
 let _aemetCache = null;
 let _aemetCacheTs = 0;
 const AEMET_CACHE_MS = 15 * 60 * 1000;
+const AEMET_LS_KEY = "aemetStationsCache";
+const AEMET_LS_TTL = 24 * 60 * 60 * 1000;
+
+function _aemetLoadLs() {
+  try {
+    const raw = localStorage.getItem(AEMET_LS_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || !Array.isArray(obj.data) || !obj.ts) return null;
+    return obj;
+  } catch { return null; }
+}
+function _aemetSaveLs(data) {
+  try { localStorage.setItem(AEMET_LS_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+}
 
 function _aemetApiKey() {
   try {
@@ -1714,8 +1742,16 @@ function _aemetApiKey() {
 
 async function getAllAemetStations() {
   if (_aemetCache && (Date.now() - _aemetCacheTs) < AEMET_CACHE_MS) return _aemetCache;
+  // Si tenemos un cache persistido reciente, úsalo de partida y refresca en segundo plano.
+  if (!_aemetCache) {
+    const ls = _aemetLoadLs();
+    if (ls && (Date.now() - ls.ts) < AEMET_LS_TTL) {
+      _aemetCache = ls.data;
+      _aemetCacheTs = ls.ts;
+    }
+  }
   const key = _aemetApiKey();
-  if (!key) return [];
+  if (!key) return _aemetCache || [];
   try {
     const metaUrl = `https://opendata.aemet.es/opendata/api/observacion/convencional/todas?api_key=${encodeURIComponent(key)}`;
     const meta = await fetchJson(metaUrl);
@@ -1752,10 +1788,11 @@ async function getAllAemetStations() {
       humidity:       r.hr  != null ? r.hr  : null,
     })).filter(s => Number.isFinite(s.lat) && Number.isFinite(s.lon));
     _aemetCacheTs = Date.now();
+    _aemetSaveLs(_aemetCache);
     return _aemetCache;
   } catch (e) {
     console.warn("getAllAemetStations:", e);
-    return [];
+    return _aemetCache || [];
   }
 }
 
