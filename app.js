@@ -195,6 +195,10 @@ const I18N = {
     "co.active": "Veredicto según tus criterios personales",
     "to.suggest_title": "Sugerir cambios al despegue",
     "to.suggest_submit": "Enviar sugerencia",
+    "to.delete": "Eliminar",
+    "to.delete_confirm": "¿Eliminar definitivamente el despegue «{name}»? Esta acción no se puede deshacer.",
+    "to.delete_ok": "Despegue eliminado.",
+    "to.delete_err": "No se pudo eliminar.",
     "to.suggest_ok": "Sugerencia enviada. La revisará un administrador.",
     "to.suggest_notfound": "No se ha encontrado el despegue de origen.",
     "to.suggestion_badge": "sugerencia",
@@ -473,6 +477,10 @@ const I18N = {
     "co.active": "Verdict using your personal criteria",
     "to.suggest_title": "Suggest changes to takeoff",
     "to.suggest_submit": "Send suggestion",
+    "to.delete": "Delete",
+    "to.delete_confirm": "Permanently delete takeoff “{name}”? This cannot be undone.",
+    "to.delete_ok": "Takeoff deleted.",
+    "to.delete_err": "Could not delete.",
     "to.suggest_ok": "Suggestion sent. An admin will review it.",
     "to.suggest_notfound": "Origin takeoff not found.",
     "to.suggestion_badge": "suggestion",
@@ -736,6 +744,10 @@ const I18N = {
     "co.active": "Urteil nach deinen persönlichen Kriterien",
     "to.suggest_title": "Änderungen am Startplatz vorschlagen",
     "to.suggest_submit": "Vorschlag senden",
+    "to.delete": "Löschen",
+    "to.delete_confirm": "Startplatz „{name}“ endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "to.delete_ok": "Startplatz gelöscht.",
+    "to.delete_err": "Löschen fehlgeschlagen.",
     "to.suggest_ok": "Vorschlag gesendet. Ein Admin prüft ihn.",
     "to.suggest_notfound": "Ursprungs-Startplatz nicht gefunden.",
     "to.suggestion_badge": "Vorschlag",
@@ -999,6 +1011,10 @@ const I18N = {
     "co.active": "Verdict selon vos critères personnels",
     "to.suggest_title": "Suggérer des modifications au déco",
     "to.suggest_submit": "Envoyer la suggestion",
+    "to.delete": "Supprimer",
+    "to.delete_confirm": "Supprimer définitivement le décollage « {name} » ? Cette action est irréversible.",
+    "to.delete_ok": "Décollage supprimé.",
+    "to.delete_err": "Suppression impossible.",
     "to.suggest_ok": "Suggestion envoyée. Un admin la vérifiera.",
     "to.suggest_notfound": "Déco d’origine introuvable.",
     "to.suggestion_badge": "suggestion",
@@ -1262,6 +1278,10 @@ const I18N = {
     "co.active": "Zure irizpide pertsonalen araberako epaia",
     "to.suggest_title": "Irteguiari aldaketak proposatu",
     "to.suggest_submit": "Bidali iradokizuna",
+    "to.delete": "Ezabatu",
+    "to.delete_confirm": "«kenduko duzu «{name}» aireratzea betiko? Ekintza hau ezin da desegin.",
+    "to.delete_ok": "Aireratzea ezabatuta.",
+    "to.delete_err": "Ezin izan da ezabatu.",
     "to.suggest_ok": "Iradokizuna bidalita. Administrari batek berrikusiko du.",
     "to.suggest_notfound": "Ez da jatorrizko irteguia aurkitu.",
     "to.suggestion_badge": "iradokizuna",
@@ -1479,6 +1499,10 @@ const I18N = {
     "co.active": "Veredicte segons els teus criteris personals",
     "to.suggest_title": "Suggereix canvis a l'enlairament",
     "to.suggest_submit": "Envia el suggeriment",
+    "to.delete": "Eliminar",
+    "to.delete_confirm": "Eliminar definitivament l’enlairament «{name}»? Aquesta acció no es pot desfer.",
+    "to.delete_ok": "Enlairament eliminat.",
+    "to.delete_err": "No s’ha pogut eliminar.",
     "to.suggest_ok": "Suggeriment enviat. Un administrador el revisarà.",
     "to.suggest_notfound": "No s'ha trobat l'enlairament d'origen.",
     "to.suggestion_badge": "suggeriment",
@@ -4026,6 +4050,9 @@ function openTakeoffSuggest(originId) {
   });
   const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.suggest_title");
   const sb = document.getElementById("toSubmitBtn"); if (sb) sb.textContent = t("to.suggest_submit");
+  // v110: solo admins pueden borrar un despegue existente; se muestra en modo "Sugerir cambios".
+  const delBtn = document.getElementById("toDeleteBtn");
+  if (delBtn) delBtn.hidden = !window.PCAuth?.isAdmin;
 }
 let _suggestTargetId = null;
 
@@ -4792,6 +4819,7 @@ function openTakeoffSubmit(prefill) {
     _suggestTargetId = null;
     const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.submit_title");
     const sb = document.getElementById("toSubmitBtn"); if (sb) sb.textContent = t("to.submit");
+    const delBtn = document.getElementById("toDeleteBtn"); if (delBtn) delBtn.hidden = true;
   }
   // Roseta inicial: si prefill.criteria.qualityByIndex existe, lo usamos; si no, derivamos de prefill.orientations.
   let initialQ = new Array(16).fill(null);
@@ -4838,6 +4866,7 @@ function closeTakeoffSubmit() {
   _suggestTargetId = null;
   const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.submit_title");
   const sb = document.getElementById("toSubmitBtn"); if (sb) sb.textContent = t("to.submit");
+  const delBtn = document.getElementById("toDeleteBtn"); if (delBtn) delBtn.hidden = true;
 }
 
 document.getElementById("toSubmitClose")?.addEventListener("click", closeTakeoffSubmit);
@@ -4888,6 +4917,35 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
   } catch (e) {
     console.error("[to] submit", e);
     msg.textContent = t("to.submit_err") + " [" + (e?.code || e?.message || "?") + "]";
+  }
+});
+
+// v110: borrar despegue (solo admin, requiere confirmacion).
+document.getElementById("toDeleteBtn")?.addEventListener("click", async () => {
+  if (!window.PCAuth?.isAdmin) return;
+  if (!_suggestTargetId) return;
+  const list = window.PCAuth?.approvedTakeoffs || [];
+  const to = list.find(x => x.id === _suggestTargetId);
+  const label = to?.name || _suggestTargetId;
+  if (!confirm(t("to.delete_confirm", { name: label }))) return;
+  const msg = document.getElementById("toSubmitMsg");
+  msg.style.color = "";
+  msg.textContent = "";
+  const delBtn = document.getElementById("toDeleteBtn");
+  const submitBtn = document.getElementById("toSubmitBtn");
+  if (delBtn) delBtn.disabled = true;
+  if (submitBtn) submitBtn.disabled = true;
+  try {
+    await window.PCAuth.deleteTakeoff(_suggestTargetId);
+    msg.style.color = "#2ecc71";
+    msg.textContent = t("to.delete_ok");
+    setTimeout(closeTakeoffSubmit, 1200);
+  } catch (e) {
+    console.error("[to] delete", e);
+    msg.textContent = t("to.delete_err") + " [" + (e?.code || e?.message || "?") + "]";
+  } finally {
+    if (delBtn) delBtn.disabled = false;
+    if (submitBtn) submitBtn.disabled = false;
   }
 });
 
