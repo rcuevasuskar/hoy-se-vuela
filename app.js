@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.131";
+const APP_VERSION = "v0.132";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -294,7 +294,7 @@ const I18N = {
     "near.airport_prefix": "Aeropuerto",
     "near.airport_src": "Open-Meteo (METAR aprox.)",
     "banner.title": "Despegue de parapente de Cenes de la Vega",
-    "ts.placeholder": "Buscar despegues cercanos o favoritos",
+    "ts.placeholder": "Buscar despegues",
     "ts.current": "Despegue:",
     "ts.radius": "Radio",
     "ts.no_radius": "Sin límite",
@@ -569,7 +569,7 @@ const I18N = {
     "near.airport_prefix": "Airport",
     "near.airport_src": "Open-Meteo (approx. METAR)",
     "banner.title": "Paragliding takeoff of Cenes de la Vega",
-    "ts.placeholder": "Search nearby or favorite takeoffs",
+    "ts.placeholder": "Search takeoffs",
     "ts.current": "Takeoff:",
     "ts.radius": "Radius",
     "ts.no_radius": "No limit",
@@ -844,7 +844,7 @@ const I18N = {
     "near.airport_prefix": "Flughafen",
     "near.airport_src": "Open-Meteo (ca. METAR)",
     "banner.title": "Gleitschirm-Startplatz von Cenes de la Vega",
-    "ts.placeholder": "Startplätze in der Nähe oder Favoriten suchen",
+    "ts.placeholder": "Startplätze suchen",
     "ts.current": "Startplatz:",
     "ts.radius": "Radius",
     "ts.no_radius": "Kein Limit",
@@ -1119,7 +1119,7 @@ const I18N = {
     "near.airport_prefix": "Aéroport",
     "near.airport_src": "Open-Meteo (METAR approx.)",
     "banner.title": "Décollage parapente de Cenes de la Vega",
-    "ts.placeholder": "Rechercher décollages proches ou favoris",
+    "ts.placeholder": "Rechercher décollages",
     "ts.current": "Décollage :",
     "ts.radius": "Rayon",
     "ts.no_radius": "Sans limite",
@@ -1394,7 +1394,7 @@ const I18N = {
     "near.airport_prefix": "Aireportua",
     "near.airport_src": "Open-Meteo (METAR gutxi gorabehera)",
     "banner.title": "Cenes de la Vegako parapente irteguia",
-    "ts.placeholder": "Bilatu inguruko edo gogoko irteguiak",
+    "ts.placeholder": "Bilatu irteguiak",
     "ts.current": "Irteguia:",
     "ts.radius": "Erradioa",
     "ts.no_radius": "Mugarik gabe",
@@ -1623,7 +1623,7 @@ const I18N = {
     "near.airport_prefix": "Aeroport",
     "near.airport_src": "Open-Meteo (METAR aprox.)",
     "banner.title": "Enlairament de parapent de Cenes de la Vega",
-    "ts.placeholder": "Cerca enlairaments propers o preferits",
+    "ts.placeholder": "Cerca enlairaments",
     "ts.current": "Enlairament:",
     "ts.radius": "Radi",
     "ts.no_radius": "Sense límit",
