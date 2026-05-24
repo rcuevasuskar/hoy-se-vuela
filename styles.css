@@ -297,39 +297,46 @@ header.topbar .ts-current {
   position: absolute; left: 50%; top: 50%;
   background: rgba(255,255,255,0.06);
   pointer-events: none;
+  z-index: 1;
 }
 .to-dir-rose.compass-rose-picker::before { width: 1px; height: 78%; transform: translate(-50%, -50%); }
 .to-dir-rose.compass-rose-picker::after  { width: 78%; height: 1px; transform: translate(-50%, -50%); }
-.to-dir-rose.compass-rose-picker .to-dir-btn {
-  position: absolute;
-  left: 50%; top: 50%;
-  width: 40px; height: 40px;
-  margin: 0;
-  padding: 0;
-  border-radius: 50%;
-  font-size: .72rem;
-  font-weight: 600;
-  background: var(--panel-2);
-  color: var(--muted);
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+
+.to-dir-rose.compass-rose-picker .rose-svg {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.to-dir-rose.compass-rose-picker .rose-sector {
+  fill: rgba(255,255,255,0.04);
+  stroke: rgba(0,0,0,0.35);
+  stroke-width: 1;
   cursor: pointer;
-  /* Coloca el chip a 96px del centro en el ángulo dado, manteniendo el texto horizontal */
-  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-96px) rotate(calc(-1 * var(--angle)));
-  transition: transform .15s ease, background-color .15s ease, color .15s ease;
+  transition: fill .15s ease, fill-opacity .15s ease;
 }
-.to-dir-rose.compass-rose-picker .to-dir-btn.is-cardinal {
-  width: 46px; height: 46px;
-  font-size: .95rem;
-  color: var(--fg);
-  background: linear-gradient(180deg, #243349 0%, #1a2638 100%);
+.to-dir-rose.compass-rose-picker .rose-sector:hover { fill: rgba(255,255,255,0.14); }
+.to-dir-rose.compass-rose-picker .rose-sector[data-q="ideal"] { fill: var(--ideal); fill-opacity: 0.65; }
+.to-dir-rose.compass-rose-picker .rose-sector[data-q="ok"]    { fill: var(--ok);    fill-opacity: 0.70; }
+.to-dir-rose.compass-rose-picker .rose-sector[data-q="bad"]   { fill: var(--bad);   fill-opacity: 0.55; }
+.to-dir-rose.compass-rose-picker .rose-sector[data-q="ideal"]:hover,
+.to-dir-rose.compass-rose-picker .rose-sector[data-q="ok"]:hover,
+.to-dir-rose.compass-rose-picker .rose-sector[data-q="bad"]:hover { fill-opacity: 0.85; }
+
+.to-dir-rose.compass-rose-picker .rose-label {
+  fill: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  paint-order: stroke fill;
+  stroke: rgba(0,0,0,0.5);
+  stroke-width: 0.6px;
 }
-.to-dir-rose.compass-rose-picker .to-dir-btn:hover {
-  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-96px) rotate(calc(-1 * var(--angle))) scale(1.1);
+.to-dir-rose.compass-rose-picker .rose-label.is-cardinal {
+  font-size: 16px;
+  font-weight: 700;
 }
-.to-dir-rose.compass-rose-picker .to-dir-btn[data-q="ideal"] { background: var(--ideal); color: #00210b; border-color: rgba(0,0,0,0.25); }
-.to-dir-rose.compass-rose-picker .to-dir-btn[data-q="ok"]    { background: var(--ok);    color: #2a1d00; border-color: rgba(0,0,0,0.25); }
-.to-dir-rose.compass-rose-picker .to-dir-btn[data-q="bad"]   { background: var(--bad);   color: #fff;    border-color: rgba(0,0,0,0.25); }
 .to-dir-btn {
   background: var(--panel-2); color: var(--fg);
   border: 1px solid var(--border);
@@ -449,6 +456,42 @@ header.topbar .ts-current {
   font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
 }
 .ts-lang option { font-family: inherit; font-size: 1rem; }
+
+/* === Selector de idioma con banderas SVG === */
+.lang-picker { position: relative; flex-shrink: 0; }
+.lang-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 3px 4px 3px 5px;
+  color: #fff;
+  cursor: pointer;
+}
+.lang-current:hover { background: rgba(0,0,0,0.35); }
+.lang-flag { display: inline-flex; width: 24px; height: 16px; border-radius: 2px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,0.4); }
+.lang-flag svg { display: block; width: 100%; height: 100%; }
+.lang-caret { font-size: .7rem; opacity: .8; }
+.lang-menu {
+  position: absolute; right: 0; top: calc(100% + 4px);
+  list-style: none; margin: 0; padding: 4px;
+  background: #1c283a; border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  z-index: 100;
+  min-width: 56px;
+}
+.lang-menu li {
+  display: flex; align-items: center; justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.lang-menu li:hover { background: rgba(255,255,255,0.08); }
+.lang-menu li.is-current { background: rgba(255,255,255,0.12); }
+.lang-menu li .lang-flag { width: 28px; height: 19px; }
 .ts-current {
   margin-top: 6px;
   font-size: 0.8rem;

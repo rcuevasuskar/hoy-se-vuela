@@ -25,14 +25,13 @@
                data-i18n-placeholder="ts.placeholder"
                placeholder="Buscar despegues cercanos o favoritos" />
         <button id="tsToggleBtn" class="ts-toggle" title="Mostrar opciones" aria-expanded="false">▾</button>
-        <select id="langSel" class="ts-lang" title="Idioma / Language">
-          <option value="es">🇪🇸</option>
-          <option value="en">🇬🇧</option>
-          <option value="de">🇩🇪</option>
-          <option value="fr">🇫🇷</option>
-          <option value="ca">🏴󠁥󠁳󠁣󠁴󠁿</option>
-          <option value="eu">🏴󠁥󠁳󠁰󠁶󠁿</option>
-        </select>
+        <div class="lang-picker" id="langPicker">
+          <button type="button" class="lang-current" id="langCurrent" aria-haspopup="listbox" aria-expanded="false" title="Idioma / Language">
+            <span class="lang-flag" id="langCurrentFlag"></span>
+            <span class="lang-caret">▾</span>
+          </button>
+          <ul class="lang-menu" id="langMenu" hidden role="listbox"></ul>
+        </div>
         <button id="notifyBtn" class="ts-notify" title="Avisarme si hay condiciones ideales" data-i18n-title="btn.notify_off">🔔</button>
         <button id="installBtn" class="ts-install" hidden title="Instalar app" data-i18n-title="btn.install">📲</button>
         <button id="refreshBtn" class="ts-refresh" title="Actualizar">⟳</button>

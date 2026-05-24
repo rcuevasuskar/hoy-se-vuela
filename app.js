@@ -3018,25 +3018,77 @@ document.querySelectorAll("#whRange button").forEach(btn => {
 });
 
 // Idioma
-const langSel = document.getElementById("langSel");
-if (langSel) {
-  langSel.value = currentLang;
-  langSel.addEventListener("change", () => {
-    currentLang = langSel.value;
-    localStorage.setItem("lang", currentLang);
-    window.PCAuth?.savePref?.("lang", currentLang);
-    applyStaticI18n();
-    syncNotifyButtonInitial();
-    const whTitleEl = document.getElementById("whTitle");
-    if (whTitleEl) whTitleEl.textContent = t("wh.titleFmt").replace("{h}", WH_HOURS);
-    // Re-renderiza todo para refrescar etiquetas dinámicas
-    if (map) {
-      map.eachLayer(l => { if (l instanceof L.CircleMarker) map.removeLayer(l); });
-    }
-    refreshObservations();
-    refreshForecast();
-    renderCompare();
-    renderNearby();
+const LANG_CODES = ["es", "en", "de", "fr", "ca", "eu"];
+const FLAG_SVG = {
+  es: '<svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#aa151b"/><rect y="10" width="60" height="20" fill="#f1bf00"/></svg>',
+  en: '<svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#012169"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" stroke-width="3"/><path d="M30,0 V40 M0,20 H60" stroke="#fff" stroke-width="10"/><path d="M30,0 V40 M0,20 H60" stroke="#C8102E" stroke-width="6"/></svg>',
+  de: '<svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#000"/><rect y="13.33" width="60" height="13.33" fill="#DD0000"/><rect y="26.66" width="60" height="13.34" fill="#FFCE00"/></svg>',
+  fr: '<svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="40" fill="#0055A4"/><rect x="20" width="20" height="40" fill="#fff"/><rect x="40" width="20" height="40" fill="#EF4135"/></svg>',
+  ca: '<svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#FCDD09"/><g fill="#DA121A"><rect y="4.44" width="60" height="4.44"/><rect y="13.33" width="60" height="4.44"/><rect y="22.22" width="60" height="4.44"/><rect y="31.11" width="60" height="4.44"/></g></svg>',
+  eu: '<svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#D52B1E"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#009B48" stroke-width="9"/><path d="M30,0 V40 M0,20 H60" stroke="#fff" stroke-width="9"/></svg>'
+};
+
+function applyLangChange(newLang) {
+  if (!LANG_CODES.includes(newLang)) return;
+  currentLang = newLang;
+  localStorage.setItem("lang", currentLang);
+  window.PCAuth?.savePref?.("lang", currentLang);
+  renderLangPicker();
+  applyStaticI18n();
+  syncNotifyButtonInitial();
+  const whTitleEl = document.getElementById("whTitle");
+  if (whTitleEl) whTitleEl.textContent = t("wh.titleFmt").replace("{h}", WH_HOURS);
+  if (map) {
+    map.eachLayer(l => { if (l instanceof L.CircleMarker) map.removeLayer(l); });
+  }
+  refreshObservations();
+  refreshForecast();
+  renderCompare();
+  renderNearby();
+}
+
+function renderLangPicker() {
+  const curFlag = document.getElementById("langCurrentFlag");
+  if (curFlag) curFlag.innerHTML = FLAG_SVG[currentLang] || FLAG_SVG.es;
+  const menu = document.getElementById("langMenu");
+  if (menu) {
+    menu.innerHTML = "";
+    LANG_CODES.forEach(code => {
+      const li = document.createElement("li");
+      li.setAttribute("role", "option");
+      li.dataset.lang = code;
+      if (code === currentLang) li.classList.add("is-current");
+      li.innerHTML = `<span class="lang-flag">${FLAG_SVG[code]}</span>`;
+      li.addEventListener("click", () => {
+        applyLangChange(code);
+        closeLangMenu();
+      });
+      menu.appendChild(li);
+    });
+  }
+}
+
+function closeLangMenu() {
+  const menu = document.getElementById("langMenu");
+  const btn = document.getElementById("langCurrent");
+  if (menu) menu.hidden = true;
+  if (btn) btn.setAttribute("aria-expanded", "false");
+}
+
+const langBtn = document.getElementById("langCurrent");
+if (langBtn) {
+  renderLangPicker();
+  langBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const menu = document.getElementById("langMenu");
+    if (!menu) return;
+    const willOpen = menu.hidden;
+    menu.hidden = !willOpen;
+    langBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  });
+  document.addEventListener("click", (e) => {
+    const picker = document.getElementById("langPicker");
+    if (picker && !picker.contains(e.target)) closeLangMenu();
   });
 }
 
@@ -3609,8 +3661,7 @@ window.addEventListener("pcuserchange", (e) => {
   let changed = false;
   if (prefs.lang && prefs.lang !== currentLang) {
     currentLang = prefs.lang;
-    const ls = document.getElementById("langSel");
-    if (ls) ls.value = currentLang;
+    if (typeof renderLangPicker === "function") renderLangPicker();
     applyStaticI18n();
     changed = true;
   }
@@ -3674,30 +3725,62 @@ function renderDirRose(currentQualities) {
   host.classList.add("compass-rose-picker");
   const labels = DIR_16_BY_LANG[currentLang] || DIR_16_BY_LANG.es;
   const q8 = _collapse16To8(currentQualities);
-  const CARDINAL_K = new Set([0, 2, 4, 6]); // N, E, S, O (en el array de 8)
+  const CARDINAL_K = new Set([0, 2, 4, 6]); // N, E, S, O
+
+  // Geometría del SVG: ring de 240×240, sectores de 45°
+  const SIZE = 240, CX = SIZE / 2, CY = SIZE / 2;
+  const R_OUT = 112, R_IN = 50;
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const arcPath = (angDeg) => {
+    const a1 = ((angDeg - 22.5) - 90) * Math.PI / 180;
+    const a2 = ((angDeg + 22.5) - 90) * Math.PI / 180;
+    const x1o = CX + R_OUT * Math.cos(a1), y1o = CY + R_OUT * Math.sin(a1);
+    const x2o = CX + R_OUT * Math.cos(a2), y2o = CY + R_OUT * Math.sin(a2);
+    const x1i = CX + R_IN  * Math.cos(a1), y1i = CY + R_IN  * Math.sin(a1);
+    const x2i = CX + R_IN  * Math.cos(a2), y2i = CY + R_IN  * Math.sin(a2);
+    return `M ${x1o.toFixed(2)} ${y1o.toFixed(2)} A ${R_OUT} ${R_OUT} 0 0 1 ${x2o.toFixed(2)} ${y2o.toFixed(2)} L ${x2i.toFixed(2)} ${y2i.toFixed(2)} A ${R_IN} ${R_IN} 0 0 0 ${x1i.toFixed(2)} ${y1i.toFixed(2)} Z`;
+  };
+  const labelPos = (angDeg) => {
+    const a = (angDeg - 90) * Math.PI / 180;
+    const r = (R_OUT + R_IN) / 2;
+    return [CX + r * Math.cos(a), CY + r * Math.sin(a)];
+  };
+
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${SIZE} ${SIZE}`);
+  svg.setAttribute("class", "rose-svg");
+
   for (let k = 0; k < 8; k++) {
     const i16 = DIR8_INDICES[k];
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "to-dir-btn" + (CARDINAL_K.has(k) ? " is-cardinal" : "");
-    b.textContent = labels[i16];
-    b.dataset.idx = String(k);    // índice 0..7 sobre las 8 direcciones
-    b.dataset.i16 = String(i16);  // equivalente en el array de 16
-    const angle = k * 45;          // grados desde N en sentido horario
-    b.style.setProperty("--angle", `${angle}deg`);
-    // Por defecto todas en "bad". Ciclo de clic: bad → ok → ideal → bad (sin nulos).
-    b.dataset.q = q8[k] || "bad";
-    b.addEventListener("click", () => {
-      const cur = b.dataset.q;
-      b.dataset.q = cur === "bad" ? "ok" : cur === "ok" ? "ideal" : "bad";
+    const ang = k * 45;
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", arcPath(ang));
+    path.setAttribute("class", "rose-sector" + (CARDINAL_K.has(k) ? " is-cardinal" : ""));
+    path.dataset.idx = String(k);
+    path.dataset.i16 = String(i16);
+    path.dataset.q = q8[k] || "bad";
+    path.addEventListener("click", () => {
+      const cur = path.dataset.q;
+      path.dataset.q = cur === "bad" ? "ok" : cur === "ok" ? "ideal" : "bad";
     });
-    host.appendChild(b);
+    svg.appendChild(path);
+
+    const [tx, ty] = labelPos(ang);
+    const txt = document.createElementNS(SVG_NS, "text");
+    txt.setAttribute("x", tx.toFixed(2));
+    txt.setAttribute("y", ty.toFixed(2));
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("dominant-baseline", "central");
+    txt.setAttribute("class", "rose-label" + (CARDINAL_K.has(k) ? " is-cardinal" : ""));
+    txt.textContent = labels[i16];
+    svg.appendChild(txt);
   }
+  host.appendChild(svg);
 }
 
 function collectDirRose() {
   const q8 = new Array(8).fill("bad");
-  document.querySelectorAll("#toDirRose .to-dir-btn").forEach(b => {
+  document.querySelectorAll("#toDirRose .rose-sector").forEach(b => {
     const k = parseInt(b.dataset.idx, 10);
     if (Number.isFinite(k) && k >= 0 && k < 8) q8[k] = b.dataset.q || "bad";
   });
