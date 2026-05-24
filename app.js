@@ -1639,14 +1639,19 @@ async function renderNearby() {
         if (meanDir == null) meanDir = s.measurements?.wind_heading;
 
         const dirInfo = classifyDirection(meanDir);
+        // Color de la flecha por velocidad media (verde ≤15, amarillo ≤22, rojo >22).
+        const spdBand = avgSpd == null ? "unknown"
+          : avgSpd <= 15 ? "ideal"
+          : avgSpd <= 22 ? "ok"
+          : "bad";
         const arrowG = card.querySelector(".mc-arrow-g");
         const arrowPoly = card.querySelector(".mc-arrow");
         if (arrowG && meanDir != null) {
           arrowG.setAttribute("transform", `rotate(${meanDir} 50 50)`);
         }
-        if (arrowPoly && dirInfo.quality !== "unknown") {
+        if (arrowPoly && spdBand !== "unknown") {
           arrowPoly.classList.remove("quality-ideal", "quality-ok", "quality-bad");
-          arrowPoly.classList.add("quality-" + dirInfo.quality);
+          arrowPoly.classList.add("quality-" + spdBand);
         }
         card.querySelector(".nearby-dir").textContent =
           meanDir != null ? `${dirInfo.name} · ${Math.round(meanDir)}°` : "—";
@@ -1698,7 +1703,7 @@ async function renderAirportStation() {
           <text x="91" y="54" text-anchor="middle" class="mc-card">E</text>
           <text x="9"  y="54" text-anchor="middle" class="mc-card">O</text>
           <g class="mc-arrow-g" transform="rotate(${dir ?? 0} 50 50)">
-            <polygon class="mc-arrow ${dirInfo.quality !== 'unknown' ? 'quality-' + dirInfo.quality : ''}" points="50,32 42,12 58,12" />
+            <polygon class="mc-arrow ${spd != null ? 'quality-' + (spd <= 15 ? 'ideal' : spd <= 22 ? 'ok' : 'bad') : ''}" points="50,32 42,12 58,12" />
           </g>
           <circle cx="50" cy="50" r="3" fill="#4ea1ff"/>
         </svg>
