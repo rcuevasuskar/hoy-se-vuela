@@ -3655,8 +3655,22 @@ function renderSearchRow(s, ctx) {
       icons.appendChild(bell);
     }
 
-    // Botón "+ Proponer" para resultados deshabilitados que no son comunidad
-    if (!enabled && !isCommunity) {
+    // Botón "+ Proponer" para resultados deshabilitados que no son comunidad.
+    // Para resultados comunitarios (con datos de despegue ya registrados) ofrecemos en su lugar
+    // un botón "✎ Sugerir cambios" que abre el formulario prellenado.
+    if (isCommunity) {
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "ts-result-propose";
+      edit.title = t("to.suggest");
+      edit.textContent = "✎";
+      edit.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const id = s.raw?.id;
+        if (id) openTakeoffSuggest(id);
+      });
+      icons.appendChild(edit);
+    } else if (!enabled) {
       const prop = document.createElement("button");
       prop.type = "button";
       prop.className = "ts-result-propose";
