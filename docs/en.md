@@ -79,6 +79,7 @@ Tap 📲 (when available) to install the app and use it offline. The service wor
 - Data is indicative. **Always assess conditions on site** before flying.
 - Open‑Meteo forecast doesn't model local orography in detail.
 - Notifications can be delayed when the tab is closed (browser/OS dependent).
+- **Storm risk**: shown as a 0–100 % score from CAPE, precipitation probability and WMO weather code. Levels: **low** ≥ 25 %, **medium** ≥ 50 %, **high** ≥ 75 %. Below 25 % it's hidden. It's an estimate — always check official bulletins.
 
 ---
 

@@ -79,6 +79,7 @@ Pulsa 📲 (cuando esté disponible) para instalar la app en el dispositivo y us
 - Los datos son orientativos. **Valora siempre las condiciones in situ** antes de volar.
 - El pronóstico Open‑Meteo no tiene en cuenta la orografía local con detalle.
 - Las notificaciones pueden retrasarse si la pestaña está cerrada (depende del navegador y del sistema).
+- **Riesgo de tormenta**: se muestra un porcentaje (0–100 %) basado en CAPE, probabilidad de precipitación y código de tiempo WMO. Niveles: **bajo** ≥ 25 %, **medio** ≥ 50 %, **alto** ≥ 75 %. Por debajo del 25 % no se muestra. Es una estimación; consulta siempre boletines oficiales.
 
 ---
 

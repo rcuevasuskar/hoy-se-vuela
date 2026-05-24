@@ -1684,9 +1684,9 @@ function stormChance(cw) {
 }
 
 function stormLevel(pct) {
-  if (pct >= 50) return "high";
-  if (pct >= 20) return "med";
-  if (pct >= 5)  return "low";
+  if (pct >= 75) return "high";
+  if (pct >= 50) return "med";
+  if (pct >= 25) return "low";
   return "none";
 }
 
@@ -3523,12 +3523,23 @@ async function tsRunSearch() {
   items = items.concat(community);
 
   // Evita duplicados: si una estación Pioupiou/FFVL ya está registrada como despegue comunitario
-  // (mismo stationId), sólo mostramos la tarjeta comunitaria.
+  // (mismo stationId o muy cerca geográficamente / mismo nombre), sólo mostramos la tarjeta comunitaria.
   const communityStationIds = new Set(
     community.map(c => c.stationId).filter(id => id != null).map(Number)
   );
-  if (communityStationIds.size) {
-    items = items.filter(s => s.community || !communityStationIds.has(Number(s.id)));
+  const normalizeName = (n) => String(n || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const communityNames = new Set(community.map(c => normalizeName(c.name)).filter(Boolean));
+  if (community.length) {
+    items = items.filter(s => {
+      if (s.community) return true;
+      if (communityStationIds.has(Number(s.id))) return false;
+      if (communityNames.has(normalizeName(s.name))) return false;
+      // Cerca (≤200 m) de algún despegue comunitario
+      for (const c of community) {
+        if (haversineKm(s.lat, s.lon, c.lat, c.lon) <= 0.2) return false;
+      }
+      return true;
+    });
   }
 
   if (query) {
