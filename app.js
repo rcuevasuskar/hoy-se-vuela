@@ -1042,6 +1042,51 @@ async function getAllStations() {
   return data?.data || [];
 }
 
+// === FFVL (Fédération Française de Vol Libre) — open data ===
+// Balises (metadatos) y relevés meteo (últimas medidas) son JSON públicos sin clave.
+let _ffvlCache = null;
+async function getAllFfvlStations() {
+  if (_ffvlCache) return _ffvlCache;
+  try {
+    const [balises, releves] = await Promise.all([
+      fetchJson(CORS_PROXY + encodeURIComponent("https://data.ffvl.fr/json/balises.json")).catch(() => []),
+      fetchJson(CORS_PROXY + encodeURIComponent("https://data.ffvl.fr/json/relevesmeteo.json")).catch(() => []),
+    ]);
+    // Mapa id → última fecha de relevé
+    const lastByBalise = {};
+    for (const r of (releves || [])) {
+      const id = String(r.idbalise ?? r.idBalise ?? "");
+      const d  = r.date || r.heure || null;
+      if (!id || !d) continue;
+      const ts = new Date(d.replace(" ", "T")).getTime();
+      if (!Number.isFinite(ts)) continue;
+      if (!lastByBalise[id] || ts > lastByBalise[id]) lastByBalise[id] = ts;
+    }
+    _ffvlCache = (balises || []).map(b => {
+      const id = String(b.idBalise ?? b.idbalise ?? "");
+      const lat = parseFloat(b.latitude);
+      const lon = parseFloat(b.longitude);
+      if (!id || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+      const lastTs = lastByBalise[id] || null;
+      return {
+        id: "ffvl_" + id,
+        rawId: id,
+        provider: "ffvl",
+        name: b.nom || b.name || ("FFVL " + id),
+        lat, lon,
+        alt: b.altitude ? parseInt(b.altitude, 10) : null,
+        orientations: b.orientations || b.orientation || "",
+        lastDate: lastTs ? new Date(lastTs).toISOString() : null,
+      };
+    }).filter(Boolean);
+    return _ffvlCache;
+  } catch (e) {
+    console.warn("getAllFfvlStations:", e);
+    _ffvlCache = [];
+    return _ffvlCache;
+  }
+}
+
 // === Meteorología (WMO weather codes) ===
 // https://open-meteo.com/en/docs WMO Weather interpretation codes
 const WMO = {
@@ -2572,10 +2617,14 @@ function selectStation(station) {
 async function ensureAllStations() {
   if (allStationsCache) return allStationsCache;
   try {
-    allStationsCache = await getAllStations();
+    const [pioupiou, ffvl] = await Promise.all([
+      getAllStations().catch(() => []),
+      getAllFfvlStations().catch(() => []),
+    ]);
+    allStationsCache = { pioupiou, ffvl };
   } catch (e) {
-    console.warn("getAllStations:", e);
-    allStationsCache = [];
+    console.warn("ensureAllStations:", e);
+    allStationsCache = { pioupiou: [], ffvl: [] };
   }
   return allStationsCache;
 }
@@ -2607,12 +2656,19 @@ async function tsRunSearch() {
   resultsEl.innerHTML = `<div class="ts-loading">${t("ts.loading")}</div>`;
   const all = await ensureAllStations();
 
-  let items = all
+  let items = (all.pioupiou || [])
     .map(stationFromPioupiou)
     .filter(Boolean)
     .filter(s => isStationRecent(s, 24))
     .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
     .filter(s => s.dist <= tsRadius);
+
+  // FFVL: añadimos solo balises con datos recientes en las últimas 24 h
+  const ffvlItems = (all.ffvl || [])
+    .filter(s => isStationRecent(s, 24))
+    .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
+    .filter(s => s.dist <= tsRadius);
+  items = items.concat(ffvlItems);
 
   // Mezcla despegues comunitarios aprobados
   const community = (window.PCAuth?.approvedTakeoffs || []).map(to => ({
@@ -2640,17 +2696,24 @@ async function tsRunSearch() {
   resultsEl.innerHTML = "";
   for (const s of items) {
     const isCommunity = !!s.community;
-    const enabled = isCommunity ? (s.stationId != null) : ENABLED_STATION_IDS.has(s.id);
+    const isFfvl = s.provider === "ffvl";
+    // FFVL no tiene integración de observaciones todavía → siempre disabled
+    const enabled = isCommunity ? (s.stationId != null)
+                    : isFfvl ? false
+                    : ENABLED_STATION_IDS.has(s.id);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "ts-result"
       + (s.id === currentStationId ? " selected" : "")
       + (enabled ? "" : " disabled")
-      + (isCommunity ? " community" : "");
+      + (isCommunity ? " community" : "")
+      + (isFfvl ? " ffvl" : "");
     if (!enabled) btn.disabled = true;
     let tail;
     if (isCommunity) {
       tail = `<span class="ts-result-badge">${t("to.community_badge")}</span>`;
+    } else if (isFfvl) {
+      tail = `<span class="ts-result-provider ffvl">FFVL</span>`;
     } else if (enabled) {
       tail = `<span class="ts-result-provider">${s.provider}</span>`;
     } else {
@@ -2691,7 +2754,11 @@ async function tsRunSearch() {
         prop.addEventListener("click", (ev) => {
           ev.stopPropagation();
           openTakeoffSubmit({
-            name: s.name, lat: s.lat, lon: s.lon, stationId: s.id,
+            name: s.name, lat: s.lat, lon: s.lon,
+            // Solo Pioupiou alimenta directamente las observaciones; FFVL no.
+            stationId: isFfvl ? null : s.id,
+            alt: s.alt || null,
+            orientations: s.orientations || "",
           });
         });
         wrap.appendChild(prop);
@@ -2842,6 +2909,8 @@ function openTakeoffSubmit(prefill) {
     if (prefill.lat != null) document.getElementById("toLat").value = Number(prefill.lat).toFixed(5);
     if (prefill.lon != null) document.getElementById("toLon").value = Number(prefill.lon).toFixed(5);
     if (prefill.stationId != null) document.getElementById("toStation").value = String(prefill.stationId);
+    if (prefill.alt != null && prefill.alt !== "") document.getElementById("toAlt").value = String(prefill.alt);
+    if (prefill.orientations) document.getElementById("toOrient").value = String(prefill.orientations);
     // Foco en el nombre para que pueda cambiarlo
     setTimeout(() => { document.getElementById("toName")?.focus(); document.getElementById("toName")?.select(); }, 50);
   } else {
