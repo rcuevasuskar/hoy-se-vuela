@@ -2526,17 +2526,22 @@ function clearTakeoffMapLayers() {
 function drawTakeoffOnMap() {
   if (!map) return;
   clearTakeoffMapLayers();
-  const marker = L.marker([currentTakeoff.lat, currentTakeoff.lon]).addTo(map)
+  const lat = Number(currentTakeoff.lat);
+  const lon = Number(currentTakeoff.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+  const marker = L.marker([lat, lon]).addTo(map)
     .bindPopup(`<b>${currentTakeoff.name}</b><br/>${t("popup.takeoff_sub")}`)
-    .bindTooltip(currentTakeoff.name.replace(/^Despegue\s+/i, ""), {
+    .bindTooltip(String(currentTakeoff.name || "").replace(/^Despegue\s+/i, ""), {
       permanent: true, direction: "top", offset: [0, -8], className: "station-label takeoff"
     })
     .openPopup();
-  const circle = L.circle([currentTakeoff.lat, currentTakeoff.lon], {
+  const circle = L.circle([lat, lon], {
     radius: 50000, color: "#4ea1ff", weight: 1, fillOpacity: 0.05, dashArray: "4,4",
   }).addTo(map);
   takeoffMapLayers.push(marker, circle);
-  map.setView([currentTakeoff.lat, currentTakeoff.lon], 10);
+  // Asegura el reflow por si el contenedor cambió de tamaño y centra/panea suavemente.
+  try { map.invalidateSize(); } catch {}
+  map.flyTo([lat, lon], 11, { duration: 0.6 });
 }
 
 // === Estaciones cercanas ===
