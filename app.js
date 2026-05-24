@@ -3869,15 +3869,19 @@ function resolveCurrentTakeoffOrigin() {
       return;
     }
   }
-  // 3) Coincidencia por coordenadas (≤ 200 m).
+  // 3) Coincidencia por coordenadas: despegue comunitario más cercano dentro de 3 km (v101).
+  //    Antes solo aceptaba ≤ 200 m, lo que dejaba estaciones AEMET cercanas (a 1-3 km) sin
+  //    aplicar los criterios del despegue (verdict con valores por defecto, no específicos).
   const lat = currentTakeoff?.lat, lon = currentTakeoff?.lon;
   if (lat == null || lon == null) return;
+  let bestT = null, bestKm = Infinity;
   for (const t of list) {
-    if (haversineKm(lat, lon, t.lat, t.lon) < 0.2) {
-      currentTakeoffOriginId = t.id;
-      if (!currentTakeoffCriteria && t.criteria) currentTakeoffCriteria = t.criteria;
-      return;
-    }
+    const km = haversineKm(lat, lon, t.lat, t.lon);
+    if (km < bestKm && km <= 3) { bestKm = km; bestT = t; }
+  }
+  if (bestT) {
+    currentTakeoffOriginId = bestT.id;
+    if (!currentTakeoffCriteria && bestT.criteria) currentTakeoffCriteria = bestT.criteria;
   }
 }
 
