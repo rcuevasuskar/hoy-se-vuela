@@ -21,6 +21,27 @@ const ENABLED_STATION_IDS = new Set([1638]);
 const API_BASE = "https://api.pioupiou.fr/v1";
 const CORS_PROXY = "https://corsproxy.io/?";
 
+// === Tema (claro / oscuro / auto) ===
+const THEME_VALUES = ["auto", "dark", "light"];
+const THEME_ICON = { auto: "💻", dark: "🌙", light: "☀️" };
+let currentTheme = (function() {
+  const saved = localStorage.getItem("theme");
+  return THEME_VALUES.includes(saved) ? saved : "auto";
+})();
+function applyTheme(theme) {
+  if (!THEME_VALUES.includes(theme)) theme = "auto";
+  currentTheme = theme;
+  document.documentElement.setAttribute("data-theme", theme);
+  const ico = document.getElementById("themeIcon");
+  if (ico) ico.textContent = THEME_ICON[theme];
+  const btn = document.getElementById("themeToggle");
+  if (btn) btn.setAttribute("title", (typeof t === "function" ? t(`theme.${theme}`) : theme));
+  localStorage.setItem("theme", theme);
+  window.PCAuth?.savePref?.("theme", theme);
+}
+// Aplica inmediatamente para evitar parpadeo (antes incluso de DOMContentLoaded)
+document.documentElement.setAttribute("data-theme", currentTheme);
+
 function loadSavedStation() {
   try {
     const raw = localStorage.getItem("selectedStation");
@@ -227,6 +248,10 @@ const I18N = {
     "ts.current": "Despegue:",
     "ts.radius": "Radio",
     "ts.no_radius": "Sin límite",
+    "theme.title": "Tema (auto/oscuro/claro)",
+    "theme.auto": "Tema: automático",
+    "theme.dark": "Tema: oscuro",
+    "theme.light": "Tema: claro",
     "ts.locate": "Usar mi ubicación",
     "ts.hint": "Pulsa 📍 para usar tu ubicación o escribe para filtrar.",
     "ts.loading": "Cargando estaciones…",
@@ -464,6 +489,10 @@ const I18N = {
     "ts.current": "Takeoff:",
     "ts.radius": "Radius",
     "ts.no_radius": "No limit",
+    "theme.title": "Theme (auto/dark/light)",
+    "theme.auto": "Theme: automatic",
+    "theme.dark": "Theme: dark",
+    "theme.light": "Theme: light",
     "ts.locate": "Use my location",
     "ts.hint": "Tap 📍 to use your location or type to filter.",
     "ts.loading": "Loading stations…",
@@ -701,6 +730,10 @@ const I18N = {
     "ts.current": "Startplatz:",
     "ts.radius": "Radius",
     "ts.no_radius": "Kein Limit",
+    "theme.title": "Design (auto/dunkel/hell)",
+    "theme.auto": "Design: automatisch",
+    "theme.dark": "Design: dunkel",
+    "theme.light": "Design: hell",
     "ts.locate": "Meinen Standort verwenden",
     "ts.hint": "📍 tippen, um deinen Standort zu nutzen, oder filtern.",
     "ts.loading": "Stationen werden geladen…",
@@ -938,6 +971,10 @@ const I18N = {
     "ts.current": "Décollage :",
     "ts.radius": "Rayon",
     "ts.no_radius": "Sans limite",
+    "theme.title": "Thème (auto/sombre/clair)",
+    "theme.auto": "Thème : automatique",
+    "theme.dark": "Thème : sombre",
+    "theme.light": "Thème : clair",
     "ts.locate": "Utiliser ma position",
     "ts.hint": "Appuyez sur 📍 pour utiliser votre position ou filtrez.",
     "ts.loading": "Chargement des stations…",
@@ -1175,6 +1212,10 @@ const I18N = {
     "ts.current": "Irteguia:",
     "ts.radius": "Erradioa",
     "ts.no_radius": "Mugarik gabe",
+    "theme.title": "Gaia (auto/iluna/argia)",
+    "theme.auto": "Gaia: automatikoa",
+    "theme.dark": "Gaia: iluna",
+    "theme.light": "Gaia: argia",
     "ts.locate": "Erabili nire kokapena",
     "ts.hint": "Sakatu 📍 zure kokapena erabiltzeko edo idatzi iragazteko.",
     "ts.loading": "Estazioak kargatzen…",
@@ -1366,6 +1407,10 @@ const I18N = {
     "ts.current": "Enlairament:",
     "ts.radius": "Radi",
     "ts.no_radius": "Sense límit",
+    "theme.title": "Tema (auto/fosc/clar)",
+    "theme.auto": "Tema: automàtic",
+    "theme.dark": "Tema: fosc",
+    "theme.light": "Tema: clar",
     "ts.locate": "Utilitza la meva ubicació",
     "ts.hint": "Prem 📍 per usar la teva ubicació o escriu per filtrar.",
     "ts.loading": "Carregant estacions…",
@@ -3380,6 +3425,17 @@ if (langBtn) {
   });
 }
 
+// Botón de tema: cicla auto → dark → light
+const themeBtn = document.getElementById("themeToggle");
+if (themeBtn) {
+  applyTheme(currentTheme);
+  themeBtn.addEventListener("click", () => {
+    const idx = THEME_VALUES.indexOf(currentTheme);
+    const next = THEME_VALUES[(idx + 1) % THEME_VALUES.length];
+    applyTheme(next);
+  });
+}
+
 // === Takeoff selector ===
 let allStationsCache = null;
 let userLocation = null; // {lat, lon} si el usuario lo ha activado
@@ -4135,6 +4191,9 @@ window.addEventListener("pcuserchange", (e) => {
   }
   if (prefs.whHours && prefs.whHours !== WH_HOURS) {
     setWindHistoryHours(prefs.whHours);
+  }
+  if (prefs.theme && THEME_VALUES.includes(prefs.theme) && prefs.theme !== currentTheme) {
+    applyTheme(prefs.theme);
   }
   if (prefs.tsRadius && prefs.tsRadius !== tsRadius) {
     tsRadius = prefs.tsRadius;
