@@ -54,32 +54,33 @@ if (!isConfigured()) {
   function setUserLabel(user) {
     const label = $("userBtnLabel");
     const btn = $("userBtn");
-    // Avatar puede vivir en el botón principal del menú (.um-avatar) o en el ítem (.ts-user-avatar) si quedara en versiones antiguas.
-    const avatar =
-      document.querySelector("#userMenuBtn .um-avatar") ||
-      btn?.querySelector(".ts-user-avatar");
+    // Avatares: cabecera del panel + bot\u00f3n principal del men\u00fa (+ legacy item).
+    const avatars = [
+      document.querySelector(".um-user-header .um-user-avatar"),
+      document.querySelector("#userMenuBtn .um-avatar"),
+      btn?.querySelector(".ts-user-avatar"),
+    ].filter(Boolean);
+    const setAvatar = (txt) => avatars.forEach(a => { a.textContent = txt; });
     if (!label) return;
     if (!user) {
       label.textContent = t("auth.guest");
       btn?.classList.remove("is-logged", "is-anon");
-      if (avatar) avatar.textContent = "👤";
+      setAvatar("\ud83d\udc64");
       return;
     }
     if (user.isAnonymous) {
       label.textContent = t("auth.anon");
       btn?.classList.remove("is-logged");
       btn?.classList.add("is-anon");
-      if (avatar) avatar.textContent = "👤";
+      setAvatar("\ud83d\udc64");
       return;
     }
     const name = user.displayName || user.email || t("auth.user");
     label.textContent = name;
     btn?.classList.add("is-logged");
     btn?.classList.remove("is-anon");
-    if (avatar) {
-      const initial = (user.displayName || user.email || "?").trim().charAt(0).toUpperCase();
-      avatar.textContent = initial;
-    }
+    const initial = (user.displayName || user.email || "?").trim().charAt(0).toUpperCase();
+    setAvatar(initial);
   }
 
   function openModal()  { $("authModal")?.removeAttribute("hidden"); }

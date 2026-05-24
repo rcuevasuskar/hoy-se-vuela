@@ -1867,3 +1867,53 @@ footer {
   .ts-current-inline .ts-current-name { max-width: 110px; font-size: 0.85rem; }
   .ts-current-inline { padding: 0 4px; gap: 2px; }
 }
+
+/* === Cabecera de estaci\u00f3n dentro de la status-card === */
+.station-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.station-header .station-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.station-header .station-actions { display: inline-flex; gap: 4px; }
+.station-header .ts-icon-btn { font-size: 1.05rem; }
+
+/* === Bot\u00f3n menu usuario: m\u00e1s compacto (sin label) === */
+.user-menu-btn .um-label { display: none; }
+.user-menu-btn { padding: 4px 6px; gap: 4px; }
+
+/* === Cabecera de usuario dentro del panel === */
+.um-user-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.um-user-header .um-user-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #fff;
+  font-weight: 600; font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.um-user-header .um-user-label {
+  flex: 1; min-width: 0;
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}

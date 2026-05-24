@@ -25,21 +25,18 @@
                data-i18n-placeholder="ts.placeholder"
                placeholder="Buscar despegues cercanos o favoritos" />
         <button id="tsToggleBtn" class="ts-toggle" title="Mostrar opciones" aria-expanded="false">▾</button>
-        <div class="ts-current-inline">
-          <strong id="tsCurrentName" class="ts-current-name">Cenes de la Vega</strong>
-          <span class="ts-current-actions" id="tsCurrentActions"></span>
-          <button class="ts-icon-btn ts-current-compass" id="orientToggle" type="button" title="Orientación del dispositivo" data-i18n-title="act.orient_toggle">🧭</button>
-        </div>
-        <button id="refreshBtn" class="ts-refresh" title="Actualizar">⟳</button>
 
         <!-- Menú de usuario (agrupa idioma, tema, avisos, instalar, ayuda, cuenta) -->
         <div class="user-menu" id="userMenu">
           <button id="userMenuBtn" class="user-menu-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Menú">
             <span class="um-avatar" aria-hidden="true">👤</span>
-            <span class="um-label" id="userBtnLabel" data-i18n="auth.guest">Invitado</span>
             <span class="um-caret" aria-hidden="true">▾</span>
           </button>
           <div class="user-menu-panel" id="userMenuPanel" hidden role="menu">
+            <div class="um-user-header" role="none">
+              <span class="um-user-avatar" aria-hidden="true">👤</span>
+              <span class="um-user-label" id="userBtnLabel" data-i18n="auth.guest">Invitado</span>
+            </div>
             <div class="um-item um-item-row" role="none">
               <span class="um-item-label" data-i18n="menu.lang">Idioma</span>
               <div class="lang-picker" id="langPicker">
@@ -98,6 +95,12 @@
   <main>
     <!-- Estado actual -->
     <section class="card status-card" id="statusCard">
+      <div class="station-header">
+        <strong id="tsCurrentName" class="station-name">Cenes de la Vega</strong>
+        <span class="ts-current-actions station-actions" id="tsCurrentActions"></span>
+        <button class="ts-icon-btn ts-current-compass" id="orientToggle" type="button" title="Orientación del dispositivo" data-i18n-title="act.orient_toggle">🧭</button>
+        <button id="refreshBtn" class="ts-icon-btn ts-refresh" type="button" title="Actualizar">⟳</button>
+      </div>
       <div class="status-grid">
         <div class="compass-wrap">
           <div class="compass">
