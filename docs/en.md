@@ -1,8 +1,8 @@
-# Parapente Cenes — Documentation
+# Hoy se vuela — Documentation
 
 Web app (PWA) for live wind, forecasts and flight criteria for paragliding. Designed for Cenes de la Vega but extensible to any community takeoff.
 
-URL: https://rcuevasuskar.github.io/parapente-cenes/
+URL: https://rcuevasuskar.github.io/hoy-se-vuela/
 
 ---
 
@@ -84,4 +84,4 @@ Tap 📲 (when available) to install the app and use it offline. The service wor
 
 ---
 
-Repository: https://github.com/rcuevasuskar/parapente-cenes
+Repository: https://github.com/rcuevasuskar/hoy-se-vuela

@@ -1,7 +1,7 @@
 {
-  "name": "Viento Cenes de la Vega",
-  "short_name": "Viento Cenes",
-  "description": "Estado, histórico y pronóstico de viento para el despegue de parapente de Cenes de la Vega (Los Majojos).",
+  "name": "Hoy se vuela",
+  "short_name": "Hoy se vuela",
+  "description": "Viento en directo, pronóstico y veredicto de vuelo para despegues de parapente. Comunitaria, multi-fuente (Pioupiou, AEMET, Holfuy, METAR).",
   "lang": "es",
   "start_url": "./index.html",
   "scope": "./",

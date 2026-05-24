@@ -1,8 +1,8 @@
-# Parapente Cenes
+# Hoy se vuela
 
-Web/PWA estática para consultar las condiciones de viento en el despegue de **Cerro de los Majojos** (Cenes de la Vega, Granada).
+Web/PWA estática colaborativa para consultar el viento en directo, pronóstico y veredicto de vuelo en despegues de parapente. Multi-fuente (Pioupiou, AEMET, Holfuy, METAR) y multi-idioma.
 
-🌐 **Demo**: https://rcuevasuskar.github.io/parapente-cenes/
+🌐 **Demo**: https://rcuevasuskar.github.io/hoy-se-vuela/
 
 ## Datos
 

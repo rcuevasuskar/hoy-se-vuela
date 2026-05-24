@@ -1,8 +1,8 @@
-# Parapente Cenes — Documentación
+# Hoy se vuela — Documentación
 
 App web (PWA) para consultar el viento en directo, pronósticos y criterios de vuelo en parapente. Pensada para Cenes de la Vega pero extensible a cualquier despegue de la comunidad.
 
-URL: https://rcuevasuskar.github.io/parapente-cenes/
+URL: https://rcuevasuskar.github.io/hoy-se-vuela/
 
 ---
 
@@ -84,4 +84,4 @@ Pulsa 📲 (cuando esté disponible) para instalar la app en el dispositivo y us
 
 ---
 
-Repositorio: https://github.com/rcuevasuskar/parapente-cenes
+Repositorio: https://github.com/rcuevasuskar/hoy-se-vuela

@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.127";
+const APP_VERSION = "v0.128";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -90,7 +90,7 @@ const NOTIFY_COOLDOWN_MS = 30 * 60 * 1000; // no avisar más de 1 vez cada 30 mi
 // === i18n ===
 const I18N = {
   es: {
-    "app.title": "Viento Cenes de la Vega · Parapente",
+    "app.title": "Hoy se vuela",
     "header.h1": "🪂 Viento en Cenes de la Vega",
     "header.subtitle": "Despegue de parapente · Estación",
     "btn.install": "📲 Instalar app",
@@ -379,7 +379,7 @@ const I18N = {
     "locale": "es-ES"
   },
   en: {
-    "app.title": "Wind at Cenes de la Vega · Paragliding",
+    "app.title": "Hoy se vuela",
     "header.h1": "🪂 Wind at Cenes de la Vega",
     "header.subtitle": "Paragliding takeoff · Station",
     "btn.install": "📲 Install app",
@@ -653,7 +653,7 @@ const I18N = {
     "cp.sum.rain":    "Rain likely: no-fly."
   },
   de: {
-    "app.title": "Wind in Cenes de la Vega · Gleitschirm",
+    "app.title": "Hoy se vuela",
     "header.h1": "🪂 Wind in Cenes de la Vega",
     "header.subtitle": "Gleitschirm-Startplatz · Station",
     "btn.install": "📲 App installieren",
@@ -927,7 +927,7 @@ const I18N = {
     "cp.sum.rain":    "Regen wahrscheinlich: Flug abgesagt."
   },
   fr: {
-    "app.title": "Vent à Cenes de la Vega · Parapente",
+    "app.title": "Hoy se vuela",
     "header.h1": "🪂 Vent à Cenes de la Vega",
     "header.subtitle": "Décollage parapente · Station",
     "btn.install": "📲 Installer l'app",
@@ -1201,7 +1201,7 @@ const I18N = {
     "cp.sum.rain":    "Pluie probable : vol annulé."
   },
   eu: {
-    "app.title": "Haizea Cenes de la Vegan · Parapente",
+    "app.title": "Hoy se vuela",
     "header.h1": "🪂 Haizea Cenes de la Vegan",
     "header.subtitle": "Parapente irteguia · Estazioa",
     "btn.install": "📲 Aplikazioa instalatu",
@@ -1429,7 +1429,7 @@ const I18N = {
     "locale": "eu-ES"
   },
   ca: {
-    "app.title": "Vent a Cenes de la Vega · Parapent",
+    "app.title": "Hoy se vuela",
     "header.h1": "🪂 Vent a Cenes de la Vega",
     "header.subtitle": "Enlairament de parapent · Estació",
     "btn.install": "📲 Instal·lar l'app",
@@ -3416,7 +3416,7 @@ function maybeNotify(verdict, dirInfo, avg, max) {
     new Notification(t("notify.title"), {
       body: `${dirInfo.name} · ${fmtNum(avg)} km/h (${t("chart.gust").toLowerCase()} ${fmtNum(max)} km/h)`,
       icon: "icon.svg",
-      tag: "viento-cenes-ideal",
+      tag: "hoy-se-vuela-ideal",
     });
   } catch (e) { console.warn(e); }
 }
@@ -3808,12 +3808,12 @@ document.getElementById("notifyBtn").addEventListener("click", toggleNotificatio
 
 // === Ayuda ===
 const HELP_DOCS_BY_LANG = {
-  es: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/es.md",
-  en: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/en.md",
-  de: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/en.md",
-  fr: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/en.md",
-  ca: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/es.md",
-  eu: "https://github.com/rcuevasuskar/parapente-cenes/blob/main/docs/es.md",
+  es: "https://github.com/rcuevasuskar/hoy-se-vuela/blob/main/docs/es.md",
+  en: "https://github.com/rcuevasuskar/hoy-se-vuela/blob/main/docs/en.md",
+  de: "https://github.com/rcuevasuskar/hoy-se-vuela/blob/main/docs/en.md",
+  fr: "https://github.com/rcuevasuskar/hoy-se-vuela/blob/main/docs/en.md",
+  ca: "https://github.com/rcuevasuskar/hoy-se-vuela/blob/main/docs/es.md",
+  eu: "https://github.com/rcuevasuskar/hoy-se-vuela/blob/main/docs/es.md",
 };
 function openHelp() {
   const modal = document.getElementById("helpModal");
