@@ -3,12 +3,12 @@
 // Estas claves son PÚBLICAS por diseño en Firebase; las reglas de Firestore
 // y Authorized domains son lo que protege el acceso.
 export const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "tu-proyecto.firebaseapp.com",
-  projectId: "tu-proyecto",
-  storageBucket: "tu-proyecto.appspot.com",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:xxxxxxxxxxxxxxxxxx"
+  apiKey: "AIzaSyDhHadCNICkVuTCmtlu-LoYSQwY4ACAPxE",
+  authDomain: "parapente-cenes.firebaseapp.com",
+  projectId: "parapente-cenes",
+  storageBucket: "parapente-cenes.firebasestorage.app",
+  messagingSenderId: "990200783989",
+  appId: "1:990200783989:web:595870131ab14a187fc43c"
 };
 
 // Si todos los campos siguen siendo placeholders, auth.js deshabilita la UI de login.
