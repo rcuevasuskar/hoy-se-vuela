@@ -2700,6 +2700,8 @@ function applyCurrentTakeoffLabel() {
 function renderCurrentTakeoffActions() {
   const host = document.getElementById("tsCurrentActions");
   if (!host) return;
+  // Intenta resolver origen comunitario si aún no está fijado.
+  resolveCurrentTakeoffOrigin();
   host.innerHTML = "";
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) return;
@@ -2798,6 +2800,31 @@ function openTakeoffSuggest(originId) {
   const sb = document.getElementById("toSubmitBtn"); if (sb) sb.textContent = t("to.suggest_submit");
 }
 let _suggestTargetId = null;
+
+function resolveCurrentTakeoffOrigin() {
+  if (currentTakeoffOriginId) return;
+  const list = window.PCAuth?.approvedTakeoffs || [];
+  if (!list.length) return;
+  // 1) Coincidencia por stationId.
+  if (currentStationId != null) {
+    const byStation = list.find(t => t.stationId != null && Number(t.stationId) === Number(currentStationId));
+    if (byStation) {
+      currentTakeoffOriginId = byStation.id;
+      if (!currentTakeoffCriteria && byStation.criteria) currentTakeoffCriteria = byStation.criteria;
+      return;
+    }
+  }
+  // 2) Coincidencia por coordenadas (≤ 50 m).
+  const lat = currentTakeoff?.lat, lon = currentTakeoff?.lon;
+  if (lat == null || lon == null) return;
+  for (const t of list) {
+    if (haversineKm(lat, lon, t.lat, t.lon) < 0.05) {
+      currentTakeoffOriginId = t.id;
+      if (!currentTakeoffCriteria && t.criteria) currentTakeoffCriteria = t.criteria;
+      return;
+    }
+  }
+}
 
 function selectStation(station, opts) {
   currentStation = station;
@@ -3429,6 +3456,9 @@ function _hookTakeoffStreams() {
   window.PCAuth.onApprovedTakeoffsChange = () => {
     const panel = document.getElementById("tsPanel");
     if (panel && !panel.hidden) tsRunSearch();
+    // Cuando lleguen los aprobados, reintenta resolver el origen del despegue actual.
+    currentTakeoffOriginId = null;
+    renderCurrentTakeoffActions();
   };
   window.PCAuth.onPendingTakeoffsChange = () => {
     const modal = document.getElementById("takeoffAdminModal");
