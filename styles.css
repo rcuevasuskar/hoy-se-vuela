@@ -584,6 +584,11 @@ header.topbar .ts-current {
   color: #ffa733;
   border: 1px solid rgba(255,143,0,0.35);
 }
+.ts-result-provider.aemet {
+  background: rgba(120,160,255,0.15);
+  color: #8ab4ff;
+  border: 1px solid rgba(120,160,255,0.35);
+}
 .ts-result .ts-result-soon {
   font-size: 0.65rem;
   text-transform: uppercase;

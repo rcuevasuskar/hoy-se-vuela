@@ -1609,6 +1609,74 @@ async function getAllFfvlStations() {
   }
 }
 
+// === AEMET (Agencia Estatal de Meteorología, España) — OpenData ===
+// Requiere API key personal de https://opendata.aemet.es/centrodedescargas/altaUsuario
+// Se lee de window.AEMET_API_KEY o de localStorage.getItem("aemetApiKey").
+// La API no soporta CORS, así que se enruta por el mismo CORS_PROXY que FFVL.
+let _aemetCache = null;
+let _aemetCacheTs = 0;
+const AEMET_CACHE_MS = 15 * 60 * 1000;
+
+function _aemetApiKey() {
+  try {
+    return (typeof window !== "undefined" && window.AEMET_API_KEY)
+      || localStorage.getItem("aemetApiKey")
+      || "";
+  } catch { return ""; }
+}
+
+async function getAllAemetStations() {
+  if (_aemetCache && (Date.now() - _aemetCacheTs) < AEMET_CACHE_MS) return _aemetCache;
+  const key = _aemetApiKey();
+  if (!key) return [];
+  try {
+    const metaUrl = `https://opendata.aemet.es/opendata/api/observacion/convencional/todas?api_key=${encodeURIComponent(key)}`;
+    const meta = await fetchJson(CORS_PROXY + encodeURIComponent(metaUrl));
+    if (!meta?.datos) {
+      console.warn("AEMET: respuesta sin 'datos'", meta);
+      return [];
+    }
+    const records = await fetchJson(CORS_PROXY + encodeURIComponent(meta.datos));
+    if (!Array.isArray(records)) return [];
+    // Conserva el registro más reciente por estación (idema).
+    const byId = new Map();
+    for (const r of records) {
+      if (!r?.idema) continue;
+      const prev = byId.get(r.idema);
+      // fint viene sin zona, AEMET lo publica en UTC.
+      const ts = new Date(String(r.fint || "").replace(/(\d)$/, "$1Z").replace(/ZZ$/, "Z")).getTime();
+      if (!Number.isFinite(ts)) continue;
+      if (!prev || ts > prev._ts) { r._ts = ts; byId.set(r.idema, r); }
+    }
+    _aemetCache = Array.from(byId.values()).map(r => ({
+      id: "aemet_" + r.idema,
+      rawId: r.idema,
+      provider: "aemet",
+      name: _aemetTitleCase(r.ubi || r.idema),
+      lat: typeof r.lat === "number" ? r.lat : parseFloat(r.lat),
+      lon: typeof r.lon === "number" ? r.lon : parseFloat(r.lon),
+      alt: r.alt != null ? Number(r.alt) : null,
+      lastDate: new Date(r._ts).toISOString(),
+      // Datos crudos por si los necesitamos al mostrar:
+      wind_speed_avg: r.vv  != null ? r.vv  * 3.6 : null,  // m/s -> km/h
+      wind_speed_max: r.vmax!= null ? r.vmax* 3.6 : null,
+      wind_heading:   r.dv  != null ? r.dv  : null,
+      temperature:    r.ta  != null ? r.ta  : null,
+      humidity:       r.hr  != null ? r.hr  : null,
+    })).filter(s => Number.isFinite(s.lat) && Number.isFinite(s.lon));
+    _aemetCacheTs = Date.now();
+    return _aemetCache;
+  } catch (e) {
+    console.warn("getAllAemetStations:", e);
+    return [];
+  }
+}
+
+function _aemetTitleCase(s) {
+  return String(s || "").toLowerCase().replace(/(^|[\s\-\/\(\),'])([a-záéíóúñ])/gi,
+    (_, sep, ch) => sep + ch.toUpperCase());
+}
+
 // === Meteorología (WMO weather codes) ===
 // https://open-meteo.com/en/docs WMO Weather interpretation codes
 const WMO = {
@@ -3615,14 +3683,15 @@ function selectStation(station, opts) {
 async function ensureAllStations() {
   if (allStationsCache) return allStationsCache;
   try {
-    const [pioupiou, ffvl] = await Promise.all([
+    const [pioupiou, ffvl, aemet] = await Promise.all([
       getAllStations().catch(() => []),
       getAllFfvlStations().catch(() => []),
+      getAllAemetStations().catch(() => []),
     ]);
-    allStationsCache = { pioupiou, ffvl };
+    allStationsCache = { pioupiou, ffvl, aemet };
   } catch (e) {
     console.warn("ensureAllStations:", e);
-    allStationsCache = { pioupiou: [], ffvl: [] };
+    allStationsCache = { pioupiou: [], ffvl: [], aemet: [] };
   }
   return allStationsCache;
 }
@@ -3668,6 +3737,13 @@ async function tsRunSearch() {
     .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
     .filter(s => s.dist <= maxDist);
   items = items.concat(ffvlItems);
+
+  // AEMET: estaciones con datos en las últimas 24 h
+  const aemetItems = (all.aemet || [])
+    .filter(s => isStationRecent(s, 24))
+    .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
+    .filter(s => s.dist <= maxDist);
+  items = items.concat(aemetItems);
 
   // Mezcla despegues comunitarios aprobados
   const community = (window.PCAuth?.approvedTakeoffs || []).map(to => ({
@@ -3791,8 +3867,9 @@ async function tsRunSearch() {
 function renderSearchRow(s, ctx) {
   const isCommunity = !!s.community;
   const isFfvl = s.provider === "ffvl";
+  const isAemet = s.provider === "aemet";
   const enabled = isCommunity ? (s.stationId != null)
-                  : isFfvl ? false
+                  : (isFfvl || isAemet) ? false
                   : ENABLED_STATION_IDS.has(s.id);
   const btn = document.createElement("button");
   btn.type = "button";
@@ -3800,13 +3877,16 @@ function renderSearchRow(s, ctx) {
     + (s.id === currentStationId ? " selected" : "")
     + (enabled ? "" : " disabled")
     + (isCommunity ? " community" : "")
-    + (isFfvl ? " ffvl" : "");
+    + (isFfvl ? " ffvl" : "")
+    + (isAemet ? " aemet" : "");
   if (!enabled) btn.disabled = true;
   let tail;
   if (isCommunity) {
     tail = `<span class="ts-result-badge">${t("to.community_badge")}</span>`;
   } else if (isFfvl) {
     tail = `<span class="ts-result-provider ffvl">FFVL</span>`;
+  } else if (isAemet) {
+    tail = `<span class="ts-result-provider aemet">AEMET</span>`;
   } else if (enabled) {
     tail = `<span class="ts-result-provider">${s.provider}</span>`;
   } else {
