@@ -2148,6 +2148,40 @@ function chartCommonOptions() {
 let forecastChart = null;
 let currentForecastDays = 1;
 
+// Plugin: separadores verticales de día en el gráfico de pronóstico (eje categórico).
+const forecastDaySepPlugin = {
+  id: "forecastDaySep",
+  afterDraw(chart) {
+    const seps = chart.$daySep;
+    if (!seps || !seps.length) return;
+    const { ctx, chartArea, scales } = chart;
+    const xs = scales.x;
+    const labels = chart.data.labels || [];
+    ctx.save();
+    seps.forEach(({ index, label }) => {
+      if (index <= 0 || index >= labels.length) return;
+      const xPrev = xs.getPixelForValue(labels[index - 1]);
+      const xCur = xs.getPixelForValue(labels[index]);
+      const x = (xPrev + xCur) / 2;
+      ctx.strokeStyle = "rgba(255,255,255,0.30)";
+      ctx.setLineDash([4, 3]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(255,255,255,0.65)";
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(label, x, chartArea.top + 2);
+    });
+    ctx.restore();
+  },
+};
+if (typeof Chart !== "undefined") Chart.register(forecastDaySepPlugin);
+
 function renderForecast(fc) {
   if (!fc?.hourly) return;
   latestForecast = fc;
@@ -2191,34 +2225,80 @@ function renderForecast(fc) {
     const ts = date.getTime();
     return ts < sr || ts > ss;
   };
-  const spdPts = slicedTimes.map((t, i) => ({ x: t, y: isNightAt(t) ? null : spd[i + i0] }));
-  const gustPts = slicedTimes.map((t, i) => ({ x: t, y: isNightAt(t) ? null : gust[i + i0] }));
-  const dirPts = slicedTimes
-    .map((t, i) => isNightAt(t) ? null : ({ x: t, y: spd[i + i0], dir: dir[i + i0] }))
-    .filter(Boolean);
-  const dirColors = dirPts.map(p => dirColor(p.dir));
-  const dirArrows = dirPts.map(p => makeArrowPoint(p.dir, dirColor(p.dir), forecastArrowSize()));
+
+  // Filtramos las horas nocturnas para que la gráfica use eje categórico compacto
+  // (sin huecos vacíos en el eje X). El cambio de día se marca con un separador fino.
+  const dayKept = []; // datos en orden cronológico, sólo diurnos
+  for (let k = 0; k < slicedTimes.length; k++) {
+    const tt = slicedTimes[k];
+    if (isNightAt(tt)) continue;
+    const gi = k + i0;
+    dayKept.push({ t: tt, spd: spd[gi], gust: gust[gi], dir: dir[gi] });
+  }
+  const labels = dayKept.map(p => `${String(p.t.getHours()).padStart(2,"0")}:00`);
+  const spdData = dayKept.map(p => p.spd);
+  const gustData = dayKept.map(p => p.gust);
+  const dirData = dayKept.map(p => ({ x: 0, y: p.spd, dir: p.dir })); // x se ignora con eje categórico
+  const dirColors = dirData.map(p => dirColor(p.dir));
+  const dirArrows = dirData.map(p => makeArrowPoint(p.dir, dirColor(p.dir), forecastArrowSize()));
+
+  // Frontera de día: índices donde cambia el día respecto al anterior.
+  const dayLocale = t("locale");
+  const daySeparators = [];
+  for (let k = 1; k < dayKept.length; k++) {
+    if (ymdOf(dayKept[k].t) !== ymdOf(dayKept[k - 1].t)) {
+      daySeparators.push({
+        index: k,
+        label: dayKept[k].t.toLocaleDateString(dayLocale, { weekday: "short", day: "numeric" }),
+      });
+    }
+  }
 
   const data = {
+    labels,
     datasets: [
-      { label: t("chart.gust"), data: gustPts,
+      { label: t("chart.gust"), data: gustData,
         borderColor: "rgba(231,76,60,0.9)", backgroundColor: "rgba(231,76,60,0.15)",
         borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: false },
-      { label: t("chart.avg"), data: spdPts,
+      { label: t("chart.avg"), data: spdData,
         borderColor: "rgba(78,161,255,1)", backgroundColor: "rgba(78,161,255,0.2)",
         borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true },
-      { label: t("chart.dir"), data: dirPts, type: "scatter",
-        pointStyle: dirArrows,
-        pointRadius: forecastArrowSize() / 2, showLine: false, parsing: false },
+      { label: t("chart.dir"), data: spdData, type: "line", showLine: false,
+        pointStyle: dirArrows, pointRadius: forecastArrowSize() / 2 },
     ],
   };
   const options = chartCommonOptions();
-  // Leyenda nativa desactivada: usamos una HTML con checkboxes más clara.
+  // Para el pronóstico usamos eje categórico (sin huecos por horas nocturnas).
+  options.scales = options.scales || {};
+  options.scales.x = {
+    type: "category",
+    ticks: { color: "#8aa0bb", maxRotation: 0, autoSkipPadding: 12 },
+    grid: { color: "rgba(255,255,255,0.05)" },
+  };
   options.plugins = options.plugins || {};
   options.plugins.legend = { display: false };
+  options.plugins.tooltip = {
+    callbacks: {
+      title: (items) => {
+        const i = items[0]?.dataIndex ?? 0;
+        const dt = dayKept[i]?.t;
+        return dt ? dt.toLocaleString(dayLocale, { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+      },
+      label: (ctx) => {
+        if (ctx.dataset.label === t("chart.dir")) {
+          const d = dirData[ctx.dataIndex]?.dir;
+          const info = classifyDirection(d);
+          return t("chart.dir_tooltip", { name: info.name, deg: Math.round(d) });
+        }
+        return `${ctx.dataset.label}: ${fmtNum(ctx.parsed.y)} km/h`;
+      },
+    },
+  };
 
-  if (forecastChart) { forecastChart.data = data; forecastChart.options = options; forecastChart.update(); }
+  if (forecastChart) { forecastChart.data = data; forecastChart.options = options; }
   else forecastChart = new Chart(ctx, { type: "line", data, options });
+  forecastChart.$daySep = daySeparators;
+  forecastChart.update();
   renderForecastLegend();
 
   // Resumen: próximas horas en franja diurna del día de referencia.
