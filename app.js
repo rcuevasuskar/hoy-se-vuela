@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.130";
+const APP_VERSION = "v0.131";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -3212,7 +3212,7 @@ async function renderNearby() {
 
     // Marcadores en el mapa
     if (map) {
-      for (const { n } of within) {
+      for (const n of within) {
         nearbyLatLngs.push([n.lat, n.lon]);
         const popupBody = n.provider === "pioupiou"
           ? `<a href="https://www.openwindmap.org/windbird-${n.rawId}" target="_blank">${t("near.popup_view")}</a>`
