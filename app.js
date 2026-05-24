@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v118";
+const APP_VERSION = "v119";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -3846,7 +3846,10 @@ function updatePanelForLabels() {
   // getCurrentTakeoffDoc llama a resolveCurrentTakeoffOrigin internamente.
   const doc = (typeof getCurrentTakeoffDoc === "function") ? getCurrentTakeoffDoc() : null;
   const stName = currentStation?.shortName || currentStation?.name || "";
-  const toName = doc?.name || null;
+  // v118: anade " · 81 m" al nombre del despegue cuando hay altitud disponible.
+  const altSrc = doc?.alt ?? currentTakeoff.alt ?? null;
+  const altLabel = Number.isFinite(+altSrc) ? ` · ${Math.round(+altSrc)} m` : "";
+  const toName = doc?.name ? (doc.name + altLabel) : null;
   const text = toName && toName !== stName
     ? t("panel.for_to_st", { to: toName, st: stName })
     : t("panel.for_st", { st: stName });
@@ -4332,6 +4335,7 @@ async function tsRunSearch() {
       provider: "community",
       name: to.name,
       lat: to.lat, lon: to.lon,
+      alt: Number.isFinite(+to.alt) ? +to.alt : null,
       community: true,
       stationId: link?.id ?? to.stationId ?? null,
       _linkedStation: link,
@@ -4396,6 +4400,7 @@ async function tsRunSearch() {
   // Construye lista de favoritos (siempre mostrar, no depende del radio)
   // v111: filtra favoritos comunitarios huerfanos (despegue eliminado por admin).
   const approvedCommunityIds = new Set((window.PCAuth?.approvedTakeoffs || []).map(t => t.id));
+  const approvedCommunityById = (id) => (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === id) || null;
   const staleCommunityFavs = favs.filter(f => f.source === "community" && !approvedCommunityIds.has(f.refId));
   // Auto-limpia los favoritos huerfanos del usuario actual (los suyos los puede borrar).
   if (staleCommunityFavs.length && window.PCAuth?.removeFavorite) {
@@ -4411,7 +4416,8 @@ async function tsRunSearch() {
       lat: f.lat, lon: f.lon,
       community: f.source === "community",
       stationId: f.stationId,
-      raw: f.source === "community" ? { id: f.refId, criteria: f.criteria, stationId: f.stationId } : null,
+      alt: f.source === "community" && Number.isFinite(+approvedCommunityById(f.refId)?.alt) ? +approvedCommunityById(f.refId).alt : null,
+      raw: f.source === "community" ? { id: f.refId, criteria: f.criteria, stationId: f.stationId, alt: approvedCommunityById(f.refId)?.alt ?? null } : null,
       rawId: f.source === "ffvl" ? f.refId : undefined,
       dist: haversineKm(center.lat, center.lon, f.lat, f.lon),
       _fav: f,
@@ -4499,7 +4505,7 @@ function renderSearchRow(s, ctx) {
     tail = `<span class="ts-result-soon">${t("ts.coming_soon")}</span>`;
   }
   btn.innerHTML = `
-    <span class="ts-result-name">${escapeHtml(s.name)}</span>
+    <span class="ts-result-name">${escapeHtml(s.name)}${Number.isFinite(+s.alt) ? ` <span class="ts-result-alt">· ${Math.round(+s.alt)} m</span>` : ""}</span>
     <span class="ts-result-dist">${s.dist.toFixed(1)} km</span>
     ${tail}
   `;

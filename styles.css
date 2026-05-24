@@ -689,6 +689,7 @@ header.topbar .ts-current {
   flex-shrink: 0;
 }
 .ts-result .ts-result-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts-result .ts-result-alt { color: var(--muted); font-weight: 400; font-size: 0.85em; }
 .ts-result .ts-result-dist { color: var(--muted); font-size: 0.75rem; flex-shrink: 0; }
 .ts-result .ts-result-provider {
   font-size: 0.65rem;
