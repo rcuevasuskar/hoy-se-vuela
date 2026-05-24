@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v120";
+const APP_VERSION = "v121";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -3832,10 +3832,15 @@ function refreshAllForCurrentTakeoff() {
 }
 
 function applyCurrentTakeoffLabel() {
+  const baseName = currentStation.shortName || currentStation.name || "";
+  // v120: incluye la altura del despegue cuando esta disponible.
+  const doc = (typeof getCurrentTakeoffDoc === "function") ? getCurrentTakeoffDoc() : null;
+  const altSrc = doc?.alt ?? currentTakeoff.alt ?? null;
+  const altLabel = Number.isFinite(+altSrc) ? ` · ${Math.round(+altSrc)} m` : "";
   const el = document.getElementById("tsCurrentName");
-  if (el) el.textContent = currentStation.shortName || currentStation.name;
+  if (el) el.textContent = baseName + altLabel;
   const guideEl = document.getElementById("guideTakeoffName");
-  if (guideEl) guideEl.textContent = currentStation.shortName || currentStation.name;
+  if (guideEl) guideEl.textContent = baseName + altLabel;
   renderCurrentTakeoffActions();
   renderTakeoffPanel();
   updatePanelForLabels();
