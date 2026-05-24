@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v124";
+const APP_VERSION = "v0.125";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -1755,6 +1755,36 @@ function combineVerdict(dirQ, spdQ) {
   return "ok";
 }
 
+// v125: variantes parametrizadas para clasificar segun los criterios de OTRO
+// despegue (no el actual). Se usan en el buscador para colorear el borde de
+// los favoritos segun si se puede volar AHI ahora mismo.
+function classifyDirectionWith(criteria, deg) {
+  if (deg == null || isNaN(deg)) return "unknown";
+  const d = ((deg % 360) + 360) % 360;
+  const idx = Math.round(d / 22.5) % 16;
+  const arr = (criteria?.qualityByIndex && criteria.qualityByIndex.some(Boolean))
+    ? criteria.qualityByIndex.map(q => q || "ok")
+    : NEUTRAL_QUALITY_BY_INDEX;
+  return arr[idx] || "unknown";
+}
+function classifySpeedWith(criteria, avg, max) {
+  if (avg == null) return "unknown";
+  const c = criteria || {};
+  const wmin = Number.isFinite(c.windMin) ? c.windMin : 5;
+  const wmax = Number.isFinite(c.windMax) ? c.windMax : 15;
+  const gmax = Number.isFinite(c.gustMax) ? c.gustMax : 30;
+  if (avg >= gmax * 0.66 || (max != null && max >= gmax)) return "warn";
+  if (avg >= wmin && avg <= wmax && (max == null || max <= gmax * 0.83)) return "ideal";
+  return "ok";
+}
+function takeoffVerdictFromSnapshot(criteria, snapshot) {
+  if (!snapshot) return "unknown";
+  const { avg, max, dir } = snapshot;
+  const dirQ = classifyDirectionWith(criteria, dir);
+  const spdQ = classifySpeedWith(criteria, avg, max);
+  return combineVerdict(dirQ, spdQ);
+}
+
 function verdictText(v) {
   return {
     title: t(`verdict.${v}.title`),
@@ -3027,20 +3057,40 @@ async function renderNearby() {
     // no respecto a la ubicacion del usuario; si el usuario esta en Granada
     // mirando Sopelana no queremos ver aeropuertos de Granada en "cercanas".
     const c = { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
-    const within = all
+    // v125: radio adaptativo. Buscamos un minimo de 4 estaciones cercanas
+    // (Pioupiou + aeropuertos METAR conjuntamente) y un maximo de 8. Ampliamos
+    // el radio progresivamente hasta llegar al minimo.
+    const NEARBY_MIN = 4;
+    const NEARBY_MAX = 8;
+    const NEARBY_RADII = [50, 100, 200, 400, 800];
+    const candidates = all
       .map(s => {
         const lat = s.location?.latitude, lon = s.location?.longitude;
         if (lat == null || lon == null) return null;
         const dist = haversineKm(c.lat, c.lon, lat, lon);
         return { s, dist, lat, lon };
       })
-      .filter(x => x && x.dist <= 50 && x.s.id !== currentStationId)
+      .filter(x => x && x.s.id !== currentStationId)
       .filter(x => {
         const d = x.s.measurements?.date;
         if (!d) return false;
         return (now - new Date(d).getTime()) < 24 * 3600 * 1000;
       })
       .sort((a, b) => a.dist - b.dist);
+    // Tambien contamos los aeropuertos METAR a esa distancia para decidir el radio.
+    const airportDists = METAR_AIRPORTS
+      .map(a => haversineKm(c.lat, c.lon, a.lat, a.lon))
+      .sort((a, b) => a - b);
+    let nearbyRadius = NEARBY_RADII[0];
+    for (const r of NEARBY_RADII) {
+      const piou = candidates.filter(x => x.dist <= r).length;
+      const ap = airportDists.filter(d => d <= r).length;
+      nearbyRadius = r;
+      if (piou + ap >= NEARBY_MIN) break;
+    }
+    _nearbyResolvedRadius = nearbyRadius;
+    const within = candidates.filter(x => x.dist <= nearbyRadius).slice(0, NEARBY_MAX);
+    _nearbyPioupiouCount = within.length;
 
     grid.innerHTML = "";
     if (!within.length) {
@@ -3187,14 +3237,16 @@ async function renderMetarStations() {
   const grid = document.getElementById("nearbyGrid");
   if (!grid) return;
   const myToken = _nearbyRenderToken;
-  // Filtra aeropuertos dentro del radio (tsRadius) desde el despegue actual.
-  // v123: igual que renderNearby, los aeropuertos cercanos son los del despegue,
-  // no los de la ubicacion del usuario.
+  // v125: usa el radio adaptativo de renderNearby (igual que Pioupiou).
   const c = { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
+  const NEARBY_MAX = 8;
+  const remainingSlots = Math.max(0, NEARBY_MAX - (_nearbyPioupiouCount || 0));
+  if (remainingSlots <= 0) return;
   const within = METAR_AIRPORTS
     .map(a => ({ ...a, dist: haversineKm(c.lat, c.lon, a.lat, a.lon) }))
-    .filter(a => a.dist <= tsRadius)
-    .sort((a, b) => a.dist - b.dist);
+    .filter(a => a.dist <= (_nearbyResolvedRadius || 50))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, remainingSlots);
   if (!within.length) return;
 
   const ids = within.map(a => a.icao).join(",");
@@ -3825,6 +3877,10 @@ function distCenter() {
 }
 // v123: token global para abortar renders concurrentes de "estaciones cercanas".
 let _nearbyRenderToken = 0;
+// v125: radio adaptativo resuelto en renderNearby y cuantas Pioupiou se pintaron,
+// para que renderMetarStations complete hasta 8 totales con aeropuertos.
+let _nearbyResolvedRadius = 50;
+let _nearbyPioupiouCount = 0;
 let tsRadius = parseInt(localStorage.getItem("tsRadius") || "50", 10);
 let tsNoRadius = localStorage.getItem("tsNoRadius") === "1";
 const TS_PROVIDERS_ALL = ["community", "pioupiou", "aemet", "holfuy"];
@@ -4292,6 +4348,11 @@ function stationFromPioupiou(s) {
     shortName: s.meta?.name || ("Pioupiou " + s.id),
     lat, lon,
     lastDate: s.measurements?.date || null,
+    // v125: snapshot meteorologico actual (si la estacion lo expone) para
+    // poder calcular el verdict del despegue en el buscador.
+    wind_speed_avg: s.measurements?.wind_speed_avg ?? null,
+    wind_speed_max: s.measurements?.wind_speed_max ?? null,
+    wind_heading: s.measurements?.wind_heading ?? null,
   };
 }
 
@@ -4539,6 +4600,28 @@ function renderSearchRow(s, ctx) {
     <span class="ts-result-dist">${s.dist.toFixed(1)} km</span>
     ${tail}
   `;
+  // v125: borde izquierdo coloreado para favoritos segun verdict actual.
+  // Solo aplica a favoritos comunitarios (que llevan criterios propios) y cuyo
+  // _linkedStation tenga datos meteorologicos recientes.
+  try {
+    const isFav = !!(ctx?.favByKey && ctx.favKey && ctx.favByKey.get(ctx.favKey(s)));
+    if (isFav) {
+      btn.classList.add("ts-fav");
+      let verdict = "unknown";
+      if (isCommunity && s._linkedStation && s.raw?.criteria) {
+        const link = s._linkedStation;
+        const snap = {
+          avg: link.wind_speed_avg ?? null,
+          max: link.wind_speed_max ?? null,
+          dir: link.wind_heading ?? null,
+        };
+        if (snap.avg != null || snap.dir != null) {
+          verdict = takeoffVerdictFromSnapshot(s.raw.criteria, snap);
+        }
+      }
+      btn.dataset.verdict = verdict;
+    }
+  } catch {}
   if (enabled) {
     btn.addEventListener("click", () => {
       if (isCommunity) {

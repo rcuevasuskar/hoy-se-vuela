@@ -574,7 +574,11 @@ header.topbar .ts-current {
 }
 .ts-panel {
   margin-top: 10px;
+  margin-left: 8px;
+  margin-right: 8px;
   padding-top: 10px;
+  padding-left: 6px;
+  padding-right: 6px;
   border-top: 1px solid rgba(255,255,255,0.08);
 }
 .ts-radius { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
@@ -656,6 +660,13 @@ header.topbar .ts-current {
 .ts-result.disabled:hover { background: rgba(0,0,0,0.15); border-color: transparent; }
 .ts-result-row { display: flex; gap: 4px; align-items: stretch; }
 .ts-result-row .ts-result { flex: 1; min-width: 0; }
+/* v125: borde izquierdo coloreado segun verdict actual para favoritos. */
+.ts-result.ts-fav { border-left: 4px solid transparent; padding-left: 6px; }
+.ts-result.ts-fav[data-verdict="ideal"]   { border-left-color: var(--ideal); }
+.ts-result.ts-fav[data-verdict="ok"]      { border-left-color: var(--warn); }
+.ts-result.ts-fav[data-verdict="warn"]    { border-left-color: var(--bad); }
+.ts-result.ts-fav[data-verdict="bad"]     { border-left-color: var(--bad); }
+.ts-result.ts-fav[data-verdict="unknown"] { border-left-color: rgba(255,255,255,0.15); }
 .ts-result-propose {
   flex-shrink: 0;
   background: rgba(78,161,255,0.12);
@@ -1915,23 +1926,30 @@ footer {
 /* === Cabecera de estaci\u00f3n dentro de la status-card === */
 .station-header {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   margin-bottom: 10px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
+.station-header .station-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .station-header .station-name {
-  flex: 1;
-  min-width: 0;
+  display: block;
+  width: 100%;
   color: var(--text);
   font-weight: 700;
   font-size: 1.1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
-.station-header .station-actions { display: inline-flex; gap: 4px; }
+.station-header .station-actions { display: inline-flex; gap: 4px; flex-wrap: wrap; }
 .station-header .ts-icon-btn { font-size: 1.05rem; }
 
 /* === Bot\u00f3n menu usuario: m\u00e1s compacto (sin label) === */
