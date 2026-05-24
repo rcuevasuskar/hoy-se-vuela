@@ -2829,11 +2829,21 @@ function resolveCurrentTakeoffOrigin() {
       return;
     }
   }
-  // 2) Coincidencia por coordenadas (≤ 50 m).
+  // 2) Coincidencia por nombre (case-insensitive, trim).
+  const curName = (currentStation?.name || currentTakeoff?.name || "").trim().toLowerCase();
+  if (curName) {
+    const byName = list.find(t => (t.name || "").trim().toLowerCase() === curName);
+    if (byName) {
+      currentTakeoffOriginId = byName.id;
+      if (!currentTakeoffCriteria && byName.criteria) currentTakeoffCriteria = byName.criteria;
+      return;
+    }
+  }
+  // 3) Coincidencia por coordenadas (≤ 200 m).
   const lat = currentTakeoff?.lat, lon = currentTakeoff?.lon;
   if (lat == null || lon == null) return;
   for (const t of list) {
-    if (haversineKm(lat, lon, t.lat, t.lon) < 0.05) {
+    if (haversineKm(lat, lon, t.lat, t.lon) < 0.2) {
       currentTakeoffOriginId = t.id;
       if (!currentTakeoffCriteria && t.criteria) currentTakeoffCriteria = t.criteria;
       return;
@@ -3338,6 +3348,7 @@ function openTakeoffSubmit(prefill) {
     if (prefill.stationId != null) document.getElementById("toStation").value = String(prefill.stationId);
     if (prefill.alt != null && prefill.alt !== "") document.getElementById("toAlt").value = String(prefill.alt);
     if (prefill.orientations) document.getElementById("toOrient").value = String(prefill.orientations);
+    if (prefill.notes) document.getElementById("toNotes").value = String(prefill.notes);
     setTimeout(() => { document.getElementById("toName")?.focus(); document.getElementById("toName")?.select(); }, 50);
   } else {
     const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
