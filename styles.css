@@ -876,7 +876,10 @@ main {
 }
 .sector.ideal { color: var(--ideal); }
 .sector.ok    { color: var(--ok); }
-.sector.bad   { color: var(--bad); opacity: 0.42; }
+/* v122: rojo pastel mas vivo para los sectores malos (antes salia parduzco por
+   el filter saturate(65%) heredado de .sector). Usamos color directo y mas
+   opacidad, sin el filtro de desaturacion. */
+.sector.bad   { color: #ff8a8a; opacity: 0.6; filter: none; }
 
 .sector[style*="--start:337.5deg"] {
   background: conic-gradient(from -22.5deg, currentColor 0deg, currentColor 45deg, transparent 0);
