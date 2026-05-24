@@ -134,8 +134,6 @@ header.topbar .ts-current {
   max-width: 360px;
   position: relative;
   box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-  max-height: calc(100vh - 48px);
-  overflow-y: auto;
 }
 .auth-dialog h2 { margin: 0 0 14px; font-size: 1.2rem; }
 .auth-close {
@@ -220,7 +218,7 @@ header.topbar .ts-current {
   width: 100%;
   box-sizing: border-box;
 }
-#takeoffSubmitModal .auth-dialog { display: flex; flex-direction: column; gap: 10px; max-width: 420px; }
+#takeoffSubmitModal .auth-dialog { display: flex; flex-direction: column; gap: 10px; max-width: 480px; }
 #takeoffSubmitModal h2 { margin-bottom: 4px; }
 .to-row { display: flex; gap: 8px; }
 .to-row > input { flex: 1; min-width: 0; }
