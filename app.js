@@ -2420,8 +2420,8 @@ async function renderNearby() {
     grid.innerHTML = "";
     if (!within.length) {
       grid.innerHTML = `<div class="compare-loading">${t("near.none")}</div>`;
-      return;
-    }
+      // No hacemos return: dejamos que las estaciones METAR (aeropuertos) se añadan a continuación.
+    } else {
 
     // Pintar primero placeholders y marcadores en el mapa
     const cards = within.map(({ s, dist }) => {
@@ -2515,6 +2515,7 @@ async function renderNearby() {
         console.warn("nearby station archive:", s.id, e);
       }
     }));
+    } // fin del else (había estaciones Pioupiou cercanas)
   } catch (e) {
     console.error("nearby:", e);
     grid.innerHTML = `<div class="compare-loading">${t("near.error")}</div>`;
@@ -3477,6 +3478,15 @@ async function tsRunSearch() {
     dist: haversineKm(center.lat, center.lon, to.lat, to.lon),
   })).filter(s => s.dist <= tsRadius);
   items = items.concat(community);
+
+  // Evita duplicados: si una estación Pioupiou/FFVL ya está registrada como despegue comunitario
+  // (mismo stationId), sólo mostramos la tarjeta comunitaria.
+  const communityStationIds = new Set(
+    community.map(c => c.stationId).filter(id => id != null).map(Number)
+  );
+  if (communityStationIds.size) {
+    items = items.filter(s => s.community || !communityStationIds.has(Number(s.id)));
+  }
 
   if (query) {
     items = items.filter(s => s.name.toLowerCase().includes(query));
