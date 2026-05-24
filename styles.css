@@ -395,6 +395,8 @@ header.topbar .ts-current {
 .to-dir-btn[data-q="bad"]   { background: #e74c3c; color: #fff; border-color: #b03a2e; }
 .to-field { display: flex; flex-direction: column; gap: 2px; font-size: .75rem; color: var(--muted); flex: 1; }
 .to-field input { width: 100%; }
+.to-field-block { display: flex; flex-direction: column; gap: 2px; font-size: .75rem; color: var(--muted); margin-top: 6px; }
+.to-field-block > input, .to-field-block > textarea { width: 100%; box-sizing: border-box; }
 .to-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .to-actions .auth-primary { flex: 1; }
 .auth-secondary {

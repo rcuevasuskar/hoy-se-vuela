@@ -359,7 +359,9 @@
       <button id="toSubmitClose" class="auth-close" title="Cerrar">✕</button>
       <h2 id="toTitle" data-i18n="to.submit_title">Añadir datos de despegue</h2>
       <p class="auth-account-info" data-i18n="to.submit_hint">Tu propuesta será revisada por un administrador antes de publicarse.</p>
-      <input id="toName" type="text" placeholder="Nombre del despegue" data-i18n-placeholder="to.name_ph" />
+      <label class="to-field-block"><span data-i18n="to.name_label">Nombre del despegue</span>
+        <input id="toName" type="text" placeholder="Nombre del despegue" data-i18n-placeholder="to.name_ph" />
+      </label>
 
       <fieldset class="to-criteria">
         <legend data-i18n="to.criteria_title">Criterios de vuelo</legend>
@@ -378,14 +380,22 @@
         </div>
       </fieldset>
 
-      <input id="toAlt" type="number" step="1" placeholder="Altitud (m)" data-i18n-placeholder="to.alt_ph" />
+      <label class="to-field-block"><span data-i18n="to.alt_label">Altitud (m)</span>
+        <input id="toAlt" type="number" step="1" placeholder="Altitud (m)" data-i18n-placeholder="to.alt_ph" />
+      </label>
       <div class="to-row">
-        <input id="toLat" type="number" step="0.00001" placeholder="Latitud" data-i18n-placeholder="to.lat_ph" />
-        <input id="toLon" type="number" step="0.00001" placeholder="Longitud" data-i18n-placeholder="to.lon_ph" />
+        <label class="to-field"><span data-i18n="to.lat_label">Latitud</span>
+          <input id="toLat" type="number" step="0.00001" placeholder="Latitud" data-i18n-placeholder="to.lat_ph" />
+        </label>
+        <label class="to-field"><span data-i18n="to.lon_label">Longitud</span>
+          <input id="toLon" type="number" step="0.00001" placeholder="Longitud" data-i18n-placeholder="to.lon_ph" />
+        </label>
       </div>
       <input id="toOrient" type="hidden" />
 
-      <textarea id="toNotes" rows="3" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
+      <label class="to-field-block"><span data-i18n="to.notes_label">Notas (acceso, peligros…)</span>
+        <textarea id="toNotes" rows="3" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
+      </label>
 
       <button id="toPickOnMapBtn" class="auth-link" type="button" data-i18n="to.pick_map">📍 Usar coordenadas actuales del mapa</button>
       <div class="to-actions">

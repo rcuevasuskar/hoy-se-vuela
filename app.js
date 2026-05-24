@@ -164,6 +164,11 @@ const I18N = {
     "to.orient_ph": "Orientaciones (N, NO, O…)",
     "to.station_ph": "ID estación Pioupiou (opcional)",
     "to.notes_ph": "Notas (acceso, peligros…)",
+    "to.name_label": "Nombre del despegue",
+    "to.alt_label": "Altitud (m)",
+    "to.lat_label": "Latitud",
+    "to.lon_label": "Longitud",
+    "to.notes_label": "Notas (acceso, peligros…)",
     "to.pick_map": "📍 Usar coordenadas actuales del mapa",
     "to.submit": "Enviar para revisión",
     "to.cancel": "Cancelar",
@@ -446,6 +451,11 @@ const I18N = {
     "to.orient_ph": "Orientations (N, NW, W…)",
     "to.station_ph": "Pioupiou station ID (optional)",
     "to.notes_ph": "Notes (access, hazards…)",
+    "to.name_label": "Takeoff name",
+    "to.alt_label": "Altitude (m)",
+    "to.lat_label": "Latitude",
+    "to.lon_label": "Longitude",
+    "to.notes_label": "Notes (access, hazards…)",
     "to.pick_map": "📍 Use current map coordinates",
     "to.submit": "Submit for review",
     "to.cancel": "Cancel",
@@ -713,6 +723,11 @@ const I18N = {
     "to.orient_ph": "Ausrichtungen (N, NW, W…)",
     "to.station_ph": "Pioupiou-Stations-ID (optional)",
     "to.notes_ph": "Notizen (Zugang, Gefahren…)",
+    "to.name_label": "Name des Startplatzes",
+    "to.alt_label": "Höhe (m)",
+    "to.lat_label": "Breitengrad",
+    "to.lon_label": "Längengrad",
+    "to.notes_label": "Notizen (Zugang, Gefahren…)",
     "to.pick_map": "📍 Aktuelle Kartenkoordinaten verwenden",
     "to.submit": "Zur Prüfung senden",
     "to.cancel": "Abbrechen",
@@ -980,6 +995,11 @@ const I18N = {
     "to.orient_ph": "Orientations (N, NO, O…)",
     "to.station_ph": "ID station Pioupiou (optionnel)",
     "to.notes_ph": "Notes (accès, dangers…)",
+    "to.name_label": "Nom du décollage",
+    "to.alt_label": "Altitude (m)",
+    "to.lat_label": "Latitude",
+    "to.lon_label": "Longitude",
+    "to.notes_label": "Notes (accès, dangers…)",
     "to.pick_map": "📍 Utiliser les coordonnées de la carte",
     "to.submit": "Envoyer pour validation",
     "to.cancel": "Annuler",
@@ -1247,6 +1267,11 @@ const I18N = {
     "to.orient_ph": "Norabideak (I, IM, M…)",
     "to.station_ph": "Pioupiou estazio ID (aukerakoa)",
     "to.notes_ph": "Oharrak (sarbidea, arriskuak…)",
+    "to.name_label": "Aireratze-lekuaren izena",
+    "to.alt_label": "Altitudea (m)",
+    "to.lat_label": "Latitudea",
+    "to.lon_label": "Longitudea",
+    "to.notes_label": "Oharrak (sarbidea, arriskuak…)",
     "to.pick_map": "📍 Erabili maparen koordenatuak",
     "to.submit": "Bidali berrikusteko",
     "to.cancel": "Utzi",
@@ -1468,6 +1493,11 @@ const I18N = {
     "to.orient_ph": "Orientacions (N, NO, O…)",
     "to.station_ph": "ID estació Pioupiou (opcional)",
     "to.notes_ph": "Notes (accés, perills…)",
+    "to.name_label": "Nom de l'enlairament",
+    "to.alt_label": "Altitud (m)",
+    "to.lat_label": "Latitud",
+    "to.lon_label": "Longitud",
+    "to.notes_label": "Notes (accés, perills…)",
     "to.pick_map": "📍 Utilitza les coordenades del mapa",
     "to.submit": "Envia per revisar",
     "to.cancel": "Cancel·la",
@@ -4478,9 +4508,6 @@ function renderSearchRow(s, ctx) {
       } else {
         selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon }, { userPicked: true });
       }
-      // v113: limpia el campo de busqueda al seleccionar (libera el filtro).
-      const searchEl = document.getElementById("tsSearch");
-      if (searchEl) searchEl.value = "";
       document.getElementById("tsPanel").hidden = true;
     });
   }
