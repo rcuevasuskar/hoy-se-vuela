@@ -4032,7 +4032,6 @@ function renderSearchRow(s, ctx) {
         selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon }, { userPicked: true });
       }
       document.getElementById("tsPanel").hidden = true;
-      document.getElementById("tsToggleBtn").setAttribute("aria-expanded", "false");
     });
   }
 
@@ -4144,7 +4143,6 @@ function initTakeoffSelector() {
   const radiusValEl = document.getElementById("tsRadiusValue");
   const noRadiusEl = document.getElementById("tsNoRadius");
   const panel = document.getElementById("tsPanel");
-  const toggleBtn = document.getElementById("tsToggleBtn");
   const locateBtn = document.getElementById("tsLocateBtn");
 
   if (radiusEl) {
@@ -4173,25 +4171,22 @@ function initTakeoffSelector() {
 
   let searchTimer = null;
   if (searchEl) {
+    const openPanel = () => {
+      if (panel?.hidden) {
+        panel.hidden = false;
+        tsRunSearch();
+      }
+    };
+    searchEl.addEventListener("focus", openPanel);
+    searchEl.addEventListener("click", openPanel);
     searchEl.addEventListener("input", () => {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(tsRunSearch, 200);
-      // Abrir panel automáticamente al escribir
-      if (panel?.hidden) {
-        panel.hidden = false;
-        toggleBtn?.setAttribute("aria-expanded", "true");
-        tsRunSearch();
-      }
+      openPanel();
     });
   }
 
-  if (toggleBtn && panel) {
-    toggleBtn.addEventListener("click", () => {
-      panel.hidden = !panel.hidden;
-      toggleBtn.setAttribute("aria-expanded", panel.hidden ? "false" : "true");
-      if (!panel.hidden) tsRunSearch();
-    });
-  }
+  // (Botón de toggle eliminado: el panel se abre al enfocar el buscador)
 
   if (locateBtn) {
     locateBtn.addEventListener("click", () => {
@@ -4211,7 +4206,6 @@ function initTakeoffSelector() {
           }
           if (panel) {
             panel.hidden = false;
-            toggleBtn?.setAttribute("aria-expanded", "true");
           }
           tsRunSearch();
           // Refresca también las distancias mostradas en la tarjeta "Estaciones cercanas".
