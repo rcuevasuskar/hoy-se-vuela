@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.132";
+const APP_VERSION = "v0.133";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -290,6 +290,7 @@ const I18N = {
     "best.none": "Sin ventanas óptimas en las próximas 12 h.",
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Volable",
+    "best.warn_yellow": "⚠️ Solo condiciones volables, sin franja óptima",
     "near.airport_label": "Aeropuerto de Granada (LEGR)",
     "near.airport_prefix": "Aeropuerto",
     "near.airport_src": "Open-Meteo (METAR aprox.)",
@@ -565,6 +566,7 @@ const I18N = {
     "best.none": "No optimal windows in the next 12 h.",
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Flyable",
+    "best.warn_yellow": "⚠️ Only flyable conditions, no optimal window",
     "near.airport_label": "Granada Airport (LEGR)",
     "near.airport_prefix": "Airport",
     "near.airport_src": "Open-Meteo (approx. METAR)",
@@ -840,6 +842,7 @@ const I18N = {
     "best.none": "Keine optimalen Fenster in den nächsten 12 h.",
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Fliegbar",
+    "best.warn_yellow": "⚠️ Nur fliegbar, kein optimales Fenster",
     "near.airport_label": "Flughafen Granada (LEGR)",
     "near.airport_prefix": "Flughafen",
     "near.airport_src": "Open-Meteo (ca. METAR)",
@@ -1115,6 +1118,7 @@ const I18N = {
     "best.none": "Pas de créneau optimal dans les 12 h.",
     "best.ideal": "✅ Idéal",
     "best.ok": "⚠️ Volable",
+    "best.warn_yellow": "⚠️ Seulement conditions volables, pas de créneau optimal",
     "near.airport_label": "Aéroport de Grenade (LEGR)",
     "near.airport_prefix": "Aéroport",
     "near.airport_src": "Open-Meteo (METAR approx.)",
@@ -1390,6 +1394,7 @@ const I18N = {
     "best.none": "Ez dago tarte optimoarik hurrengo 12 orduetan.",
     "best.ideal": "✅ Aproposa",
     "best.ok": "⚠️ Hegagarria",
+    "best.warn_yellow": "⚠️ Hegagarria soilik, ez dago tarte optimorik",
     "near.airport_label": "Granadako aireportua (LEGR)",
     "near.airport_prefix": "Aireportua",
     "near.airport_src": "Open-Meteo (METAR gutxi gorabehera)",
@@ -1619,6 +1624,7 @@ const I18N = {
     "best.none": "Sense franges òptimes en les pròximes 12 h.",
     "best.ideal": "✅ Ideal",
     "best.ok": "⚠️ Volable",
+    "best.warn_yellow": "⚠️ Només condicions volables, sense franja òptima",
     "near.airport_label": "Aeroport de Granada (LEGR)",
     "near.airport_prefix": "Aeroport",
     "near.airport_src": "Open-Meteo (METAR aprox.)",
@@ -2533,13 +2539,15 @@ function renderBestWindow(fc) {
   const dayStart = ref.scanFrom.getTime();
   const dayEnd   = ref.scanTo.getTime();
   const now = Date.now();
-  const runs = []; // {start,end,quality}
-  let cur = null;
+  // v133: clasificamos cada hora con el mismo veredicto que usan las flechas
+  // del pronóstico (ideal = verde, ok = amarillo, bad = rojo). Después
+  // construimos rachas separadas por calidad y mostramos hasta 2 intervalos
+  // priorizando los más largos. Si no hay verdes, caemos a amarillas con aviso.
+  const hours = [];
   for (let i = 0; i < h.time.length; i++) {
     const ts = new Date(h.time[i]).getTime();
     if (ts < dayStart) continue;
     if (ts > dayEnd) break;
-    // En el día actual no consideramos horas pasadas.
     if (ref.dayOffset === 0 && ts < now - 30 * 60 * 1000) continue;
     const dirInfo = classifyDirection(h.wind_direction_10m[i]);
     const spdQ = classifySpeed(h.wind_speed_10m[i], h.wind_gusts_10m[i]);
@@ -2548,35 +2556,48 @@ function renderBestWindow(fc) {
     const risk = weatherRisk(slot);
     if (risk === "storm") v = "bad";
     else if (risk === "rain" && v !== "bad") v = "warn";
-    if (v === "ideal" || v === "ok") {
-      if (!cur || cur.quality !== v) { if (cur) runs.push(cur); cur = { start: ts, end: ts + 3600 * 1000, quality: v }; }
-      else { cur.end = ts + 3600 * 1000; }
-    } else { if (cur) { runs.push(cur); cur = null; } }
+    hours.push({ ts, v });
   }
-  if (cur) runs.push(cur);
-  // Preferir ideal sobre ok; entre iguales, el más largo, y antes en el tiempo a igualdad.
-  runs.sort((a, b) => {
-    const rank = (q) => q === "ideal" ? 0 : 1;
-    if (rank(a.quality) !== rank(b.quality)) return rank(a.quality) - rank(b.quality);
-    const lenA = a.end - a.start, lenB = b.end - b.start;
-    if (lenA !== lenB) return lenB - lenA;
-    return a.start - b.start;
-  });
+  // Agrupa rachas consecutivas que cumplan `pass(v)`.
+  const buildRuns = (pass) => {
+    const out = [];
+    let cur = null;
+    for (const { ts, v } of hours) {
+      if (pass(v)) {
+        if (!cur) cur = { start: ts, end: ts + 3600 * 1000 };
+        else cur.end = ts + 3600 * 1000;
+      } else if (cur) { out.push(cur); cur = null; }
+    }
+    if (cur) out.push(cur);
+    return out;
+  };
+  let runs = buildRuns(v => v === "ideal");
+  let usedFallback = false;
+  if (runs.length === 0) {
+    // Sin franjas verdes → probamos amarillas (volables) con aviso.
+    runs = buildRuns(v => v === "ideal" || v === "ok");
+    usedFallback = runs.length > 0;
+  }
   const labelKey = ref.dayOffset === 1 ? "best.label_tomorrow" : "best.label";
-  const best = runs[0];
-  if (!best) {
+  box.querySelector(".bw-label").textContent = t(labelKey);
+  if (runs.length === 0) {
     box.hidden = false;
     box.className = "best-window none";
-    box.querySelector(".bw-label").textContent = t(labelKey);
     box.querySelector("#bestWindowText").textContent = t("best.none");
     return;
   }
-  box.hidden = false;
-  box.className = "best-window " + (best.quality === "ideal" ? "" : "ok");
+  // Hasta 2 intervalos, los más largos primero; al pintar respetar orden cronológico.
+  const top = runs
+    .slice()
+    .sort((a, b) => (b.end - b.start) - (a.end - a.start))
+    .slice(0, 2)
+    .sort((a, b) => a.start - b.start);
   const fmtHM = (ms) => new Date(ms).toLocaleTimeString(t("locale"), { hour: "2-digit", minute: "2-digit" });
-  const tag = best.quality === "ideal" ? t("best.ideal") : t("best.ok");
-  box.querySelector(".bw-label").textContent = t(labelKey);
-  box.querySelector("#bestWindowText").textContent = `${fmtHM(best.start)}–${fmtHM(best.end)} · ${tag}`;
+  const parts = top.map(r => `${fmtHM(r.start)}–${fmtHM(r.end)}`);
+  const tag = usedFallback ? t("best.warn_yellow") : t("best.ideal");
+  box.hidden = false;
+  box.className = "best-window " + (usedFallback ? "ok" : "");
+  box.querySelector("#bestWindowText").textContent = `${parts.join(" · ")} · ${tag}`;
 }
 
 // === Pronóstico (utilidades comunes) ===
