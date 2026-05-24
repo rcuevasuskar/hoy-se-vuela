@@ -1917,3 +1917,21 @@ footer {
   font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* Selector de idioma dentro de la cabecera de usuario */
+.um-user-header .lang-picker { flex-shrink: 0; margin-left: auto; }
+.um-user-header .lang-current {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: inline-flex; align-items: center; gap: 4px;
+  cursor: pointer;
+}
+.um-user-header .lang-current:hover { border-color: var(--accent); }
+.um-user-header .lang-menu { right: 0; top: calc(100% + 4px); }
+.user-menu-panel { min-width: 260px; }
+
+/* Avatar siempre como icono: bg neutral, no accent */
+.um-user-header .um-user-avatar { background: transparent; color: inherit; font-size: 1.2rem; }

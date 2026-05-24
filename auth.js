@@ -79,8 +79,7 @@ if (!isConfigured()) {
     label.textContent = name;
     btn?.classList.add("is-logged");
     btn?.classList.remove("is-anon");
-    const initial = (user.displayName || user.email || "?").trim().charAt(0).toUpperCase();
-    setAvatar(initial);
+    setAvatar("\ud83d\udc64");
   }
 
   function openModal()  { $("authModal")?.removeAttribute("hidden"); }
