@@ -383,11 +383,22 @@ if (!isConfigured()) {
       setError("");
       const provider = new GoogleAuthProvider();
       try {
-        // Popup en desktop; redirect fallback en móviles donde el popup suele bloquearse
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        if (isMobile) await signInWithRedirect(auth, provider);
-        else { await signInWithPopup(auth, provider); closeModal(); }
-      } catch (e) { setError(humanError(e)); }
+        // Intentamos siempre popup (funciona en Chrome Android y desktop).
+        // Solo si el navegador bloquea el popup caemos a redirect.
+        try {
+          await signInWithPopup(auth, provider);
+          closeModal();
+        } catch (popupErr) {
+          console.warn("[auth] popup failed, fallback to redirect", popupErr?.code);
+          if (popupErr?.code === "auth/popup-blocked"
+              || popupErr?.code === "auth/popup-closed-by-user"
+              || popupErr?.code === "auth/operation-not-supported-in-this-environment") {
+            await signInWithRedirect(auth, provider);
+          } else {
+            throw popupErr;
+          }
+        }
+      } catch (e) { setError(humanError(e) + " [" + (e?.code||"?") + "]"); }
     });
 
     $("authAnonBtn")?.addEventListener("click", async () => {
