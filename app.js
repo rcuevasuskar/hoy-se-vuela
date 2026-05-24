@@ -652,7 +652,7 @@ const I18N = {
     "auth.err_wrong_password": "Email ou mot de passe incorrect.",
     "auth.err_email_in_use": "Cet email est déjà enregistré.",
     "auth.err_pwd_short": "Le mot de passe doit avoir au moins 6 caractères.",
-    "auth.err_popup_blocked": "Fenêtre bloquée. Réessaie."
+    "auth.err_popup_blocked": "Fenêtre bloquée. Réessaie.",
     "cmp.title": "Comparatif derniers jours",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(lever +3 h → coucher −1 h)",
