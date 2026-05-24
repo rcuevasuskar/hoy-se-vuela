@@ -4334,7 +4334,16 @@ async function tsRunSearch() {
   });
 
   // Construye lista de favoritos (siempre mostrar, no depende del radio)
-  const favItems = favs.map(f => {
+  // v111: filtra favoritos comunitarios huerfanos (despegue eliminado por admin).
+  const approvedCommunityIds = new Set((window.PCAuth?.approvedTakeoffs || []).map(t => t.id));
+  const staleCommunityFavs = favs.filter(f => f.source === "community" && !approvedCommunityIds.has(f.refId));
+  // Auto-limpia los favoritos huerfanos del usuario actual (los suyos los puede borrar).
+  if (staleCommunityFavs.length && window.PCAuth?.removeFavorite) {
+    staleCommunityFavs.forEach(f => {
+      window.PCAuth.removeFavorite(f.id).catch(e => console.warn("[fav] cleanup stale", e));
+    });
+  }
+  const favItems = favs.filter(f => f.source !== "community" || approvedCommunityIds.has(f.refId)).map(f => {
     const fakeItem = {
       id: f.source === "pioupiou" ? Number(f.refId) : (f.source === "community" ? "to_" + f.refId : "ffvl_" + f.refId),
       provider: f.source,
