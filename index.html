@@ -60,18 +60,24 @@
       <div class="status-grid">
         <div class="compass-wrap">
           <div class="compass">
-            <span class="cardinal n" data-i18n="card.n">N</span>
-            <span class="cardinal e" data-i18n="card.e">E</span>
-            <span class="cardinal s" data-i18n="card.s">S</span>
-            <span class="cardinal w" data-i18n="card.w">O</span>
-            <div class="sector ideal" style="--start:247.5deg;--end:337.5deg;"></div>
-            <div class="sector ok"    style="--start:337.5deg;--end:22.5deg;"></div>
-            <div class="sector ok"    style="--start:202.5deg;--end:247.5deg;"></div>
-            <div class="sector bad"   style="--start:22.5deg;--end:202.5deg;"></div>
-            <div class="wedge-wrap" id="windWedge">
-              <div class="wedge"></div>
+            <div class="compass-rose" id="compassRose">
+              <span class="cardinal n" data-i18n="card.n">N</span>
+              <span class="cardinal e" data-i18n="card.e">E</span>
+              <span class="cardinal s" data-i18n="card.s">S</span>
+              <span class="cardinal w" data-i18n="card.w">O</span>
+              <div class="sector ideal" style="--start:247.5deg;--end:337.5deg;"></div>
+              <div class="sector ok"    style="--start:337.5deg;--end:22.5deg;"></div>
+              <div class="sector ok"    style="--start:202.5deg;--end:247.5deg;"></div>
+              <div class="sector bad"   style="--start:22.5deg;--end:202.5deg;"></div>
+              <div class="wedge-wrap" id="windWedge">
+                <svg class="wedge" viewBox="0 0 32 40" aria-hidden="true">
+                  <polygon points="16,40 1,5 31,5" />
+                </svg>
+              </div>
             </div>
+            <div class="compass-center"><span id="compassAvg">—</span></div>
           </div>
+          <button class="compass-orient" id="orientToggle" type="button" title="Orientación del dispositivo">🧭</button>
         </div>
         <div class="readings">
           <div class="reading">

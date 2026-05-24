@@ -309,15 +309,25 @@ main {
 }
 
 /* Compass */
-.compass-wrap { text-align: center; padding: 22px 18px 22px 18px; }
+.compass-wrap { text-align: center; padding: 22px 18px 22px 18px; position: relative; }
 .compass {
   position: relative;
   width: 180px;
   height: 180px;
+  margin: 0 auto;
   border-radius: 50%;
   background: radial-gradient(circle at center, #1c283a 0%, #131c2a 70%);
   border: 2px solid var(--border);
   box-shadow: inset 0 0 18px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35);
+}
+/* Capa rotativa que gira con la orientación del dispositivo */
+.compass-rose {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  transform: rotate(var(--heading, 0deg));
+  transform-origin: 50% 50%;
+  transition: transform 0.25s ease-out;
 }
 .cardinal {
   position: absolute;
@@ -337,13 +347,13 @@ main {
   background: conic-gradient(from var(--start), currentColor 0deg, currentColor calc(var(--end) - var(--start)), transparent 0);
   -webkit-mask: radial-gradient(circle, transparent 29%, #000 30%, #000 66%, transparent 67%);
           mask: radial-gradient(circle, transparent 29%, #000 30%, #000 66%, transparent 67%);
-  opacity: 1;
+  opacity: 0.55;
   pointer-events: none;
-  filter: saturate(160%) brightness(1.05);
+  filter: saturate(65%) brightness(1.15);
 }
 .sector.ideal { color: var(--ideal); }
 .sector.ok    { color: var(--ok); }
-.sector.bad   { color: var(--bad); opacity: 0.9; }
+.sector.bad   { color: var(--bad); opacity: 0.42; }
 
 .sector[style*="--start:337.5deg"] {
   background: conic-gradient(from -22.5deg, currentColor 0deg, currentColor 45deg, transparent 0);
@@ -362,21 +372,66 @@ main {
 }
 .wedge {
   position: absolute;
-  top: 10px;
+  top: 6px;
   left: 50%;
+  width: 32px;
+  height: 40px;
   transform: translateX(-50%);
-  width: 0; height: 0;
-  border-left: 16px solid transparent;
-  border-right: 16px solid transparent;
-  border-top: 34px solid var(--accent-dark);
-  filter: drop-shadow(0 0 7px rgba(45,122,217,0.85));
+  overflow: visible;
 }
-.wedge-wrap[data-quality="ideal"] .wedge { border-top-color: var(--accent-dark); filter: drop-shadow(0 0 8px var(--accent-dark)); }
-.wedge-wrap[data-quality="ok"]    .wedge { border-top-color: var(--accent-dark); filter: drop-shadow(0 0 8px var(--accent-dark)); }
-.wedge-wrap[data-quality="bad"]   .wedge { border-top-color: var(--accent-dark); filter: drop-shadow(0 0 8px var(--accent-dark)); }
+.wedge polygon {
+  fill: var(--accent);
+  stroke: #000;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.45));
+  transition: fill 0.3s ease;
+}
+.wedge-wrap[data-speed="ideal"] .wedge polygon { fill: var(--ideal); }
+.wedge-wrap[data-speed="ok"]    .wedge polygon { fill: var(--ok); }
+.wedge-wrap[data-speed="warn"]  .wedge polygon { fill: var(--warn); }
+.wedge-wrap[data-speed="bad"]   .wedge polygon { fill: var(--bad); }
+.wedge-wrap[data-speed="unknown"] .wedge polygon { fill: #6b7891; }
 
+/* Lectura central: viento medio en km/h */
+.compass-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.compass-center span {
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--text);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  font-variant-numeric: tabular-nums;
+}
 
-/* (Marca antigua eliminada: ahora se usa .wedge dentro de la brújula.) */
+/* Botón de orientación del dispositivo */
+.compass-orient {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease;
+}
+.compass-orient:hover { color: var(--text); border-color: var(--accent); }
+.compass-orient.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(78,161,255,0.5);
+}
 
 .center-dot { display: none; }
 

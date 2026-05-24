@@ -990,9 +990,15 @@ function renderLive(live) {
   // El wedge en el borde apunta hacia el centro desde la posición de origen del viento.
   const wedge = document.getElementById("windWedge");
   if (wedge && dir != null) {
-    wedge.style.transform = `rotate(${dir}deg)`;
+    wedge.dataset.dir = String(dir);
+    wedge.style.transform = `rotate(${dir - currentHeading}deg)`;
     wedge.dataset.quality = dirInfo.quality;
+    wedge.dataset.speed = classifySpeed(avg, max);
   }
+
+  // Viento medio numérico en el centro de la brújula.
+  const centerEl = document.getElementById("compassAvg");
+  if (centerEl) centerEl.textContent = (avg != null) ? Math.round(avg) : "—";
 
   const spdQ = classifySpeed(avg, max);
   let verdict = combineVerdict(dirInfo.quality, spdQ);
@@ -1855,6 +1861,74 @@ let WH_HOURS = parseInt(localStorage.getItem("whHours"), 10);
 if (![2, 4, 6].includes(WH_HOURS)) WH_HOURS = 2;
 let WH_BUCKET_MIN = (WH_HOURS * 60) / WH_BUCKETS;
 
+// === Orientación del dispositivo (brújula auto-rotación) ===
+let currentHeading = 0;
+let orientationEnabled = false;
+function handleDeviceOrientation(e) {
+  let h = null;
+  // iOS Safari expone webkitCompassHeading (0=N, sentido horario).
+  if (typeof e.webkitCompassHeading === "number") {
+    h = e.webkitCompassHeading;
+  } else if (e.absolute && typeof e.alpha === "number") {
+    // alpha: rotación alrededor del eje Z, antihorario desde N.
+    h = (360 - e.alpha) % 360;
+  } else if (typeof e.alpha === "number") {
+    h = (360 - e.alpha) % 360;
+  }
+  if (h == null || isNaN(h)) return;
+  currentHeading = h;
+  applyCompassHeading();
+}
+function applyCompassHeading() {
+  const rose = document.getElementById("compassRose");
+  if (rose) rose.style.setProperty("--heading", `${-currentHeading}deg`);
+  const wedge = document.getElementById("windWedge");
+  if (wedge && wedge.dataset.dir) {
+    const d = parseFloat(wedge.dataset.dir);
+    if (!isNaN(d)) wedge.style.transform = `rotate(${d - currentHeading}deg)`;
+  }
+}
+async function enableDeviceOrientation() {
+  try {
+    if (typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function") {
+      const perm = await DeviceOrientationEvent.requestPermission();
+      if (perm !== "granted") return false;
+    }
+    const evt = ("ondeviceorientationabsolute" in window)
+      ? "deviceorientationabsolute"
+      : "deviceorientation";
+    window.addEventListener(evt, handleDeviceOrientation, true);
+    orientationEnabled = true;
+    return true;
+  } catch (err) {
+    console.warn("Device orientation not available:", err);
+    return false;
+  }
+}
+function disableDeviceOrientation() {
+  window.removeEventListener("deviceorientationabsolute", handleDeviceOrientation, true);
+  window.removeEventListener("deviceorientation", handleDeviceOrientation, true);
+  orientationEnabled = false;
+  currentHeading = 0;
+  applyCompassHeading();
+}
+function initOrientationToggle() {
+  const btn = document.getElementById("orientToggle");
+  if (!btn) return;
+  // Si el dispositivo claramente no soporta orientación (escritorio sin sensores),
+  // dejamos el botón pero al pulsarlo simplemente no hará nada útil.
+  btn.addEventListener("click", async () => {
+    if (!orientationEnabled) {
+      const ok = await enableDeviceOrientation();
+      btn.classList.toggle("active", ok);
+    } else {
+      disableDeviceOrientation();
+      btn.classList.remove("active");
+    }
+  });
+}
+
 function setWindHistoryHours(h) {
   if (![2, 4, 6].includes(h)) return;
   WH_HOURS = h;
@@ -2245,6 +2319,7 @@ function initTakeoffSelector() {
 applyStaticI18n();
 syncNotifyButtonInitial();
 initTakeoffSelector();
+initOrientationToggle();
 renderMap();
 // Sincroniza UI del selector de horas con el valor cargado
 document.querySelectorAll("#whRange button").forEach(b => {
