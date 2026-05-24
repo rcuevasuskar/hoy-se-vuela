@@ -180,8 +180,9 @@ if (!isConfigured()) {
       const email = $("authEmail").value.trim();
       const pwd = $("authPassword").value;
       if (!email || !pwd) return setError(t("auth.err_fields"));
-      try { await signInWithEmailAndPassword(auth, email, pwd); closeModal(); }
-      catch (e) { setError(humanError(e)); }
+      console.log("[auth] login attempt", email);
+      try { await signInWithEmailAndPassword(auth, email, pwd); console.log("[auth] login ok"); closeModal(); }
+      catch (e) { console.error("[auth] login error", e); setError(humanError(e) + " [" + (e?.code||"?") + "]"); }
     });
 
     $("authRegisterBtn")?.addEventListener("click", async () => {
@@ -189,8 +190,9 @@ if (!isConfigured()) {
       const email = $("authRegEmail").value.trim();
       const pwd = $("authRegPassword").value;
       if (!email || pwd.length < 6) return setError(t("auth.err_pwd_short"));
-      try { await createUserWithEmailAndPassword(auth, email, pwd); closeModal(); }
-      catch (e) { setError(humanError(e)); }
+      console.log("[auth] register attempt", email);
+      try { await createUserWithEmailAndPassword(auth, email, pwd); console.log("[auth] register ok"); closeModal(); }
+      catch (e) { console.error("[auth] register error", e); setError(humanError(e) + " [" + (e?.code||"?") + "]"); }
     });
 
     $("authGoogleBtn")?.addEventListener("click", async () => {
