@@ -202,7 +202,7 @@ const I18N = {
     "near.airport_prefix": "Aeropuerto",
     "near.airport_src": "Open-Meteo (METAR aprox.)",
     "banner.title": "Despegue de parapente de Cenes de la Vega",
-    "ts.placeholder": "Buscar despegue / estación…",
+    "ts.placeholder": "Buscar despegues cercanos o favoritos",
     "ts.current": "Despegue:",
     "ts.radius": "Radio",
     "ts.locate": "Usar mi ubicación",
@@ -432,7 +432,7 @@ const I18N = {
     "near.airport_prefix": "Airport",
     "near.airport_src": "Open-Meteo (approx. METAR)",
     "banner.title": "Paragliding takeoff of Cenes de la Vega",
-    "ts.placeholder": "Search takeoff / station…",
+    "ts.placeholder": "Search nearby or favorite takeoffs",
     "ts.current": "Takeoff:",
     "ts.radius": "Radius",
     "ts.locate": "Use my location",
@@ -662,7 +662,7 @@ const I18N = {
     "near.airport_prefix": "Flughafen",
     "near.airport_src": "Open-Meteo (ca. METAR)",
     "banner.title": "Gleitschirm-Startplatz von Cenes de la Vega",
-    "ts.placeholder": "Startplatz / Station suchen…",
+    "ts.placeholder": "Startplätze in der Nähe oder Favoriten suchen",
     "ts.current": "Startplatz:",
     "ts.radius": "Radius",
     "ts.locate": "Meinen Standort verwenden",
@@ -892,7 +892,7 @@ const I18N = {
     "near.airport_prefix": "Aéroport",
     "near.airport_src": "Open-Meteo (METAR approx.)",
     "banner.title": "Décollage parapente de Cenes de la Vega",
-    "ts.placeholder": "Rechercher décollage / station…",
+    "ts.placeholder": "Rechercher décollages proches ou favoris",
     "ts.current": "Décollage :",
     "ts.radius": "Rayon",
     "ts.locate": "Utiliser ma position",
@@ -2852,6 +2852,7 @@ function resolveCurrentTakeoffOrigin() {
 }
 
 function selectStation(station, opts) {
+  if (opts && opts.userPicked) _userPickedStation = true;
   currentStation = station;
   currentStationId = station.id;
   currentTakeoff = { lat: station.lat, lon: station.lon, name: station.name };
@@ -3043,9 +3044,9 @@ function renderSearchRow(s, ctx) {
           id: s.stationId, provider: "pioupiou",
           name: s.name, shortName: s.name,
           lat: s.lat, lon: s.lon,
-        }, { criteria: s.raw?.criteria || null, originId: s.raw?.id || null });
+        }, { criteria: s.raw?.criteria || null, originId: s.raw?.id || null, userPicked: true });
       } else {
-        selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon });
+        selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon }, { userPicked: true });
       }
       document.getElementById("tsPanel").hidden = true;
       document.getElementById("tsToggleBtn").setAttribute("aria-expanded", "false");
@@ -3194,6 +3195,10 @@ function initTakeoffSelector() {
           userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
           locateBtn.classList.add("active");
           locateBtn.disabled = false;
+          // Si aún no había despegue resuelto por favoritos, intenta el más cercano.
+          if (!_userPickedStation && !(window.PCAuth?.favorites || []).length) {
+            resolveDefaultTakeoff();
+          }
           if (panel) {
             panel.hidden = false;
             toggleBtn?.setAttribute("aria-expanded", "true");
@@ -3501,9 +3506,89 @@ function _hookTakeoffStreams() {
     if (panel && !panel.hidden) tsRunSearch();
     renderCurrentTakeoffActions();
     startFavoriteAlertsPolling(); // re-arranca timer
+    resolveDefaultTakeoff();      // reevalúa habitual/favorito al llegar lista
+  };
+  window.PCAuth.onUserChange = () => {
+    _userPickedStation = false;   // nueva sesión → reaplica reglas
+    resolveDefaultTakeoff();
   };
 }
 _hookTakeoffStreams();
+
+// === Despegue por defecto ===
+// Reglas:
+//   1) Favorito "habitual" (homeFavId)
+//   2) Favorito añadido primero (menor addedAt)
+//   3) Estación habilitada más cercana a la geolocalización del usuario
+//   4) Cenes (DEFAULT_STATION)
+let _userPickedStation = false;
+let _defaultResolvedOnce = false;
+
+function _favToStation(f) {
+  if (f.source === "pioupiou") {
+    return {
+      station: { id: Number(f.refId), provider: "pioupiou", name: f.name, shortName: f.name, lat: f.lat, lon: f.lon },
+      opts: { criteria: f.criteria || null },
+    };
+  }
+  if (f.source === "community") {
+    return {
+      station: { id: f.stationId, provider: "pioupiou", name: f.name, shortName: f.name, lat: f.lat, lon: f.lon },
+      opts: { criteria: f.criteria || null, originId: f.refId },
+    };
+  }
+  if (f.source === "ffvl") {
+    return {
+      station: { id: "ffvl_" + f.refId, provider: "ffvl", name: f.name, shortName: f.name, lat: f.lat, lon: f.lon, rawId: f.refId },
+      opts: { criteria: f.criteria || null },
+    };
+  }
+  return null;
+}
+
+function _addedAtMs(f) {
+  const a = f.addedAt;
+  if (!a) return Infinity;
+  if (typeof a.toMillis === "function") return a.toMillis();
+  if (typeof a.seconds === "number") return a.seconds * 1000;
+  return Infinity;
+}
+
+async function resolveDefaultTakeoff() {
+  if (_userPickedStation) return;
+  // 1) Habitual
+  const favs = window.PCAuth?.favorites || [];
+  const homeId = window.PCAuth?.prefs?.homeFavId || null;
+  let chosen = homeId ? favs.find(f => f.id === homeId) : null;
+  // 2) Favorito más antiguo
+  if (!chosen && favs.length) {
+    chosen = [...favs].sort((a, b) => _addedAtMs(a) - _addedAtMs(b))[0];
+  }
+  if (chosen) {
+    const conv = _favToStation(chosen);
+    if (conv) { selectStation(conv.station, conv.opts); _defaultResolvedOnce = true; return; }
+  }
+  // 3) Más cercano a GPS (sin pedir geolocalización; solo si ya está disponible)
+  if (userLocation) {
+    try {
+      const all = await ensureAllStations();
+      let best = null, bestD = Infinity;
+      for (const s of (all.pioupiou || [])) {
+        const st = stationFromPioupiou(s);
+        if (!st) continue;
+        if (!ENABLED_STATION_IDS.has(st.id)) continue;
+        const d = haversineKm(userLocation.lat, userLocation.lon, st.lat, st.lon);
+        if (d < bestD) { bestD = d; best = st; }
+      }
+      if (best) { selectStation(best); _defaultResolvedOnce = true; return; }
+    } catch (e) { console.warn("resolveDefaultTakeoff GPS:", e); }
+  }
+  // 4) Cenes (solo si aún no se resolvió en esta sesión)
+  if (!_defaultResolvedOnce) {
+    selectStation({ ...DEFAULT_STATION });
+    _defaultResolvedOnce = true;
+  }
+}
 
 // === Alertas por despegue favorito (polling) ===
 let _favPollTimer = null;
