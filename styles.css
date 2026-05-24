@@ -440,13 +440,15 @@ header.topbar .ts-current {
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px;
   padding: 4px 4px;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   line-height: 1;
   flex-shrink: 0;
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
 }
+.ts-lang option { font-family: inherit; font-size: 1rem; }
 .ts-current {
   margin-top: 6px;
   font-size: 0.8rem;

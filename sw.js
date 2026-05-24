@@ -1,5 +1,5 @@
 // Service Worker básico para PWA: cache-first del shell, network-first de datos.
-const CACHE = "viento-cenes-v61";
+const CACHE = "viento-cenes-v62";
 const SHELL = [
   "./",
   "./index.html",
