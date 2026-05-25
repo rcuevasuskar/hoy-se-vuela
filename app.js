@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.180";
+const APP_VERSION = "v0.181";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5209,8 +5209,10 @@ document.getElementById("toGeocodeBtn")?.addEventListener("click", async () => {
         nameEl.value = String(it.display_name || "").split(",")[0].trim();
       }
       out.hidden = true;
-      // Resetea la seleccion de estacion de referencia: las coords cambiaron.
+      // Resetea la seleccion de estacion y recarga el desplegable con las
+      // estaciones cercanas a las nuevas coordenadas.
       _toClearStationRef();
+      _toLoadStationsForCoords();
     });
     out.appendChild(btn);
   }
@@ -5219,76 +5221,69 @@ document.getElementById("toGeocodeInput")?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); document.getElementById("toGeocodeBtn")?.click(); }
 });
 
-// v147: estacion de referencia (opcional). Busca estaciones de cualquier
-// proveedor integrado (Pioupiou + AEMET + Holfuy) dentro de 30 km de las
-// coordenadas escritas en el formulario.
+// v180: estacion de referencia opcional. La elegimos de un <select> que
+// se rellena automaticamente con todas las estaciones (cualquier proveedor)
+// dentro de 30 km de las coordenadas del formulario, ordenadas por distancia.
+// Si el usuario deja la opcion vacia "Sin estacion", se respeta y el despegue
+// caera a las URLs de Windy/Volandoo o a la estimacion de Windy para la
+// ubicacion.
 function _toClearStationRef() {
-  const idEl = document.getElementById("toStationId"); if (idEl) idEl.value = "";
-  const sel = document.getElementById("toStationsSelected");
-  if (sel) { sel.hidden = true; sel.innerHTML = ""; }
-  const list = document.getElementById("toStationsList");
-  if (list) { list.hidden = true; list.innerHTML = ""; }
+  const sel = document.getElementById("toStationId");
+  if (sel && sel.tagName === "SELECT") sel.value = "";
 }
-function _toRenderStationsList(stations) {
-  const list = document.getElementById("toStationsList");
-  if (!list) return;
-  list.innerHTML = "";
-  if (!stations.length) {
-    list.innerHTML = `<div class="to-stations-empty">${t("to.ref_empty")}</div>`;
-    list.hidden = false;
-    return;
-  }
-  for (const s of stations) {
-    const item = document.createElement("button");
-    item.type = "button";
-    item.className = "to-stations-item";
-    item.innerHTML = `<b>${escapeHtml(s.name)}</b> <small>· ${s.provider} · ${s.dist.toFixed(1)} km</small>`;
-    item.addEventListener("click", () => {
-      const idEl = document.getElementById("toStationId");
-      if (idEl) idEl.value = (s.provider === "pioupiou") ? String(s.rawId ?? s.id ?? "") : "";
-      const sel = document.getElementById("toStationsSelected");
-      if (sel) {
-        sel.hidden = false;
-        sel.innerHTML = `<span class="to-ref-pill">${escapeHtml(s.name)} · ${s.provider} · ${s.dist.toFixed(1)} km · <button type="button" class="to-ref-clear">✕</button></span>`;
-        sel.querySelector(".to-ref-clear")?.addEventListener("click", _toClearStationRef);
-      }
-      list.hidden = true;
-    });
-    list.appendChild(item);
-  }
-  list.hidden = false;
-}
-document.getElementById("toFindStationsBtn")?.addEventListener("click", async () => {
+async function _toLoadStationsForCoords({ keepValue = false } = {}) {
+  const sel = document.getElementById("toStationId");
+  if (!sel || sel.tagName !== "SELECT") return;
   const lat = parseFloat(document.getElementById("toLat")?.value);
   const lon = parseFloat(document.getElementById("toLon")?.value);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-    alert(t("to.ref_need_coords"));
-    return;
-  }
-  const list = document.getElementById("toStationsList");
-  if (list) { list.hidden = false; list.innerHTML = `<div class="to-stations-loading">${t("loading")}</div>`; }
+  const prev = keepValue ? sel.value : "";
+  // Recrea opciones, conservando siempre "Sin estacion" como primera.
+  while (sel.options.length > 1) sel.remove(1);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
   try {
     const all = await ensureAllStations();
     const flat = [];
     for (const s of (all.pioupiou || [])) {
       const ss = stationFromPioupiou(s); if (!ss) continue;
-      flat.push({ ...ss, dist: haversineKm(lat, lon, ss.lat, ss.lon) });
+      flat.push({ id: ss.id, provider: "pioupiou", name: ss.name, lat: ss.lat, lon: ss.lon,
+                  dist: haversineKm(lat, lon, ss.lat, ss.lon) });
     }
     for (const s of (all.aemet || [])) {
       if (s?.lat == null || s?.lon == null) continue;
-      flat.push({ provider: "aemet", id: s.id || s.idema, name: s.name || s.ubi || s.idema, lat: s.lat, lon: s.lon, dist: haversineKm(lat, lon, s.lat, s.lon) });
+      flat.push({ id: s.id || ("aemet_" + s.idema), provider: "aemet",
+                  name: s.name || s.ubi || s.idema, lat: s.lat, lon: s.lon,
+                  dist: haversineKm(lat, lon, s.lat, s.lon) });
     }
     for (const s of (all.holfuy || [])) {
       if (s?.lat == null || s?.lon == null) continue;
-      flat.push({ provider: "holfuy", id: s.id, name: s.name || ("Holfuy " + s.id), lat: s.lat, lon: s.lon, dist: haversineKm(lat, lon, s.lat, s.lon) });
+      flat.push({ id: s.id || ("holfuy_" + s.rawId), provider: "holfuy",
+                  name: s.name || ("Holfuy " + s.id), lat: s.lat, lon: s.lon,
+                  dist: haversineKm(lat, lon, s.lat, s.lon) });
     }
-    const within = flat.filter(s => s.dist <= 30).sort((a, b) => a.dist - b.dist).slice(0, 20);
-    _toRenderStationsList(within);
+    const within = flat.filter(s => s.dist <= 30).sort((a, b) => a.dist - b.dist).slice(0, 50);
+    for (const s of within) {
+      const opt = document.createElement("option");
+      opt.value = String(s.id);
+      opt.textContent = `${s.name} · ${s.provider} · ${s.dist.toFixed(1)} km`;
+      sel.appendChild(opt);
+    }
+    // Si la seleccion previa sigue siendo valida la conservamos; si no, "Sin estacion".
+    if (keepValue && prev && Array.from(sel.options).some(o => o.value === prev)) {
+      sel.value = prev;
+    } else if (keepValue && prev) {
+      // El prev no aparece en el rango. Lo anadimos como opcion sintetica
+      // (estacion guardada previamente que ya no esta en el listado, para no
+      // perder el dato al editar).
+      const opt = document.createElement("option");
+      opt.value = prev;
+      opt.textContent = `${prev} (fuera de 30 km)`;
+      sel.appendChild(opt);
+      sel.value = prev;
+    }
   } catch (e) {
-    console.warn("[to] find stations", e);
-    if (list) list.innerHTML = `<div class="to-stations-empty">${t("near.error")}</div>`;
+    console.warn("[to] load stations", e);
   }
-});
+}
 
 document.querySelectorAll("#whRange button").forEach(btn => {
   btn.addEventListener("click", () => setWindHistoryHours(parseInt(btn.dataset.h, 10)));
@@ -6010,14 +6005,28 @@ async function tsRunSearch() {
   // findLinkedStation sigue siendo necesario para autovincular el despegue a
   // la estacion de viento mas cercana (cualquier proveedor) al hacer click.
   const LINK_KM = 30;
-  const findLinkedStation = (lat, lon) => {
+  const pools = [
+    (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
+    (all.aemet || []),
+    (all.holfuy || []),
+  ];
+  // v181: si el despegue tiene un stationId explicito (cualquier proveedor),
+  // intentamos resolverlo en los pools antes de caer al "mas cercano".
+  const findStationById = (id) => {
+    if (id == null || id === "") return null;
+    const key = String(id);
+    for (const pool of pools) {
+      for (const st of pool) {
+        if (String(st.id) === key) return st;
+      }
+    }
+    return null;
+  };
+  const findLinkedStation = (lat, lon, explicitId) => {
+    const explicit = findStationById(explicitId);
+    if (explicit) return explicit;
     let best = null, bestKm = LINK_KM + 1;
     let bestRecent = null, bestRecentKm = LINK_KM + 1;
-    const pools = [
-      (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
-      (all.aemet || []),
-      (all.holfuy || []),
-    ];
     for (const pool of pools) {
       for (const st of pool) {
         if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
@@ -6032,7 +6041,7 @@ async function tsRunSearch() {
   // Lista comunitaria: todos los despegues aprobados dentro del radio,
   // filtrados por la query y ordenados por distancia.
   const community = (window.PCAuth?.approvedTakeoffs || []).map(to => {
-    const link = findLinkedStation(to.lat, to.lon);
+    const link = findLinkedStation(to.lat, to.lon, to.stationId);
     return {
       id: "to_" + to.id,
       provider: "community",
@@ -6667,7 +6676,7 @@ function openTakeoffSubmit(prefill) {
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
   document.getElementById("toSubmitMsg").textContent = "";
-  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax","toWindyUrl","toVolandooUrl","toStationId","toGeocodeInput"].forEach(id => {
+  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax","toWindyUrl","toVolandooUrl","toGeocodeInput"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   _toClearStationRef?.();
@@ -6678,11 +6687,6 @@ function openTakeoffSubmit(prefill) {
     const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.submit_title");
     const sb = document.getElementById("toSubmitBtn"); if (sb) sb.textContent = t("to.submit");
     const delBtn = document.getElementById("toDeleteBtn"); if (delBtn) delBtn.hidden = true;
-    // v170: oculta el id de doc cuando no estamos editando.
-    const idBlock = document.getElementById("toDocIdBlock");
-    const idInput = document.getElementById("toDocId");
-    if (idBlock) idBlock.hidden = true;
-    if (idInput) idInput.value = "";
   }
   // Roseta inicial: si prefill.criteria.qualityByIndex existe, lo usamos; si no, derivamos de prefill.orientations.
   let initialQ = new Array(16).fill(null);
@@ -6716,7 +6720,11 @@ function openTakeoffSubmit(prefill) {
     if (prefill.windyUrl) document.getElementById("toWindyUrl").value = String(prefill.windyUrl);
     if (prefill.volandooUrl) document.getElementById("toVolandooUrl").value = String(prefill.volandooUrl);
     if (prefill.stationId != null && prefill.stationId !== "") {
-      const idEl = document.getElementById("toStationId"); if (idEl) idEl.value = String(prefill.stationId);
+      const idEl = document.getElementById("toStationId");
+      if (idEl) {
+        // <select>: el valor se aplicara cuando se rellene el listado.
+        idEl.value = String(prefill.stationId);
+      }
     }
     setTimeout(() => { document.getElementById("toName")?.focus(); document.getElementById("toName")?.select(); }, 50);
   } else {
@@ -6727,6 +6735,9 @@ function openTakeoffSubmit(prefill) {
     if (lon) lon.value = c.lon.toFixed(5);
   }
   document.getElementById("takeoffSubmitModal").hidden = false;
+  // v180: carga las estaciones cercanas en el desplegable, preservando la
+  // seleccion si veniamos de un prefill con stationId.
+  _toLoadStationsForCoords({ keepValue: true });
 }
 function closeTakeoffSubmit() {
   document.getElementById("takeoffSubmitModal").hidden = true;
@@ -6745,6 +6756,9 @@ document.getElementById("toPickOnMapBtn")?.addEventListener("click", () => {
   const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
   document.getElementById("toLat").value = c.lat.toFixed(5);
   document.getElementById("toLon").value = c.lon.toFixed(5);
+  // v180: recarga el desplegable de estaciones para las nuevas coords.
+  _toClearStationRef();
+  _toLoadStationsForCoords();
 });
 document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
   const msg = document.getElementById("toSubmitMsg");

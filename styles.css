@@ -398,8 +398,17 @@ header.topbar .ts-current {
 .to-field-block { display: flex; flex-direction: column; gap: 2px; font-size: .75rem; color: var(--muted); margin-top: 6px; }
 .to-field-block > input, .to-field-block > textarea { width: 100%; box-sizing: border-box; }
 /* v147: geocodificador y selector de estacion de referencia */
-.to-geocode-row { display: flex; gap: 6px; }
+.to-geocode-row { display: flex; gap: 6px; align-items: stretch; }
 .to-geocode-row input { flex: 1; min-width: 0; }
+.to-geocode-row > button { flex: 0 0 auto; }
+/* v180: select nativo para la estacion de referencia. */
+.to-field-block > select.to-station-select {
+  width: 100%; box-sizing: border-box;
+  padding: 6px 8px; font-size: .85rem;
+  background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.to-hint { margin: 4px 0 0; font-size: .72rem; color: var(--muted); }
 .to-geocode-results, .to-stations-list {
   margin-top: 4px; max-height: 180px; overflow: auto;
   border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2);

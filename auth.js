@@ -134,7 +134,7 @@ if (!isConfigured()) {
     const payload = {
       source: station.source || "pioupiou",  // "pioupiou" | "community"
       refId: String(station.refId ?? station.id ?? ""),
-      stationId: station.stationId != null ? Number(station.stationId) : null,
+      stationId: station.stationId != null && station.stationId !== "" ? String(station.stationId) : null,
       name: station.name,
       lat: Number(station.lat), lon: Number(station.lon),
       criteria: station.criteria || null,
@@ -206,7 +206,7 @@ if (!isConfigured()) {
         lon: Number(data.lon),
         alt: data.alt != null && data.alt !== "" ? Number(data.alt) : null,
         orientations: String(data.orientations || "").trim(),
-        stationId: data.stationId != null && data.stationId !== "" ? Number(data.stationId) : null,
+        stationId: data.stationId != null && data.stationId !== "" ? String(data.stationId).trim() : null,
         notes: String(data.notes || "").trim() || null,
         windyUrl: (data.windyUrl ? String(data.windyUrl).trim() : null) || null,
         volandooUrl: (data.volandooUrl ? String(data.volandooUrl).trim() : null) || null,
@@ -232,7 +232,7 @@ if (!isConfigured()) {
       lon: Number(data.lon),
       alt: data.alt != null && data.alt !== "" ? Number(data.alt) : null,
       orientations: String(data.orientations || "").trim(),
-      stationId: data.stationId != null && data.stationId !== "" ? Number(data.stationId) : null,
+      stationId: data.stationId != null && data.stationId !== "" ? String(data.stationId).trim() : null,
       notes: String(data.notes || "").trim() || null,
       windyUrl: (data.windyUrl ? String(data.windyUrl).trim() : null) || null,
       volandooUrl: (data.volandooUrl ? String(data.volandooUrl).trim() : null) || null,

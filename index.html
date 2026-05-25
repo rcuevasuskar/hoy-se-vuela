@@ -392,10 +392,6 @@
       <button id="toSubmitClose" class="auth-close" title="Cerrar">✕</button>
       <h2 id="toTitle" data-i18n="to.submit_title">Añadir datos de despegue</h2>
       <p class="auth-account-info" data-i18n="to.submit_hint">Tu propuesta será revisada por un administrador antes de publicarse.</p>
-      <!-- v170: id del documento en Firestore, visible solo al editar un despegue existente (debug). -->
-      <label class="to-field-block" id="toDocIdBlock" hidden><span>ID del despegue (Firestore)</span>
-        <input id="toDocId" type="text" readonly />
-      </label>
       <label class="to-field-block"><span data-i18n="to.name_label">Nombre del despegue</span>
         <input id="toName" type="text" placeholder="Nombre del despegue" data-i18n-placeholder="to.name_ph" />
       </label>
@@ -426,6 +422,7 @@
         <div class="to-geocode-row">
           <input id="toGeocodeInput" type="text" placeholder="Ej: Pegalajar, Jaén" data-i18n-placeholder="to.geocode_ph" />
           <button id="toGeocodeBtn" class="auth-secondary" type="button" data-i18n="to.geocode_search">🔎 Buscar</button>
+          <button id="toPickOnMapBtn" class="auth-secondary" type="button" title="Usar coordenadas actuales del mapa" data-i18n-title="to.pick_map" aria-label="Usar coordenadas actuales del mapa">📍</button>
         </div>
         <div id="toGeocodeResults" class="to-geocode-results" hidden></div>
       </label>
@@ -440,16 +437,16 @@
       </div>
       <input id="toOrient" type="hidden" />
 
-      <!-- v147: estacion de referencia (opcional, dentro de 30 km de las coords) -->
-      <div class="to-field-block">
-        <div class="to-station-ref-header">
-          <span data-i18n="to.ref_station_label">Estación de referencia (opcional, dentro de 30 km)</span>
-          <button id="toFindStationsBtn" class="auth-link" type="button" data-i18n="to.find_stations">📡 Buscar</button>
-        </div>
-        <input id="toStationId" type="hidden" />
-        <div id="toStationsList" class="to-stations-list" hidden></div>
-        <div id="toStationsSelected" class="to-stations-selected" hidden></div>
-      </div>
+      <!-- v180: estacion de referencia opcional. Se elige de un desplegable
+           con las estaciones cercanas (cualquier proveedor) ordenadas por
+           distancia. Si no se elige ninguna, el despegue cae a la URL de
+           Windy / Volandoo o a la estimacion de Windy para la ubicacion. -->
+      <label class="to-field-block"><span data-i18n="to.ref_station_label">Estación de referencia (opcional)</span>
+        <select id="toStationId" class="to-station-select">
+          <option value="" data-i18n="to.ref_none">Sin estación (Windy de la ubicación)</option>
+        </select>
+        <p class="to-hint" id="toStationsHint" data-i18n="to.ref_hint">Elige una estación cercana o deja “Sin estación” para usar las URLs de Windy/Volandoo o la estimación de Windy.</p>
+      </label>
 
       <label class="to-field-block"><span data-i18n="to.notes_label">Notas (acceso, peligros…)</span>
         <textarea id="toNotes" rows="3" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
@@ -463,7 +460,6 @@
         <input id="toVolandooUrl" type="url" placeholder="https://volandoo.com/weather/…" data-i18n-placeholder="to.volandoo_ph" />
       </label>
 
-      <button id="toPickOnMapBtn" class="auth-link" type="button" data-i18n="to.pick_map">📍 Usar coordenadas actuales del mapa</button>
       <div class="to-actions">
         <button id="toCancelBtn" class="auth-secondary" type="button" data-i18n="to.cancel">Cancelar</button>
         <button id="toDeleteBtn" class="auth-danger" type="button" hidden data-i18n="to.delete">Eliminar</button>
