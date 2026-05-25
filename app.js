@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.165";
+const APP_VERSION = "v0.166";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5558,6 +5558,10 @@ function renderTakeoffPanel() {
 function renderCurrentTakeoffActions() {
   const host = document.getElementById("tsCurrentActions");
   if (!host) return;
+  // v166: el menu de acciones se renderiza en su propio contenedor (a la
+  // derecha del boton de refresh) si existe; si no, cae al host principal.
+  const menuHost = document.getElementById("tsCurrentActionsMenu") || host;
+  if (menuHost !== host) menuHost.innerHTML = "";
   // Intenta resolver origen comunitario si aún no está fijado.
   resolveCurrentTakeoffOrigin();
   host.innerHTML = "";
@@ -5699,7 +5703,8 @@ function renderCurrentTakeoffActions() {
     trigger.title = t("act.menu");
     trigger.setAttribute("aria-haspopup", "true");
     trigger.setAttribute("aria-expanded", "false");
-    trigger.innerHTML = `<span class="ts-action-trigger-icon">☰</span><span class="ts-action-trigger-label">${escapeHtml(t("act.menu"))}</span>`;
+    // v166: solo icono, sin texto.
+    trigger.innerHTML = `<span class="ts-action-trigger-icon">☰</span>`;
     const list = document.createElement("div");
     list.className = "ts-action-menu-list";
     list.setAttribute("role", "menu");
@@ -5741,7 +5746,7 @@ function renderCurrentTakeoffActions() {
     });
     wrap.appendChild(trigger);
     wrap.appendChild(list);
-    host.appendChild(wrap);
+    menuHost.appendChild(wrap);
   }
 }
 
@@ -5756,6 +5761,12 @@ function openTakeoffSuggest(originId) {
     notes: to.notes || "",
     windyUrl: to.windyUrl || "",
     volandooUrl: to.volandooUrl || "",
+    // v166: pasamos tambien el stationId para que el form lo preserve. Antes
+    // se enviaba null al hacer submit, lo que orfanaba el doc de su estacion
+    // y al recargar el resolver no podia encontrarlo por stationId (caia a
+    // resolucion por nombre/proximidad y podia enganchar un doc distinto con
+    // los valores viejos).
+    stationId: to.stationId ?? null,
     criteria: to.criteria || null,
   });
   const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.suggest_title");
