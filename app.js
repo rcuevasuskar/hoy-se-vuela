@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.152";
+const APP_VERSION = "v0.153";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -5146,7 +5146,7 @@ function selectStation(station, opts) {
   if (opts && opts.userPicked) _userPickedStation = true;
   // Si llega un opts.takeoff explícito (click en despegue comunitario),
   // lo usamos como lugar; si no, sintetizamos uno a partir de la estación.
-  const takeoff = (opts && opts.takeoff) ? opts.takeoff
+  let takeoff = (opts && opts.takeoff) ? opts.takeoff
                  : (opts && (opts.originId || opts.criteria))
                    ? {
                        id: opts.originId || null,
@@ -5156,6 +5156,26 @@ function selectStation(station, opts) {
                        criteria: opts.criteria || null,
                      }
                    : null;
+  // v152: cuando solo tenemos el originId, completamos con el doc comunitario
+  // aprobado para no perder URLs externas (volandooUrl/windyUrl), notas, etc.
+  if (takeoff && takeoff.id) {
+    const doc = (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === takeoff.id);
+    if (doc) {
+      takeoff = {
+        ...takeoff,
+        name: takeoff.name || doc.name,
+        shortName: takeoff.shortName || doc.shortName || doc.name,
+        lat: takeoff.lat ?? doc.lat,
+        lon: takeoff.lon ?? doc.lon,
+        alt: takeoff.alt ?? doc.alt ?? null,
+        orientations: takeoff.orientations || doc.orientations || "",
+        notes: takeoff.notes || doc.notes || "",
+        windyUrl: takeoff.windyUrl || doc.windyUrl || "",
+        volandooUrl: takeoff.volandooUrl || doc.volandooUrl || "",
+        criteria: takeoff.criteria || doc.criteria || null,
+      };
+    }
+  }
   setCurrent({ takeoff, station });
   saveSelectedStation(station);
   applyCurrentTakeoffLabel();
