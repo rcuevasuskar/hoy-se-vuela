@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.177";
+const APP_VERSION = "v0.178";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -6139,7 +6139,15 @@ async function tsRunSearch() {
       window.PCAuth.removeFavorite(f.id).catch(e => console.warn("[fav] cleanup stale", e));
     });
   }
-  const favItems = favs.filter(f => f.source !== "community" || approvedCommunityIds.has(f.refId)).map(f => {
+  const favItems = favs.filter(f => f.source !== "community" || approvedCommunityIds.has(f.refId))
+    // v177: respeta los chips de proveedores (Comunidad / Pioupiou / AEMET / Holfuy).
+    // Antes los favoritos se mostraban siempre, asi que al desmarcar "Comunidad"
+    // los favoritos comunitarios seguian apareciendo.
+    .filter(f => {
+      const prov = f.source === "ffvl" ? "pioupiou" : f.source; // FFVL viaja con Pioupiou
+      return provOn(prov);
+    })
+    .map(f => {
     const fakeItem = {
       id: f.source === "pioupiou" ? Number(f.refId) : (f.source === "community" ? "to_" + f.refId : "ffvl_" + f.refId),
       provider: f.source,
