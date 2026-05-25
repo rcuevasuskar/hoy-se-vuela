@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.153";
+const APP_VERSION = "v0.154";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -4967,9 +4967,16 @@ function renderCurrentTakeoffActions() {
   // personalizado, lo usamos en su lugar (o además, para Volandoo).
   const doc2 = (typeof getCurrentTakeoffDoc === "function") ? getCurrentTakeoffDoc() : null;
   const lat = Number(currentTakeoff.lat), lon = Number(currentTakeoff.lon);
+  // v153: por defecto el botón de Windy abre el panel de "sounding"
+  // (sondeo atmosférico) centrado en el despegue, mucho más útil para
+  // parapente que el mapa genérico. Si el doc tiene un windyUrl propio,
+  // lo respetamos.
+  const soundingHref = (Number.isFinite(lat) && Number.isFinite(lon))
+    ? `https://www.windy.com/sounding/${lat.toFixed(3)}/${lon.toFixed(3)}?iconEu,900h,${lat.toFixed(3)},${lon.toFixed(3)},11,p:wind`
+    : null;
   const windyHref = (doc2?.windyUrl && /^https?:/i.test(doc2.windyUrl))
     ? doc2.windyUrl
-    : (Number.isFinite(lat) && Number.isFinite(lon) ? `https://www.windy.com/-?${lat},${lon},11` : null);
+    : soundingHref;
   if (windyHref) {
     const a = document.createElement("a");
     a.className = "ts-icon-btn";
