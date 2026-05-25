@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.176";
+const APP_VERSION = "v0.177";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -6071,10 +6071,15 @@ async function tsRunSearch() {
   }).filter(s => s.dist <= maxDist);
   items = items.concat(community);
 
-  // Evita duplicados: si una estación Pioupiou/FFVL ya está registrada como despegue comunitario
-  // (mismo stationId, mismo nombre normalizado o muy cerca geográficamente), sólo mostramos la tarjeta comunitaria.
+  // Evita duplicados: si una estación Pioupiou/FFVL/AEMET/Holfuy ya está registrada como despegue comunitario
+  // (mismo id, mismo nombre normalizado o muy cerca geográficamente), sólo mostramos la tarjeta comunitaria.
+  // v176: comparamos ids como STRING. Antes los pasabamos por Number(), y como
+  // los ids modernos son tipo "aemet_3196" o "holfuy_101", Number(...) daba NaN.
+  // En un Set, NaN === NaN, asi que con un solo takeoff comunitario vinculado a
+  // AEMET el Set ya contenia NaN y filtraba TODAS las estaciones AEMET (y
+  // Holfuy) al activar el chip "Comunidad".
   const communityStationIds = new Set(
-    community.map(c => c.stationId).filter(id => id != null).map(Number)
+    community.map(c => c.stationId).filter(id => id != null).map(String)
   );
   const normalizeName = (n) => String(n || "")
     .toLowerCase()
@@ -6088,7 +6093,7 @@ async function tsRunSearch() {
     const before = items.length;
     items = items.filter(s => {
       if (s.community) return true;
-      if (communityStationIds.has(Number(s.id))) return false;
+      if (communityStationIds.has(String(s.id))) return false;
       const nm = normalizeName(s.name);
       if (nm && communityNames.has(nm)) return false;
       for (const c of community) {

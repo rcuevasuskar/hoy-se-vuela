@@ -532,9 +532,10 @@
         <div id="sndStatus" class="sounding-status" data-i18n="snd.loading">Cargando…</div>
         <div class="sounding-charts" hidden>
           <div class="sounding-chart-toolbar">
-            <label class="snd-toggle">
+            <label class="ts-no-radius snd-skew">
               <input type="checkbox" id="sndSkewToggle" checked>
-              <span data-i18n="snd.skew_t">Skew-T</span>
+              <span class="ts-switch" aria-hidden="true"></span>
+              <span class="ts-no-radius-text" data-i18n="snd.skew_t">Skew-T</span>
             </label>
           </div>
           <div class="sounding-chart-wrap"><canvas id="sndTempChart"></canvas></div>
