@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.186";
+const APP_VERSION = "v0.187";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -364,6 +364,7 @@ const I18N = {
     "ts.current": "Despegue:",
     "ts.radius": "Radio",
     "ts.no_radius": "Sin límite",
+    "ts.close": "Cerrar buscador",
     "ts.show_favs": "Favoritos",
     "theme.title": "Tema (auto/oscuro/claro)",
     "theme.auto": "Tema: automático",
@@ -684,6 +685,7 @@ const I18N = {
     "ts.current": "Takeoff:",
     "ts.radius": "Radius",
     "ts.no_radius": "No limit",
+    "ts.close": "Close search",
     "ts.show_favs": "Favorites",
     "theme.title": "Theme (auto/dark/light)",
     "menu.lang": "Language",
@@ -1004,6 +1006,7 @@ const I18N = {
     "ts.current": "Startplatz:",
     "ts.radius": "Radius",
     "ts.no_radius": "Kein Limit",
+    "ts.close": "Suche schließen",
     "ts.show_favs": "Favoriten",
     "theme.title": "Design (auto/dunkel/hell)",
     "menu.lang": "Sprache",
@@ -1324,6 +1327,7 @@ const I18N = {
     "ts.current": "Décollage :",
     "ts.radius": "Rayon",
     "ts.no_radius": "Sans limite",
+    "ts.close": "Fermer la recherche",
     "ts.show_favs": "Favoris",
     "theme.title": "Thème (auto/sombre/clair)",
     "menu.lang": "Langue",
@@ -1644,6 +1648,7 @@ const I18N = {
     "ts.current": "Irteguia:",
     "ts.radius": "Erradioa",
     "ts.no_radius": "Mugarik gabe",
+    "ts.close": "Itxi bilaketa",
     "ts.show_favs": "Gogokoak",
     "theme.title": "Gaia (auto/iluna/argia)",
     "menu.lang": "Hizkuntza",
@@ -1918,6 +1923,7 @@ const I18N = {
     "ts.current": "Enlairament:",
     "ts.radius": "Radi",
     "ts.no_radius": "Sense límit",
+    "ts.close": "Tancar cercador",
     "ts.show_favs": "Preferits",
     "theme.title": "Tema (auto/fosc/clar)",
     "menu.lang": "Idioma",
@@ -6422,6 +6428,12 @@ function initTakeoffSelector() {
     }
   };
   window.closeTsPanel = closeTsPanel;
+
+  // v0.187: boton X dentro del panel del buscador.
+  document.getElementById("tsPanelClose")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeTsPanel({ clearInput: true });
+  });
   if (searchEl) {
     const openPanel = () => {
       if (panel?.hidden) {
@@ -6510,11 +6522,10 @@ function initCollapsibleCards() {
     btn.className = "card-toggle";
     btn.setAttribute("aria-label", "Plegar / Desplegar");
     btn.title = "Plegar / Desplegar";
-    btn.textContent = "▾";
+    // v0.187: icono via CSS (::before con » rotado).
     h.appendChild(btn);
     const apply = (collapsed) => {
       card.classList.toggle("collapsed", collapsed);
-      btn.textContent = collapsed ? "▸" : "▾";
       btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
     };
     try {

@@ -2439,6 +2439,7 @@ section.card.collapsible > h2 {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  position: relative;
 }
 section.card.collapsible > h2 .card-toggle {
   margin-left: auto;
@@ -2446,11 +2447,30 @@ section.card.collapsible > h2 .card-toggle {
   border: 0;
   color: var(--muted);
   cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
   padding: 4px 8px;
   border-radius: 4px;
-  transition: background 0.15s, color 0.15s, transform 0.15s;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 24px;
+  transition: background 0.15s, color 0.15s;
+}
+section.card.collapsible > h2 .card-toggle::before {
+  /* v0.187: doble angulo (>>) rotado segun estado.
+     Expandido (no collapsed) -> apunta hacia ARRIBA = "plegar".
+     Colapsado                -> apunta hacia ABAJO   = "expandir". */
+  content: "\00BB"; /* » */
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-block;
+  transform: rotate(-90deg);
+  transition: transform 0.2s ease;
+}
+section.card.collapsible.collapsed > h2 .card-toggle::before {
+  transform: rotate(90deg);
 }
 section.card.collapsible > h2 .card-toggle:hover {
   background: rgba(255, 255, 255, 0.08);
@@ -2467,4 +2487,22 @@ section.card.collapsed > h2 { margin-bottom: 0; }
 #tsAddTakeoffBtn:disabled:hover {
   background: transparent;
   color: inherit;
+}
+
+/* === Boton cerrar del panel de busqueda (v0.187) === */
+.ts-radius .ts-radius-label .ts-panel-close {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.ts-radius .ts-radius-label .ts-panel-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
 }

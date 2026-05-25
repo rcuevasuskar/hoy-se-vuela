@@ -90,6 +90,8 @@
               <span class="ts-switch" aria-hidden="true"></span>
               <span class="ts-no-radius-text" data-i18n="ts.no_radius">Sin límite</span>
             </label>
+            <button id="tsPanelClose" class="ts-panel-close" type="button"
+                    title="Cerrar" data-i18n-title="ts.close" aria-label="Cerrar buscador">✕</button>
           </div>
           <input type="range" id="tsRadius" min="10" max="300" step="5" value="50" />
         </div>
@@ -287,16 +289,14 @@
 
     <!-- Pronóstico -->
     <section class="card collapsible">
-      <div class="chart-header">
-        <h2 class="forecast-title">
-          <span id="forecastTitleText" data-i18n="fc.title">Pronóstico (Open-Meteo)</span>
-          <span id="forecastMiniCompass" class="fc-mini-compass-inline" aria-hidden="true"></span>
-        </h2>
-        <div class="range-buttons" id="forecastButtons">
-          <button data-days="1" class="active" data-i18n="fc.today">Hoy</button>
-          <button data-days="2">+24 h</button>
-          <button data-days="3">+48 h</button>
-        </div>
+      <h2 class="forecast-title">
+        <span id="forecastTitleText" data-i18n="fc.title">Pronóstico (Open-Meteo)</span>
+        <span id="forecastMiniCompass" class="fc-mini-compass-inline" aria-hidden="true"></span>
+      </h2>
+      <div class="range-buttons" id="forecastButtons">
+        <button data-days="1" class="active" data-i18n="fc.today">Hoy</button>
+        <button data-days="2">+24 h</button>
+        <button data-days="3">+48 h</button>
       </div>
       <div class="chart-wrap">
         <canvas id="forecastChart"></canvas>
