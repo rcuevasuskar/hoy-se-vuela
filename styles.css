@@ -477,19 +477,19 @@ header.topbar .ts-current {
 
 /* v168: Acciones inline en el footer, en la misma linea que "Ultima lectura".
    v170: acciones a la izquierda, última lectura a la derecha (se envuelve
-   alineada a la derecha si no caben en una linea). */
+   alineada a la derecha si no caben en una linea).
+   v0.186: "Ultima lectura" baja a su propia linea y va alineada a la izquierda. */
 .last-update-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   margin-top: 8px;
 }
 .last-update-row .last-update {
   margin-top: 0;
-  flex: 1 1 auto;
-  min-width: 0;
-  text-align: right;
+  width: 100%;
+  text-align: left;
 }
 .ts-actions-inline {
   display: flex;
@@ -1617,10 +1617,10 @@ main {
 .legend-note {
   color: var(--muted);
   font-size: 0.8rem;
-  text-align: right;
+  text-align: left;
   margin: 8px 0 0;
 }
-.legend-note.source-note { font-size: 0.72rem; opacity: 0.7; margin-top: 6px; }
+.legend-note.source-note { font-size: 0.72rem; opacity: 0.7; margin-top: 6px; text-align: left; }
 
 .range-buttons button {
   background: var(--panel-2);
@@ -1986,7 +1986,7 @@ main {
 .dot.warn  { background: var(--warn); }
 
 footer {
-  text-align: center;
+  text-align: left;
   color: var(--muted);
   font-size: 0.8rem;
   padding: 16px;
@@ -2431,4 +2431,40 @@ footer {
 .ts-prov:hover { border-color: var(--accent); }
 @media (max-width: 640px) {
   .ts-providers { margin-left: 0; width: 100%; }
+}
+
+/* === Paneles colapsables (v0.186) === */
+section.card.collapsible > h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+section.card.collapsible > h2 .card-toggle {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+section.card.collapsible > h2 .card-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+section.card.collapsed > *:not(h2) { display: none !important; }
+section.card.collapsed > h2 { margin-bottom: 0; }
+
+/* Boton + Anadir despegue deshabilitado (invitados) */
+#tsAddTakeoffBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+#tsAddTakeoffBtn:disabled:hover {
+  background: transparent;
+  color: inherit;
 }

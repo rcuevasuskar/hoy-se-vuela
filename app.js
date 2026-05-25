@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.185";
+const APP_VERSION = "v0.186";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -207,6 +207,7 @@ const I18N = {
     "to.volandoo_ph": "https://volandoo.com/weather/…",
     "menu.add_takeoff": "Añadir despegue",
     "menu.add_takeoff_tip": "Crear un despegue nuevo a partir de un lugar buscado en el mapa",
+    "to.guest_add_tip": "Regístrate para poder añadir y sugerir cambios en despegues",
     "to.geocode_label": "Buscar un lugar en el mapa",
     "to.geocode_ph": "Ej: Pegalajar, Jaén",
     "to.geocode_search": "🔎 Buscar",
@@ -297,7 +298,7 @@ const I18N = {
     "cmp.row.state": "Estado",
     "cmp.legend": "Misma franja horaria actual (±2 h) en los últimos 3 días.",
     "near.title": "Estaciones cercanas",
-    "near.radius": "radio 50 km",
+    "near.radius": "(Radio: 50 km)",
     "near.none": "No hay otras estaciones Pioupiou activas dentro de 50 km.",
     "near.error": "Error al cargar estaciones cercanas.",
     "near.network_prefix": "Red",
@@ -541,6 +542,7 @@ const I18N = {
     "to.volandoo_ph": "https://volandoo.com/weather/…",
     "menu.add_takeoff": "Add takeoff",
     "menu.add_takeoff_tip": "Create a new takeoff from a place searched on the map",
+    "to.guest_add_tip": "Sign up to add takeoffs or suggest changes",
     "to.geocode_label": "Search a place on the map",
     "to.geocode_ph": "e.g. Pegalajar, Jaén",
     "to.geocode_search": "🔎 Search",
@@ -631,7 +633,7 @@ const I18N = {
     "cmp.row.state": "Status",
     "cmp.legend": "Same current time slot (±2 h) over the last 3 days.",
     "near.title": "Nearby stations",
-    "near.radius": "50 km radius",
+    "near.radius": "(Radius: 50 km)",
     "near.none": "No other active Pioupiou stations within 50 km.",
     "near.error": "Failed to load nearby stations.",
     "near.network_prefix": "Network",
@@ -860,6 +862,7 @@ const I18N = {
     "to.volandoo_ph": "https://volandoo.com/weather/…",
     "menu.add_takeoff": "Startplatz hinzufügen",
     "menu.add_takeoff_tip": "Neuen Startplatz aus einem auf der Karte gesuchten Ort anlegen",
+    "to.guest_add_tip": "Registriere dich, um Startplätze hinzuzufügen oder Änderungen vorzuschlagen",
     "to.geocode_label": "Ort auf der Karte suchen",
     "to.geocode_ph": "z. B. Pegalajar, Jaén",
     "to.geocode_search": "🔎 Suchen",
@@ -950,7 +953,7 @@ const I18N = {
     "cmp.row.state": "Status",
     "cmp.legend": "Gleiches Zeitfenster wie aktuell (±2 h) in den letzten 3 Tagen.",
     "near.title": "Stationen in der Nähe",
-    "near.radius": "50 km Radius",
+    "near.radius": "(Radius: 50 km)",
     "near.none": "Keine weiteren aktiven Pioupiou-Stationen innerhalb von 50 km.",
     "near.error": "Fehler beim Laden der nahegelegenen Stationen.",
     "near.network_prefix": "Netz",
@@ -1179,6 +1182,7 @@ const I18N = {
     "to.volandoo_ph": "https://volandoo.com/weather/…",
     "menu.add_takeoff": "Ajouter un décollage",
     "menu.add_takeoff_tip": "Créer un nouveau décollage à partir d'un lieu recherché sur la carte",
+    "to.guest_add_tip": "Inscris-toi pour ajouter ou suggérer des modifications de décollages",
     "to.geocode_label": "Rechercher un lieu sur la carte",
     "to.geocode_ph": "Ex : Pegalajar, Jaén",
     "to.geocode_search": "🔎 Rechercher",
@@ -1269,7 +1273,7 @@ const I18N = {
     "cmp.row.state": "État",
     "cmp.legend": "Même créneau horaire actuel (±2 h) sur les 3 derniers jours.",
     "near.title": "Stations proches",
-    "near.radius": "rayon 50 km",
+    "near.radius": "(Rayon: 50 km)",
     "near.none": "Aucune autre station Pioupiou active dans un rayon de 50 km.",
     "near.error": "Échec du chargement des stations proches.",
     "near.network_prefix": "Réseau",
@@ -1498,6 +1502,7 @@ const I18N = {
     "to.volandoo_ph": "https://volandoo.com/weather/…",
     "menu.add_takeoff": "Aireratzea gehitu",
     "menu.add_takeoff_tip": "Mapan bilatutako leku batetik aireratze berri bat sortu",
+    "to.guest_add_tip": "Izena eman aireratzeak gehitzeko edo aldaketak iradokitzeko",
     "to.geocode_label": "Mapan leku bat bilatu",
     "to.geocode_ph": "Adib: Pegalajar, Jaén",
     "to.geocode_search": "🔎 Bilatu",
@@ -1588,7 +1593,7 @@ const I18N = {
     "cmp.row.state": "Egoera",
     "cmp.legend": "Egungo ordu tarte berbera (±2 h) azken 3 egunetan.",
     "near.title": "Inguruko estazioak",
-    "near.radius": "50 km erradioa",
+    "near.radius": "(Erradioa: 50 km)",
     "near.none": "Ez dago beste Pioupiou estaziorik aktibo 50 km-an.",
     "near.error": "Errorea inguruko estazioak kargatzean.",
     "near.network_prefix": "Sarea",
@@ -1771,6 +1776,7 @@ const I18N = {
     "to.volandoo_ph": "https://volandoo.com/weather/…",
     "menu.add_takeoff": "Afegir enlairament",
     "menu.add_takeoff_tip": "Crear un enlairament nou a partir d'un lloc cercat al mapa",
+    "to.guest_add_tip": "Registra't per afegir enlairaments o suggerir canvis",
     "to.geocode_label": "Cerca un lloc al mapa",
     "to.geocode_ph": "Ex: Pegalajar, Jaén",
     "to.geocode_search": "🔎 Cercar",
@@ -1861,7 +1867,7 @@ const I18N = {
     "cmp.row.state": "Estat",
     "cmp.legend": "Mateixa franja horària actual (±2 h) als últims 3 dies.",
     "near.title": "Estacions properes",
-    "near.radius": "radi 50 km",
+    "near.radius": "(Radi: 50 km)",
     "near.none": "No hi ha altres estacions Pioupiou actives dins 50 km.",
     "near.error": "Error en carregar estacions properes.",
     "near.network_prefix": "Xarxa",
@@ -3454,10 +3460,12 @@ function classifyClouds(cw) {
 
 function renderCloudPanel(cw) {
   const box = document.getElementById("cloudPanel");
+  const card = document.getElementById("cloudCard");
   if (!box) return;
   const cl = classifyClouds(cw);
-  if (!cl) { box.hidden = true; return; }
+  if (!cl) { box.hidden = true; if (card) card.hidden = true; return; }
   box.hidden = false;
+  if (card) card.hidden = false;
 
   const setLayer = (layer, pct, typeKey) => {
     const p = Math.round(pct || 0);
@@ -4305,11 +4313,10 @@ function drawTakeoffOnMap() {
   const lon = Number(currentTakeoff.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
   const marker = L.marker([lat, lon]).addTo(map)
-    .bindPopup(`<b>${escapeHtml(currentTakeoff.name || "")}</b>`)
+    // v0.186: sin popup ("bocadillo"); solo la etiqueta permanente.
     .bindTooltip(String(currentTakeoff.name || "").replace(/^Despegue\s+/i, ""), {
       permanent: true, direction: "top", offset: [0, -8], className: "station-label takeoff"
-    })
-    .openPopup();
+    });
   const circle = L.circle([lat, lon], {
     radius: 50000, color: "#4ea1ff", weight: 1, fillOpacity: 0.05, dashArray: "4,4",
   }).addTo(map);
@@ -5678,34 +5685,41 @@ function renderCurrentTakeoffActions() {
   const windyHref = (doc2?.windyUrl && /^https?:/i.test(doc2.windyUrl))
     ? doc2.windyUrl
     : soundingHref;
-  // v168: orden solicitado: ✎ Editar, 📈 Ver sondeo, 🌬️ Ver Windy, 🪶 Volandoo.
+  // v168: orden solicitado: ✎ Editar, 📈 Sondeo, 🌬️ Abrir Windy, 🪶 Volandoo.
   if (Number.isFinite(lat) && Number.isFinite(lon)) {
     actions.push({
       icon: "📈",
-      label: "Ver sondeo",
+      label: "Sondeo",
       run: () => openSounding(Date.now()),
     });
   }
   if (windyHref) {
-    actions.push({ icon: "🌬️", label: "Ver Windy", href: windyHref });
+    actions.push({ icon: "🌬️", label: "Abrir Windy", href: windyHref });
   }
   if (doc2?.volandooUrl && /^https?:/i.test(doc2.volandooUrl)) {
     actions.push({ icon: "🪶", label: "Volandoo", href: doc2.volandooUrl });
   }
+  // v0.186: brujula movida desde la cabecera a la barra de acciones.
+  actions.push({
+    icon: "🧭",
+    label: "Modo Brújula",
+    isActive: !!orientationEnabled,
+    run: async () => {
+      if (!orientationEnabled) await enableDeviceOrientation();
+      else disableDeviceOrientation();
+      try { renderCurrentTakeoffActions(); } catch {}
+    },
+  });
 
   // v167: las acciones (✎ Editar, 🌬️ Windy, 📈 Sondeo, 🪶 Volandoo) ya no van
   // en un menu desplegable de la cabecera; se renderizan inline en el footer
   // junto a "Ultima lectura". El contenedor #tsActionsInline existe en
   // index.html. Si por alguna razon no esta, no renderizamos nada.
+  // v0.186: sin etiqueta "Acciones:"; los chips hablan por si mismos.
   const inlineHost = document.getElementById("tsActionsInline");
   if (inlineHost) {
     inlineHost.innerHTML = "";
     if (actions.length) {
-      const label = document.createElement("span");
-      label.className = "ts-actions-inline-label";
-      // v170: con mayuscula inicial.
-      label.textContent = "Acciones:";
-      inlineHost.appendChild(label);
       actions.forEach((a, i) => {
         if (i > 0) {
           const sep = document.createElement("span");
@@ -6481,11 +6495,46 @@ function initTakeoffSelector() {
   }
 }
 
+// === Paneles colapsables (v0.186) ===
+// Cada section.card.collapsible recibe un boton-flecha en su h2 que pliega
+// el contenido (todo lo que no sea el h2). El estado se persiste en
+// localStorage para que sobreviva recargas.
+function initCollapsibleCards() {
+  const cards = document.querySelectorAll("section.card.collapsible");
+  cards.forEach((card, idx) => {
+    const h = card.querySelector("h2");
+    if (!h || h.querySelector(".card-toggle")) return;
+    const key = "cardCollapsed:" + (card.id || `idx${idx}:${h.textContent.trim().slice(0, 24)}`);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "card-toggle";
+    btn.setAttribute("aria-label", "Plegar / Desplegar");
+    btn.title = "Plegar / Desplegar";
+    btn.textContent = "▾";
+    h.appendChild(btn);
+    const apply = (collapsed) => {
+      card.classList.toggle("collapsed", collapsed);
+      btn.textContent = collapsed ? "▸" : "▾";
+      btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    };
+    try {
+      apply(localStorage.getItem(key) === "1");
+    } catch { apply(false); }
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const collapsed = !card.classList.contains("collapsed");
+      apply(collapsed);
+      try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch {}
+    });
+  });
+}
+
 // Inicialización
 applyStaticI18n();
 syncNotifyButtonInitial();
 initTakeoffSelector();
 initOrientationToggle();
+initCollapsibleCards();
 renderMap();
 // Sincroniza UI del selector de horas con el valor cargado
 document.querySelectorAll("#whRange button").forEach(b => {
@@ -6504,9 +6553,18 @@ window.addEventListener("pcuserchange", (e) => {
   if (adminReviewBtn) adminReviewBtn.hidden = !isAdmin;
   const fbConsoleBtn = document.getElementById("firebaseConsoleBtn");
   if (fbConsoleBtn) fbConsoleBtn.hidden = !isAdmin;
-  // v147: "Anadir despegue" solo para usuarios autenticados (no anonimos).
+  // v147: "Anadir despegue" se muestra siempre, pero queda deshabilitado para
+  // usuarios anonimos o sin sesion. El click handler tambien lo bloquea por
+  // si acaso. v0.186: tooltip explicativo.
   const addTakeoffBtn = document.getElementById("tsAddTakeoffBtn");
-  if (addTakeoffBtn) addTakeoffBtn.hidden = !user || user.isAnonymous;
+  if (addTakeoffBtn) {
+    addTakeoffBtn.hidden = false;
+    const guest = !user || user.isAnonymous;
+    addTakeoffBtn.disabled = guest;
+    addTakeoffBtn.title = guest
+      ? (t("to.guest_add_tip") || "Regístrate para poder añadir y sugerir cambios en despegues")
+      : t("menu.add_takeoff_tip");
+  }
   updateAdminPendingBadge();
   if (!prefs) return;
   let changed = false;

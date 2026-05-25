@@ -109,7 +109,6 @@
         <div class="station-actions-row">
           <h1 class="app-brand" data-i18n="app.brand">¿Hoy se vuela?</h1>
           <span class="ts-current-actions station-actions" id="tsCurrentActions"></span>
-          <button class="ts-icon-btn ts-current-compass" id="orientToggle" type="button" title="Orientación del dispositivo" data-i18n-title="act.orient_toggle">🧭</button>
           <button id="refreshBtn" class="ts-icon-btn ts-refresh" type="button" title="Actualizar">⟳</button>
         </div>
         <strong id="tsCurrentName" class="station-name">Cenes de la Vega</strong>
@@ -204,6 +203,13 @@
         </div>
       </div>
 
+      <!-- v0.186: mejor ventana justo debajo del veredicto. -->
+      <div id="bestWindow" class="best-window" hidden>
+        <span class="bw-icon">⏱️</span>
+        <span class="bw-label" data-i18n="best.label">Mejor ventana hoy:</span>
+        <strong id="bestWindowText">—</strong>
+      </div>
+
       <div id="weatherStrip" class="weather-strip" hidden>
         <div class="ws-item"><span class="ws-icon" id="wsIcon">☀️</span><span id="wsDesc">—</span></div>
         <div class="ws-item" id="wsTempBox" hidden>
@@ -234,11 +240,13 @@
         </div>
       </div>
 
+      <small class="panel-for panel-for-block" id="panelForBlock" hidden></small>
+    </section>
+
+    <!-- Análisis de nubes (v0.186): panel propio, colapsable. -->
+    <section class="card collapsible" id="cloudCard" hidden>
+      <h2><span class="cp-icon" aria-hidden="true">☁️</span> <span data-i18n="cp.title">Análisis de nubes</span></h2>
       <div id="cloudPanel" class="cloud-panel" hidden>
-        <div class="cp-header">
-          <span class="cp-icon">☁️</span>
-          <span class="cp-title" data-i18n="cp.title">Análisis de nubes</span>
-        </div>
         <div class="cp-layers">
           <div class="cp-layer" data-layer="high">
             <span class="cp-l-name" data-i18n="cp.high">Altas</span>
@@ -265,17 +273,10 @@
         </div>
         <div class="cp-summary" id="cpSummary"></div>
       </div>
-
-      <div id="bestWindow" class="best-window" hidden>
-        <span class="bw-icon">⏱️</span>
-        <span class="bw-label" data-i18n="best.label">Mejor ventana hoy:</span>
-        <strong id="bestWindowText">—</strong>
-      </div>
-      <small class="panel-for panel-for-block" id="panelForBlock" hidden></small>
     </section>
 
     <!-- Guía -->
-    <section class="card guide">
+    <section class="card guide collapsible">
       <h2><span data-i18n="guide.title">Guía rápida</span> · <small><span data-i18n="guide.for">Criterios para</span> <strong id="guideTakeoffName">Cenes de la Vega</strong></small></h2>
       <ul id="guideList"></ul>
       <div class="guide-notes" id="guideNotes" hidden>
@@ -285,7 +286,7 @@
     </section>
 
     <!-- Pronóstico -->
-    <section class="card">
+    <section class="card collapsible">
       <div class="chart-header">
         <h2 class="forecast-title">
           <span id="forecastTitleText" data-i18n="fc.title">Pronóstico (Open-Meteo)</span>
@@ -309,7 +310,7 @@
     </section>
 
     <!-- Comparativa días anteriores -->
-    <section class="card">
+    <section class="card collapsible">
       <h2><span data-i18n="cmp.title">Comparativa últimos días</span> <small id="compareWindowLabel"></small></h2>
       <div id="compareGrid" class="compare-grid">
         <div class="compare-loading" data-i18n="loading">Cargando…</div>
@@ -318,8 +319,8 @@
     </section>
 
     <!-- Estaciones cercanas -->
-    <section class="card">
-      <h2><span data-i18n="near.title">Estaciones cercanas</span> <small data-i18n="near.radius">radio 50 km</small></h2>
+    <section class="card collapsible">
+      <h2><span data-i18n="near.title">Estaciones cercanas</span> <small data-i18n="near.radius">(Radio: 50 km)</small></h2>
       <div id="nearbyGrid" class="nearby-grid">
         <div class="compare-loading" data-i18n="loading">Cargando…</div>
       </div>
@@ -331,7 +332,7 @@
     </section>
 
     <!-- Mapa -->
-    <section class="card">
+    <section class="card collapsible">
       <h2 data-i18n="map.title">Ubicación del despegue</h2>
       <div id="map" class="map-wrap"></div>
     </section>
