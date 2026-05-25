@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.147";
+const APP_VERSION = "v0.148";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -6047,6 +6047,11 @@ function _hookTakeoffStreams() {
   window.PCAuth.onApprovedTakeoffsChange = () => {
     const panel = document.getElementById("tsPanel");
     if (panel && !panel.hidden) tsRunSearch();
+    // v147: si aun no se ha resuelto el despegue por defecto (sin favoritos), reintenta
+    // ahora que tenemos la lista comunitaria para poder elegir el mas cercano por GPS.
+    if (!_userPickedStation && !(window.PCAuth?.favorites || []).length) {
+      resolveDefaultTakeoff();
+    }
     // v107: re-engancha el doc del despegue actual con datos frescos del snapshot.
     // El bug previo era: limpiar aliases sin re-aplicar el doc dejaba la criteria
     // vieja en currentTakeoff y los alias en null → classifyDirection caía a neutro.
@@ -6095,11 +6100,41 @@ function _hookTakeoffStreams() {
 }
 _hookTakeoffStreams();
 
+// v147: la primera vez que se abre la app, pide permiso de ubicacion para poder
+// elegir como despegue por defecto el registrado mas cercano. Si ya se pidio antes
+// (concedido o denegado), no vuelve a molestar; el usuario siempre puede pulsar
+// el boton 📍 en la barra de busqueda.
+function requestInitialGeolocation() {
+  if (!("geolocation" in navigator)) return;
+  try { if (localStorage.getItem("geoPromptedOnce")) return; } catch {}
+  try { localStorage.setItem("geoPromptedOnce", "1"); } catch {}
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      const locateBtn = document.getElementById("locateBtn");
+      if (locateBtn) locateBtn.classList.add("active");
+      if (!_userPickedStation && !(window.PCAuth?.favorites || []).length) {
+        resolveDefaultTakeoff();
+      }
+      if (typeof renderNearby === "function") renderNearby();
+      if (typeof tsRunSearch === "function") {
+        const panel = document.getElementById("tsPanel");
+        if (panel && !panel.hidden) tsRunSearch();
+      }
+    },
+    (err) => { console.warn("initial geolocation:", err); },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+  );
+}
+// Lanzamos un poco mas tarde para no competir con el primer render
+setTimeout(requestInitialGeolocation, 1500);
+
 // === Despegue por defecto ===
 // Reglas:
 //   1) Favorito "habitual" (homeFavId)
 //   2) Favorito añadido primero (menor addedAt)
-//   3) Estación habilitada más cercana a la geolocalización del usuario
+//   3) Despegue registrado (comunitario) más cercano a la geolocalización del usuario,
+//      autovinculado a la estación integrada (Pioupiou/AEMET/Holfuy) más próxima con datos recientes.
 //   4) Cenes (DEFAULT_STATION)
 let _userPickedStation = false;
 let _defaultResolvedOnce = false;
@@ -6176,20 +6211,42 @@ async function resolveDefaultTakeoff() {
     const conv = _favToStation(chosen);
     if (conv) { selectStation(conv.station, conv.opts); _defaultResolvedOnce = true; return; }
   }
-  // 3) Más cercano a GPS (sin pedir geolocalización; solo si ya está disponible)
+  // 3) Despegue registrado mas cercano a la geolocalizacion (v147+)
   if (userLocation) {
     try {
-      const all = await ensureAllStations();
-      let best = null, bestD = Infinity;
-      for (const s of (all.pioupiou || [])) {
-        const st = stationFromPioupiou(s);
-        if (!st) continue;
-        if (!ENABLED_STATION_IDS.has(st.id)) continue;
-        const d = haversineKm(userLocation.lat, userLocation.lon, st.lat, st.lon);
-        if (d < bestD) { bestD = d; best = st; }
+      const tlist = window.PCAuth?.approvedTakeoffs || [];
+      let bestT = null, bestD = Infinity;
+      for (const to of tlist) {
+        if (!Number.isFinite(to.lat) || !Number.isFinite(to.lon)) continue;
+        const d = haversineKm(userLocation.lat, userLocation.lon, to.lat, to.lon);
+        if (d < bestD) { bestD = d; bestT = to; }
       }
-      if (best) { selectStation(best); _defaultResolvedOnce = true; return; }
-    } catch (e) { console.warn("resolveDefaultTakeoff GPS:", e); }
+      if (bestT) {
+        // Autovincula con la estacion integrada con datos recientes mas cercana al despegue
+        const all = await ensureAllStations();
+        const LINK_KM = 30;
+        let best = null, bestKm = LINK_KM + 1;
+        const pools = [
+          (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
+          (all.aemet || []),
+          (all.holfuy || []),
+        ];
+        for (const pool of pools) for (const st of pool) {
+          if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
+          if (!isStationRecent(st, 24)) continue;
+          const km = haversineKm(bestT.lat, bestT.lon, st.lat, st.lon);
+          if (km < bestKm) { bestKm = km; best = st; }
+        }
+        if (best) {
+          selectStation(
+            { id: best.id, provider: best.provider, name: bestT.name, shortName: bestT.shortName || bestT.name, lat: bestT.lat, lon: bestT.lon },
+            { criteria: bestT.criteria || null, originId: bestT.id }
+          );
+          _defaultResolvedOnce = true;
+          return;
+        }
+      }
+    } catch (e) { console.warn("resolveDefaultTakeoff nearest takeoff:", e); }
   }
   // 4) Cenes (solo si aún no se resolvió en esta sesión)
   if (!_defaultResolvedOnce) {
