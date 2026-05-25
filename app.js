@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.138";
+const APP_VERSION = "v0.139";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -2830,16 +2830,12 @@ function renderForecastMiniCompass() {
     return `<path d="${sectorPath(start, end)}" fill="${color}" opacity="${opacity}" />`;
   }).join("");
   // v138: mini-brujula inline en la cabecera del pronostico, sin etiqueta
-  // (la cabecera ya muestra el nombre del despegue).
+  // ni puntos cardinales (la cabecera ya muestra el nombre del despegue).
   host.innerHTML = `
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <circle cx="${cx}" cy="${cy}" r="${rOut + 0.5}" fill="rgba(15,22,33,0.65)" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
       ${sectors}
       <circle cx="${cx}" cy="${cy}" r="${rIn - 0.5}" fill="rgba(15,22,33,0.82)"/>
-      <text x="${cx}" y="9"  text-anchor="middle" class="cardinal">N</text>
-      <text x="${cx}" y="67" text-anchor="middle" class="cardinal">S</text>
-      <text x="66" y="${cy + 3}" text-anchor="middle" class="cardinal">E</text>
-      <text x="6"  y="${cy + 3}" text-anchor="middle" class="cardinal">O</text>
     </svg>`;
 }
 

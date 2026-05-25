@@ -882,16 +882,26 @@ main {
   transform-origin: 50% 50%;
   transition: transform 0.25s ease-out;
 }
+/* v138: cardinales dentro del anillo de sectores (radio ~45px del centro
+   en una brujula de 180px). La flecha (.wedge-wrap) queda por encima de
+   las letras gracias a un z-index superior, asi cuando coincide con N/E/S/O
+   no las tapa el fondo de la letra. */
 .cardinal {
   position: absolute;
+  top: 50%;
+  left: 50%;
   font-weight: 700;
-  color: var(--muted);
-  font-size: 0.9rem;
+  color: var(--text);
+  font-size: 0.78rem;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.6);
+  pointer-events: none;
+  z-index: 1;
 }
-.cardinal.n { top: -20px;    left: 50%; transform: translateX(-50%); }
-.cardinal.s { bottom: -20px; left: 50%; transform: translateX(-50%); }
-.cardinal.e { right: -16px;  top: 50%;  transform: translateY(-50%); }
-.cardinal.w { left: -16px;   top: 50%;  transform: translateY(-50%); }
+.cardinal.n { transform: translate(-50%, -50%) translateY(-45px); }
+.cardinal.s { transform: translate(-50%, -50%) translateY( 45px); }
+.cardinal.e { transform: translate(-50%, -50%) translateX( 45px); }
+.cardinal.w { transform: translate(-50%, -50%) translateX(-45px); }
 
 .sector {
   position: absolute;
@@ -923,6 +933,7 @@ main {
 /* === Brújula: wedge en el borde apuntando hacia el centro === */
 /* El wedge nace en la posición de procedencia del viento y apunta hacia el centro,
    simbolizando el viento entrando por ese sector hacia el despegue. */
+/* v138: la flecha de viento siempre por encima de los cardinales. */
 .wedge-wrap {
   position: absolute;
   inset: 0;
@@ -930,6 +941,7 @@ main {
   transform: rotate(0deg);
   transform-origin: 50% 50%;
   transition: transform 0.6s ease;
+  z-index: 2;
 }
 .wedge {
   position: absolute;
