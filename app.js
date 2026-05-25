@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.166";
+const APP_VERSION = "v0.167";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5558,10 +5558,6 @@ function renderTakeoffPanel() {
 function renderCurrentTakeoffActions() {
   const host = document.getElementById("tsCurrentActions");
   if (!host) return;
-  // v166: el menu de acciones se renderiza en su propio contenedor (a la
-  // derecha del boton de refresh) si existe; si no, cae al host principal.
-  const menuHost = document.getElementById("tsCurrentActionsMenu") || host;
-  if (menuHost !== host) menuHost.innerHTML = "";
   // Intenta resolver origen comunitario si aún no está fijado.
   resolveCurrentTakeoffOrigin();
   host.innerHTML = "";
@@ -5694,59 +5690,32 @@ function renderCurrentTakeoffActions() {
     actions.push({ icon: "🪶", label: "Volandoo", href: doc2.volandooUrl });
   }
 
-  if (actions.length) {
-    const wrap = document.createElement("div");
-    wrap.className = "ts-action-menu";
-    const trigger = document.createElement("button");
-    trigger.type = "button";
-    trigger.className = "ts-icon-btn ts-action-trigger";
-    trigger.title = t("act.menu");
-    trigger.setAttribute("aria-haspopup", "true");
-    trigger.setAttribute("aria-expanded", "false");
-    // v166: solo icono, sin texto.
-    trigger.innerHTML = `<span class="ts-action-trigger-icon">☰</span>`;
-    const list = document.createElement("div");
-    list.className = "ts-action-menu-list";
-    list.setAttribute("role", "menu");
-    list.hidden = true;
-    for (const a of actions) {
-      const it = (a.href) ? document.createElement("a") : document.createElement("button");
-      it.className = "ts-action-item" + (a.isActive ? " is-active" : "");
-      it.setAttribute("role", "menuitem");
-      if (a.href) { it.href = a.href; it.target = "_blank"; it.rel = "noopener"; }
-      else { it.type = "button"; }
-      it.innerHTML = `<span class="ts-action-icon">${a.icon}</span><span class="ts-action-label">${escapeHtml(a.label)}</span>`;
-      it.addEventListener("click", () => {
-        list.hidden = true;
-        trigger.setAttribute("aria-expanded", "false");
-        if (a.run) a.run();
-      });
-      list.appendChild(it);
-    }
-    const closeMenu = () => {
-      list.hidden = true;
-      trigger.setAttribute("aria-expanded", "false");
-      document.removeEventListener("click", outside, true);
-      document.removeEventListener("keydown", onKey);
-    };
-    const outside = (e) => { if (!wrap.contains(e.target)) closeMenu(); };
-    const onKey = (e) => { if (e.key === "Escape") closeMenu(); };
-    trigger.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const willOpen = list.hidden;
-      list.hidden = !willOpen;
-      trigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
-      if (willOpen) {
-        document.addEventListener("click", outside, true);
-        document.addEventListener("keydown", onKey);
-      } else {
-        document.removeEventListener("click", outside, true);
-        document.removeEventListener("keydown", onKey);
+  // v167: las acciones (✎ Editar, 🌬️ Windy, 📈 Sondeo, 🪶 Volandoo) ya no van
+  // en un menu desplegable de la cabecera; se renderizan inline en el footer
+  // junto a "Ultima lectura". El contenedor #tsActionsInline existe en
+  // index.html. Si por alguna razon no esta, no renderizamos nada.
+  const inlineHost = document.getElementById("tsActionsInline");
+  if (inlineHost) {
+    inlineHost.innerHTML = "";
+    if (actions.length) {
+      const label = document.createElement("span");
+      label.className = "ts-actions-inline-label";
+      label.textContent = t("act.menu") + ":";
+      inlineHost.appendChild(label);
+      for (const a of actions) {
+        const it = (a.href) ? document.createElement("a") : document.createElement("button");
+        it.className = "ts-action-chip" + (a.isActive ? " is-active" : "");
+        if (a.href) { it.href = a.href; it.target = "_blank"; it.rel = "noopener"; }
+        else { it.type = "button"; }
+        it.title = a.label;
+        it.innerHTML = `<span class="ts-action-chip-icon">${a.icon}</span><span class="ts-action-chip-label">${escapeHtml(a.label)}</span>`;
+        if (a.run) it.addEventListener("click", a.run);
+        inlineHost.appendChild(it);
       }
-    });
-    wrap.appendChild(trigger);
-    wrap.appendChild(list);
-    menuHost.appendChild(wrap);
+      inlineHost.hidden = false;
+    } else {
+      inlineHost.hidden = true;
+    }
   }
 }
 
