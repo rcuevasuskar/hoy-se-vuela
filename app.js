@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.189";
+const APP_VERSION = "v0.190";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -308,6 +308,7 @@ const I18N = {
     "near.popup_view": "Ver estación",
     "map.title": "Ubicación del despegue",
     "guide.title": "Guía rápida",
+    "guide.title_this": "Guía rápida para este despegue",
     "fc.source_prefix": "Datos:",
     "guide.for": "Criterios para",
     "guide.for_prefix": "para",
@@ -645,6 +646,7 @@ const I18N = {
     "near.popup_view": "View station",
     "map.title": "Takeoff location",
     "guide.title": "Quick guide",
+    "guide.title_this": "Quick guide for this takeoff",
     "fc.source_prefix": "Data:",
     "guide.for": "Criteria for",
     "guide.for_prefix": "for",
@@ -967,6 +969,7 @@ const I18N = {
     "near.popup_view": "Station ansehen",
     "map.title": "Standort des Startplatzes",
     "guide.title": "Kurzanleitung",
+    "guide.title_this": "Kurzanleitung für diesen Startplatz",
     "fc.source_prefix": "Daten:",
     "guide.for": "Kriterien für",
     "guide.for_prefix": "für",
@@ -1289,6 +1292,7 @@ const I18N = {
     "near.popup_view": "Voir la station",
     "map.title": "Emplacement du décollage",
     "guide.title": "Guide rapide",
+    "guide.title_this": "Guide rapide pour ce décollage",
     "fc.source_prefix": "Données :",
     "guide.for": "Critères pour",
     "guide.for_prefix": "pour",
@@ -1611,6 +1615,7 @@ const I18N = {
     "near.popup_view": "Ikusi estazioa",
     "map.title": "Irteguiaren kokapena",
     "guide.title": "Gida azkarra",
+    "guide.title_this": "Aireratze honetarako gida azkarra",
     "fc.source_prefix": "Datuak:",
     "guide.for": "Irizpideak honentzat",
     "guide.for_prefix": "honentzat:",
@@ -1887,6 +1892,7 @@ const I18N = {
     "near.popup_view": "Veure estació",
     "map.title": "Ubicació de l'enlairament",
     "guide.title": "Guia ràpida",
+    "guide.title_this": "Guia ràpida per a aquest enlairament",
     "fc.source_prefix": "Dades:",
     "guide.for": "Criteris per a",
     "guide.for_prefix": "per a",

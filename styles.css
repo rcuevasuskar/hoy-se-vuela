@@ -1983,6 +1983,14 @@ main {
 .guide-notes { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); }
 .guide-notes h3 { margin: 0 0 4px; font-size: .95rem; color: var(--muted); font-weight: 600; }
 .guide-notes p { margin: 0; white-space: pre-wrap; color: var(--fg); font-size: .92rem; line-height: 1.35; }
+
+/* v0.190: subtitulo dentro del panel Guia con el nombre del despegue. */
+.guide-subtitle {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
 .dot {
   width: 12px; height: 12px; border-radius: 50%;
   display: inline-block;
