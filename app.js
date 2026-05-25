@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.183";
+const APP_VERSION = "v0.184";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -6773,9 +6773,21 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
     const ideals = DIR16.filter((_, i) => qualityByIndex[i] === "ideal");
     const oks = DIR16.filter((_, i) => qualityByIndex[i] === "ok");
     const orientationsText = ideals.concat(oks).join(",");
-    const windMinV = parseFloat(document.getElementById("toWindMin").value);
-    const windMaxV = parseFloat(document.getElementById("toWindMax").value);
-    const gustMaxV = parseFloat(document.getElementById("toGustMax").value);
+    // v183: si el usuario deja un campo vacio, asumimos el valor que ve como
+    // placeholder (5 / 15 / 30 por defecto). Antes se guardaba null y el
+    // usuario veia "racha max" en blanco en Firestore aunque el form mostraba
+    // "30" como pista visual.
+    const _readNumOrPlaceholder = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return NaN;
+      const v = parseFloat(el.value);
+      if (Number.isFinite(v)) return v;
+      const ph = parseFloat(el.placeholder);
+      return Number.isFinite(ph) ? ph : NaN;
+    };
+    const windMinV = _readNumOrPlaceholder("toWindMin");
+    const windMaxV = _readNumOrPlaceholder("toWindMax");
+    const gustMaxV = _readNumOrPlaceholder("toGustMax");
     const criteria = (qualityByIndex.some(Boolean) || Number.isFinite(windMinV) || Number.isFinite(windMaxV) || Number.isFinite(gustMaxV))
       ? {
           qualityByIndex,
@@ -6876,7 +6888,7 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
           lon: Number(submittedPayload.lon),
           alt: (submittedPayload.alt !== "" && submittedPayload.alt != null) ? Number(submittedPayload.alt) : null,
           orientations: String(submittedPayload.orientations || "").trim(),
-          stationId: (submittedPayload.stationId !== "" && submittedPayload.stationId != null) ? Number(submittedPayload.stationId) : null,
+          stationId: (submittedPayload.stationId !== "" && submittedPayload.stationId != null) ? String(submittedPayload.stationId) : null,
           notes: String(submittedPayload.notes || "").trim() || null,
           windyUrl: submittedPayload.windyUrl || null,
           volandooUrl: submittedPayload.volandooUrl || null,
