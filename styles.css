@@ -854,14 +854,21 @@ main {
 }
 
 /* Compass */
+/* v143: medidas parametrizadas para poder encoger todo el bloque
+   (anemometros + brujula) en movil sin que se salga del contenedor. */
 .compass-wrap {
+  --compass-size: 180px;
+  --bar-width: 32px;
+  --bar-gap: 20px;
+  --label-width: 72px;
+  --cardinal-r: 0.30; /* fraccion del tamano de la brujula */
   text-align: center;
   padding: 22px 18px;
   position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 20px;
+  gap: var(--bar-gap);
 }
 /* v141: cada columna agrupa widget (anemometro o brujula) + etiqueta debajo */
 .compass-wrap .cw-col {
@@ -874,7 +881,7 @@ main {
    espaciado entre si independientemente del idioma. Usamos abreviaturas en
    los textos para que quepan en 72px. */
 .compass-wrap .cw-label {
-  width: 72px;
+  width: var(--label-width, 72px);
   text-align: center;
   font-size: 0.75rem;
   font-weight: 600;
@@ -886,8 +893,8 @@ main {
 }
 .compass {
   position: relative;
-  width: 180px;
-  height: 180px;
+  width: var(--compass-size, 180px);
+  height: var(--compass-size, 180px);
   margin: 0 auto;
   border-radius: 50%;
   background: radial-gradient(circle at center, #1c283a 0%, #131c2a 70%);
@@ -919,10 +926,10 @@ main {
   pointer-events: none;
   z-index: 1;
 }
-.cardinal.n { transform: translate(-50%, -50%) translateY(-54px); }
-.cardinal.s { transform: translate(-50%, -50%) translateY( 54px); }
-.cardinal.e { transform: translate(-50%, -50%) translateX( 54px); }
-.cardinal.w { transform: translate(-50%, -50%) translateX(-54px); }
+.cardinal.n { transform: translate(-50%, -50%) translateY(calc(var(--compass-size, 180px) * var(--cardinal-r, 0.30) * -1)); }
+.cardinal.s { transform: translate(-50%, -50%) translateY(calc(var(--compass-size, 180px) * var(--cardinal-r, 0.30))); }
+.cardinal.e { transform: translate(-50%, -50%) translateX(calc(var(--compass-size, 180px) * var(--cardinal-r, 0.30))); }
+.cardinal.w { transform: translate(-50%, -50%) translateX(calc(var(--compass-size, 180px) * var(--cardinal-r, 0.30) * -1)); }
 
 .sector {
   position: absolute;
@@ -1390,8 +1397,8 @@ main {
 .compass-wrap .wind-bar-vertical {
   position: relative;
   flex: 0 0 auto;
-  width: 32px;
-  height: 180px;
+  width: var(--bar-width, 32px);
+  height: var(--compass-size, 180px);
   border-radius: 12px;
   background: radial-gradient(circle at center, #1c283a 0%, #131c2a 70%);
   border: 2px solid var(--border);
@@ -1441,9 +1448,16 @@ main {
   border-top: 1px dashed rgba(255,255,255,0.25);
 }
 @media (max-width: 540px) {
-  .compass-wrap { gap: 22px; }
-  .compass-wrap .wind-bar-vertical { width: 26px; height: 160px; }
-  .wind-bar-vertical .wbv-value { font-size: 0.75rem; bottom: 3px; }
+  .compass-wrap {
+    --compass-size: 140px;
+    --bar-width: 26px;
+    --bar-gap: 10px;
+    --label-width: 56px;
+    padding: 14px 4px;
+  }
+  .compass-wrap .cw-label { font-size: 0.7rem; }
+  .wind-bar-vertical .wbv-value { font-size: 0.7rem; bottom: 3px; }
+  .compass-center span { font-size: 1.3rem; }
 }
 .legend-note {
   color: var(--muted);
