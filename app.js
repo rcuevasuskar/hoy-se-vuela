@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.148";
+const APP_VERSION = "v0.149";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -1972,6 +1972,32 @@ async function fetchJsonLatin1(url) {
 }
 
 async function getLive() {
+  // v149: prioridad de fuentes de datos en tiempo real:
+  //   1) URL de la estacion en Volandoo asociada al despegue.
+  //   2) URL de Windy asociada (coords -> Open-Meteo, mostrando Windy como fuente).
+  //   3) Estacion integrada seleccionada (Pioupiou/AEMET/Holfuy).
+  // Cada rama anota `source: {name, url}` para que la UI lo muestre junto a la ultima lectura.
+  const voSlug = parseVolandooSlug(currentTakeoff?.volandooUrl);
+  if (voSlug) {
+    try {
+      const r = await fetchVolandooStationLive(voSlug, currentTakeoff?.volandooUrl);
+      if (r && r.measurements && r.measurements.wind_speed_avg != null) return r;
+    } catch (e) { console.warn("volandoo live:", e); }
+  }
+  if (currentTakeoff?.windyUrl) {
+    const c = parseWindyCoords(currentTakeoff.windyUrl)
+      || (Number.isFinite(currentTakeoff?.lat) && Number.isFinite(currentTakeoff?.lon)
+            ? { lat: currentTakeoff.lat, lon: currentTakeoff.lon } : null);
+    if (c) {
+      try {
+        const r = await fetchOpenMeteoCurrent(c.lat, c.lon);
+        if (r && r.measurements && r.measurements.wind_speed_avg != null) {
+          r.source = { name: "Windy" + (currentTakeoff.name ? " · " + currentTakeoff.name : ""), url: currentTakeoff.windyUrl };
+          return r;
+        }
+      } catch (e) { console.warn("windy/open-meteo live:", e); }
+    }
+  }
   // v100: estaciones no-Pioupiou (AEMET / Holfuy) usan su propio fetch y
   // devolvemos un objeto con el mismo shape `{ measurements: {...} }`.
   const prov = currentStation?.provider;
@@ -1990,10 +2016,88 @@ async function getLive() {
         date:           s.lastDate       ?? null,
       },
       status: { date: s.lastDate ?? null },
+      source: stationSourceInfo(),
     };
   }
   const data = await fetchJson(`${API_BASE}/live/${currentStationId}`);
+  if (data?.data) data.data.source = stationSourceInfo();
   return data?.data;
+}
+
+// v149: helpers para fuentes externas (Volandoo / Windy / Open-Meteo)
+function parseVolandooSlug(url) {
+  if (!url) return null;
+  const m = String(url).match(/volandoo\.com\/weather\/([^\/?#]+)/i);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function parseWindyCoords(url) {
+  if (!url) return null;
+  const s = String(url);
+  // ?lat=..&lon=.. o &lat,..,lon
+  const q = s.match(/[?&]lat=(-?\d+(?:\.\d+)?)[^&]*&lon=(-?\d+(?:\.\d+)?)/i);
+  if (q) return { lat: parseFloat(q[1]), lon: parseFloat(q[2]) };
+  // Windy URLs tipo .../?40.123,-3.456,10 o #40.123,-3.456,10
+  const m = s.match(/[?#,/](-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/);
+  if (m) {
+    const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
+    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) return { lat, lon };
+  }
+  return null;
+}
+async function fetchVolandooStationLive(slug, fallbackUrl) {
+  const data = await fetchJson(`https://api.volandoo.com/v1/weather/${encodeURIComponent(slug)}`);
+  const st = data?.data?.station;
+  const d = st?.data;
+  if (!d) return null;
+  const iso = d.time ? new Date(d.time * 1000).toISOString() : null;
+  return {
+    measurements: {
+      wind_heading:   d.dir  ?? null,
+      wind_speed_min: d.min  ?? null,
+      wind_speed_avg: d.wind ?? null,
+      wind_speed_max: d.max  ?? null,
+      date: iso,
+    },
+    status: { date: iso },
+    source: {
+      name: "Volandoo" + (st.name ? " · " + st.name : ""),
+      url: fallbackUrl || `https://volandoo.com/weather/${encodeURIComponent(slug)}`,
+    },
+  };
+}
+async function fetchOpenMeteoCurrent(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+              `&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&windspeed_unit=kmh&timezone=auto`;
+  const data = await fetchJson(url);
+  const c = data?.current;
+  if (!c) return null;
+  const iso = c.time ? new Date(c.time).toISOString() : null;
+  return {
+    measurements: {
+      wind_heading:   c.wind_direction_10m ?? null,
+      wind_speed_min: null,
+      wind_speed_avg: c.wind_speed_10m ?? null,
+      wind_speed_max: c.wind_gusts_10m ?? c.wind_speed_10m ?? null,
+      date: iso,
+    },
+    status: { date: iso },
+    source: { name: "Open-Meteo", url: null },
+  };
+}
+function stationSourceInfo() {
+  const prov = currentStation?.provider;
+  const name = currentStation?.shortName || currentStation?.name || "";
+  if (prov === "pioupiou") {
+    return { name: "Pioupiou" + (name ? " · " + name : ""), url: `https://pioupiou.fr/en/observations/live/${currentStationId}` };
+  }
+  if (prov === "holfuy") {
+    const raw = String(currentStationId || "").replace(/^holfuy[_-]?/, "");
+    return { name: "Holfuy" + (name ? " · " + name : ""), url: raw ? `https://holfuy.com/en/data/?s=${raw}` : null };
+  }
+  if (prov === "aemet") {
+    return { name: "AEMET" + (name ? " · " + name : ""), url: null };
+  }
+  return { name: name || "—", url: null };
 }
 
 async function getArchive(startDate, stopDate) {
@@ -2385,6 +2489,19 @@ function fmtTime(iso) {
     return d.toLocaleString(t("locale"), { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" });
   } catch { return iso; }
 }
+// v149: muestra la fuente del dato en tiempo real junto a "Ultima lectura"
+function renderLiveSource(src) {
+  const el = document.getElementById("lastUpdateSource");
+  if (!el) return;
+  if (!src || !src.name) { el.textContent = ""; return; }
+  const label = String(src.name);
+  if (src.url) {
+    el.innerHTML = ' · <a href="' + src.url.replace(/"/g, "&quot;") + '" target="_blank" rel="noopener">' +
+                   label.replace(/</g, "&lt;") + '</a>';
+  } else {
+    el.textContent = " · " + label;
+  }
+}
 
 // === Estado actual ===
 let previousAvg = null;
@@ -2403,6 +2520,7 @@ function renderLive(live) {
     previousAvg = null;
     setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—");
     setText("lastUpdate", "—");
+    renderLiveSource(null);
     renderWindBarVertical(null, null);
     const trendEl = document.getElementById("windAvgTrend");
     if (trendEl) trendEl.hidden = true;
@@ -2434,6 +2552,7 @@ function renderLive(live) {
   setText("windMax", fmtNum(max));
   setText("windMin", fmtNum(min));
   setText("lastUpdate", fmtTime(date));
+  renderLiveSource(live.source || null);
   renderWindBarVertical(avg, max);
 
   // Indicador de tendencia comparando con la lectura anterior
@@ -4539,6 +4658,7 @@ function refreshAllForCurrentTakeoff() {
   previousAvg = null;
   latestLive = null;
   setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—"); setText("lastUpdate", "—");
+  renderLiveSource(null);
   renderWindBarVertical(null, null);
   refreshObservations();
   refreshForecast();
@@ -4881,6 +5001,9 @@ function _attachTakeoffDoc(doc) {
   currentTakeoff.criteria = doc.criteria || null;
   currentTakeoff.orientations = doc.orientations || "";
   currentTakeoff.notes = doc.notes || "";
+  // v149: URLs externas que getLive() usa para sacar la lectura en tiempo real.
+  currentTakeoff.windyUrl = doc.windyUrl || "";
+  currentTakeoff.volandooUrl = doc.volandooUrl || "";
   // Aliases compat
   currentTakeoffOriginId = doc.id;
   currentTakeoffCriteria = doc.criteria || null;
@@ -4948,6 +5071,8 @@ function setCurrent({ takeoff, station }) {
       criteria: takeoff.criteria || null,
       orientations: takeoff.orientations || "",
       notes: takeoff.notes || "",
+      windyUrl: takeoff.windyUrl || "",
+      volandooUrl: takeoff.volandooUrl || "",
     };
   } else if (station) {
     // Estación cruda sin doc comunitario: el "lugar" coincide con la estación,
@@ -4962,6 +5087,8 @@ function setCurrent({ takeoff, station }) {
       criteria: null,
       orientations: "",
       notes: "",
+      windyUrl: "",
+      volandooUrl: "",
     };
   }
   currentTakeoffOriginId = currentTakeoff.id;
@@ -6066,6 +6193,8 @@ function _hookTakeoffStreams() {
         currentTakeoff.criteria = null;
         currentTakeoff.notes = "";
         currentTakeoff.orientations = "";
+        currentTakeoff.windyUrl = "";
+        currentTakeoff.volandooUrl = "";
         currentTakeoffOriginId = null;
         currentTakeoffCriteria = null;
       }

@@ -1082,6 +1082,9 @@ main {
   color: var(--muted);
   text-align: right;
 }
+.last-source { color: var(--muted); }
+.last-source a { color: var(--accent); text-decoration: none; }
+.last-source a:hover { text-decoration: underline; }
 
 /* Readings */
 .readings {
