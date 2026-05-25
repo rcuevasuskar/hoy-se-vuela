@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.163";
+const APP_VERSION = "v0.164";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -5691,7 +5691,7 @@ function renderCurrentTakeoffActions() {
     trigger.title = t("act.menu");
     trigger.setAttribute("aria-haspopup", "true");
     trigger.setAttribute("aria-expanded", "false");
-    trigger.innerHTML = `<span class="ts-action-trigger-icon">⋮</span><span class="ts-action-trigger-label">${escapeHtml(t("act.menu"))}</span>`;
+    trigger.innerHTML = `<span class="ts-action-trigger-icon">☰</span><span class="ts-action-trigger-label">${escapeHtml(t("act.menu"))}</span>`;
     const list = document.createElement("div");
     list.className = "ts-action-menu-list";
     list.setAttribute("role", "menu");
@@ -6802,6 +6802,14 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       criteria,
       targetId: _suggestTargetId || null,
     };
+    // v164: capturamos el criterio "viejo" del doc ANTES de enviar la
+    // actualizacion para poder limpiar overrides personales que coincidan
+    // exactamente con el (ver bloque de limpieza mas abajo).
+    const _preEditOldCriteriaJson = (() => {
+      if (!_suggestTargetId) return null;
+      const d = (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === _suggestTargetId);
+      return d ? JSON.stringify(d.criteria ?? null) : null;
+    })();
     const submitResult = await window.PCAuth.submitTakeoff(submittedPayload);
     // v161/v162: al editar/sugerir cambios sobre un despegue comunitario
     // existente, limpiamos cualquier override personal (🛠) guardado para ese
@@ -6830,6 +6838,22 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
         if (userTakeoffOverrides && userTakeoffOverrides[k]) {
           delete userTakeoffOverrides[k];
           changed = true;
+        }
+      }
+      // v164: tambien purgamos cualquier override personal cuyo contenido
+      // coincida EXACTAMENTE con el criterio antiguo del doc. Esto cubre el
+      // caso reportado donde el override estaba guardado bajo una clave de
+      // estacion historica (p.ej. "pioupiou:X") que ya no coincide ni con la
+      // clave actual del contexto ni con el stationId del doc, pero seguia
+      // aplicandose al volver al despegue (mostrando los valores viejos).
+      if (_preEditOldCriteriaJson && _preEditOldCriteriaJson !== "null" && userTakeoffOverrides) {
+        for (const k of Object.keys(userTakeoffOverrides)) {
+          try {
+            if (JSON.stringify(userTakeoffOverrides[k] ?? null) === _preEditOldCriteriaJson) {
+              delete userTakeoffOverrides[k];
+              changed = true;
+            }
+          } catch {}
         }
       }
       if (changed) _saveUserOverrides();

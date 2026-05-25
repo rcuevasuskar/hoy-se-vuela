@@ -466,32 +466,45 @@ header.topbar .ts-current {
 .ts-icon-btn.is-home { color: #ff9800; }
 .ts-icon-btn.is-alert { color: #4ea1ff; }
 
-/* v162: Menu de acciones (⋮) en la cabecera de despegue actual. */
-.ts-action-menu { position: relative; display: inline-flex; margin-left: 4px; }
+/* v162/v164: Menu de acciones en la cabecera de despegue actual. */
+.ts-action-menu { position: relative; display: inline-flex; margin-left: 8px; padding-left: 8px; border-left: 1px solid rgba(255,255,255,0.12); }
 .ts-action-menu .ts-action-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
-  font-size: .8rem;
-  font-weight: 600;
-  color: var(--fg, #e6e6e6);
-  background: rgba(78,161,255,0.18);
-  border: 1px solid rgba(78,161,255,0.45);
-  border-radius: 999px;
-  line-height: 1.1;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  gap: 5px;
+  padding: 3px 7px 3px 6px;
+  font-size: .7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 5px;
+  line-height: 1.15;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .ts-action-menu .ts-action-trigger:hover {
-  background: rgba(78,161,255,0.32);
-  border-color: rgba(78,161,255,0.7);
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.28);
+  color: var(--fg);
 }
 .ts-action-menu .ts-action-trigger[aria-expanded="true"] {
-  background: rgba(78,161,255,0.4);
-  border-color: rgba(78,161,255,0.8);
+  background: rgba(78,161,255,0.18);
+  border-color: rgba(78,161,255,0.55);
+  color: var(--fg);
 }
-.ts-action-menu .ts-action-trigger-icon { font-size: .95rem; line-height: 1; }
-.ts-action-menu .ts-action-trigger-label { letter-spacing: 0.01em; }
+.ts-action-menu .ts-action-trigger-icon { font-size: .85rem; line-height: 1; }
+.ts-action-menu .ts-action-trigger-label { letter-spacing: 0.04em; }
+:root[data-theme="light"] .ts-action-menu .ts-action-trigger {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.14);
+}
+:root[data-theme="light"] .ts-action-menu .ts-action-trigger:hover {
+  background: rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.25);
+}
+:root[data-theme="light"] .ts-action-menu { border-left-color: rgba(0,0,0,0.12); }
 .ts-action-menu-list[hidden] { display: none; }
 .ts-action-menu-list {
   position: absolute;
