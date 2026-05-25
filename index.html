@@ -245,6 +245,20 @@
       <small class="panel-for panel-for-block" id="panelForBlock" hidden></small>
     </section>
 
+    <!-- Guía (movida encima de Análisis de nubes en v0.188) -->
+    <section class="card guide collapsible">
+      <h2>
+        <span class="card-icon" aria-hidden="true">📋</span>
+        <span data-i18n="guide.title">Guía rápida</span>
+        <small><span data-i18n="guide.for_prefix">para</span> <strong id="guideTakeoffName">Cenes de la Vega</strong></small>
+      </h2>
+      <ul id="guideList"></ul>
+      <div class="guide-notes" id="guideNotes" hidden>
+        <h3><span data-i18n="guide.notes_title">Notas del despegue</span></h3>
+        <p id="guideNotesText"></p>
+      </div>
+    </section>
+
     <!-- Análisis de nubes (v0.186): panel propio, colapsable. -->
     <section class="card collapsible" id="cloudCard" hidden>
       <h2><span class="cp-icon" aria-hidden="true">☁️</span> <span data-i18n="cp.title">Análisis de nubes</span></h2>
@@ -277,26 +291,19 @@
       </div>
     </section>
 
-    <!-- Guía -->
-    <section class="card guide collapsible">
-      <h2><span data-i18n="guide.title">Guía rápida</span> · <small><span data-i18n="guide.for">Criterios para</span> <strong id="guideTakeoffName">Cenes de la Vega</strong></small></h2>
-      <ul id="guideList"></ul>
-      <div class="guide-notes" id="guideNotes" hidden>
-        <h3><span data-i18n="guide.notes_title">Notas del despegue</span></h3>
-        <p id="guideNotesText"></p>
-      </div>
-    </section>
-
     <!-- Pronóstico -->
     <section class="card collapsible">
       <h2 class="forecast-title">
+        <span class="card-icon" aria-hidden="true">🌦️</span>
         <span id="forecastTitleText" data-i18n="fc.title">Pronóstico (Open-Meteo)</span>
-        <span id="forecastMiniCompass" class="fc-mini-compass-inline" aria-hidden="true"></span>
       </h2>
-      <div class="range-buttons" id="forecastButtons">
-        <button data-days="1" class="active" data-i18n="fc.today">Hoy</button>
-        <button data-days="2">+24 h</button>
-        <button data-days="3">+48 h</button>
+      <div class="fc-toolbar">
+        <span id="forecastMiniCompass" class="fc-mini-compass-inline" aria-hidden="true"></span>
+        <div class="range-buttons" id="forecastButtons">
+          <button data-days="1" class="active" data-i18n="fc.today">Hoy</button>
+          <button data-days="2">+24 h</button>
+          <button data-days="3">+48 h</button>
+        </div>
       </div>
       <div class="chart-wrap">
         <canvas id="forecastChart"></canvas>
@@ -311,16 +318,25 @@
 
     <!-- Comparativa días anteriores -->
     <section class="card collapsible">
-      <h2><span data-i18n="cmp.title">Comparativa últimos días</span> <small id="compareWindowLabel"></small></h2>
+      <h2>
+        <span class="card-icon" aria-hidden="true">📊</span>
+        <span data-i18n="cmp.title">Comparativa últimos días</span>
+      </h2>
       <div id="compareGrid" class="compare-grid">
         <div class="compare-loading" data-i18n="loading">Cargando…</div>
       </div>
-      <p class="legend-note" data-i18n="cmp.legend">Misma franja horaria actual (±2 h) en los últimos 3 días.</p>
+      <p class="legend-note">
+        <span data-i18n="cmp.legend">Misma franja horaria actual (±2 h) en los últimos 3 días.</span>
+        <span id="compareWindowLabel"></span>
+      </p>
     </section>
 
     <!-- Estaciones cercanas -->
     <section class="card collapsible">
-      <h2><span data-i18n="near.title">Estaciones cercanas</span> <small data-i18n="near.radius">(Radio: 50 km)</small></h2>
+      <h2>
+        <span class="card-icon" aria-hidden="true">📡</span>
+        <span data-i18n="near.title">Estaciones cercanas</span>
+      </h2>
       <div id="nearbyGrid" class="nearby-grid">
         <div class="compare-loading" data-i18n="loading">Cargando…</div>
       </div>
@@ -328,12 +344,16 @@
         <span data-i18n="near.network_prefix">Red</span>
         <a href="https://www.openwindmap.org/" target="_blank" rel="noopener">OpenWindMap / Pioupiou</a>.
         <span data-i18n="near.legend_suffix">Solo dirección e intensidad media de las últimas horas; cada estación tiene sus propios criterios de volabilidad.</span>
+        <span data-i18n="near.radius">Radio: 50 km.</span>
       </p>
     </section>
 
     <!-- Mapa -->
     <section class="card collapsible">
-      <h2 data-i18n="map.title">Ubicación del despegue</h2>
+      <h2>
+        <span class="card-icon" aria-hidden="true">🗺️</span>
+        <span data-i18n="map.title">Ubicación del despegue</span>
+      </h2>
       <div id="map" class="map-wrap"></div>
     </section>
   </main>

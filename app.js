@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.187";
+const APP_VERSION = "v0.188";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -298,7 +298,7 @@ const I18N = {
     "cmp.row.state": "Estado",
     "cmp.legend": "Misma franja horaria actual (±2 h) en los últimos 3 días.",
     "near.title": "Estaciones cercanas",
-    "near.radius": "(Radio: 50 km)",
+    "near.radius": "Radio: 50 km.",
     "near.none": "No hay otras estaciones Pioupiou activas dentro de 50 km.",
     "near.error": "Error al cargar estaciones cercanas.",
     "near.network_prefix": "Red",
@@ -310,6 +310,7 @@ const I18N = {
     "guide.title": "Guía rápida",
     "fc.source_prefix": "Datos:",
     "guide.for": "Criterios para",
+    "guide.for_prefix": "para",
     "guide.ideal": "<strong>Ideal:</strong> Oeste (O) o Noroeste (NO), 5–15 km/h (rachas ≤ 25).",
     "guide.ok": "<strong>Volable:</strong> Norte (N) o Suroeste (SO), o vientos fuera del rango ideal pero por debajo del límite.",
     "guide.bad": "<strong>Malo:</strong> componentes Este (NE, E, SE) — empeora cuanto más al Este.",
@@ -634,7 +635,7 @@ const I18N = {
     "cmp.row.state": "Status",
     "cmp.legend": "Same current time slot (±2 h) over the last 3 days.",
     "near.title": "Nearby stations",
-    "near.radius": "(Radius: 50 km)",
+    "near.radius": "Radius: 50 km.",
     "near.none": "No other active Pioupiou stations within 50 km.",
     "near.error": "Failed to load nearby stations.",
     "near.network_prefix": "Network",
@@ -646,6 +647,7 @@ const I18N = {
     "guide.title": "Quick guide",
     "fc.source_prefix": "Data:",
     "guide.for": "Criteria for",
+    "guide.for_prefix": "for",
     "guide.ideal": "<strong>Ideal:</strong> West (W) or Northwest (NW), 5–15 km/h (gusts ≤ 25).",
     "guide.ok": "<strong>Flyable:</strong> North (N) or Southwest (SW), or winds outside the ideal range but below the limit.",
     "guide.bad": "<strong>Bad:</strong> Easterly components (NE, E, SE) — worse the further east.",
@@ -955,7 +957,7 @@ const I18N = {
     "cmp.row.state": "Status",
     "cmp.legend": "Gleiches Zeitfenster wie aktuell (±2 h) in den letzten 3 Tagen.",
     "near.title": "Stationen in der Nähe",
-    "near.radius": "(Radius: 50 km)",
+    "near.radius": "Radius: 50 km.",
     "near.none": "Keine weiteren aktiven Pioupiou-Stationen innerhalb von 50 km.",
     "near.error": "Fehler beim Laden der nahegelegenen Stationen.",
     "near.network_prefix": "Netz",
@@ -967,6 +969,7 @@ const I18N = {
     "guide.title": "Kurzanleitung",
     "fc.source_prefix": "Daten:",
     "guide.for": "Kriterien für",
+    "guide.for_prefix": "für",
     "guide.ideal": "<strong>Ideal:</strong> West (W) oder Nordwest (NW), 5–15 km/h (Böen ≤ 25).",
     "guide.ok": "<strong>Fliegbar:</strong> Nord (N) oder Südwest (SW), oder Wind außerhalb des Idealbereichs aber unter dem Limit.",
     "guide.bad": "<strong>Schlecht:</strong> Ostkomponenten (NO, O, SO) — schlechter je östlicher.",
@@ -1276,7 +1279,7 @@ const I18N = {
     "cmp.row.state": "État",
     "cmp.legend": "Même créneau horaire actuel (±2 h) sur les 3 derniers jours.",
     "near.title": "Stations proches",
-    "near.radius": "(Rayon: 50 km)",
+    "near.radius": "Rayon: 50 km.",
     "near.none": "Aucune autre station Pioupiou active dans un rayon de 50 km.",
     "near.error": "Échec du chargement des stations proches.",
     "near.network_prefix": "Réseau",
@@ -1288,6 +1291,7 @@ const I18N = {
     "guide.title": "Guide rapide",
     "fc.source_prefix": "Données :",
     "guide.for": "Critères pour",
+    "guide.for_prefix": "pour",
     "guide.ideal": "<strong>Idéal :</strong> Ouest (O) ou Nord-Ouest (NO), 5–15 km/h (rafales ≤ 25).",
     "guide.ok": "<strong>Volable :</strong> Nord (N) ou Sud-Ouest (SO), ou vents hors plage idéale mais sous la limite.",
     "guide.bad": "<strong>Mauvais :</strong> composantes Est (NE, E, SE) — pire vers l'est.",
@@ -1597,7 +1601,7 @@ const I18N = {
     "cmp.row.state": "Egoera",
     "cmp.legend": "Egungo ordu tarte berbera (±2 h) azken 3 egunetan.",
     "near.title": "Inguruko estazioak",
-    "near.radius": "(Erradioa: 50 km)",
+    "near.radius": "Erradioa: 50 km.",
     "near.none": "Ez dago beste Pioupiou estaziorik aktibo 50 km-an.",
     "near.error": "Errorea inguruko estazioak kargatzean.",
     "near.network_prefix": "Sarea",
@@ -1609,6 +1613,7 @@ const I18N = {
     "guide.title": "Gida azkarra",
     "fc.source_prefix": "Datuak:",
     "guide.for": "Irizpideak honentzat",
+    "guide.for_prefix": "honentzat:",
     "guide.ideal": "<strong>Aproposa:</strong> Mendebal (M) edo Ipar-Mendebal (IM), 5–15 km/h (boladak ≤ 25).",
     "guide.ok": "<strong>Hegagarria:</strong> Ipar (I) edo Hego-Mendebal (HM), edo tarte aproposetik kanpoko haizeak baina mugaren azpitik.",
     "guide.bad": "<strong>Txarra:</strong> Ekialdeko osagaiak (IE, E, HE) — okerragoa ekialderago.",
@@ -1872,7 +1877,7 @@ const I18N = {
     "cmp.row.state": "Estat",
     "cmp.legend": "Mateixa franja horària actual (±2 h) als últims 3 dies.",
     "near.title": "Estacions properes",
-    "near.radius": "(Radi: 50 km)",
+    "near.radius": "Radi: 50 km.",
     "near.none": "No hi ha altres estacions Pioupiou actives dins 50 km.",
     "near.error": "Error en carregar estacions properes.",
     "near.network_prefix": "Xarxa",
@@ -1884,6 +1889,7 @@ const I18N = {
     "guide.title": "Guia ràpida",
     "fc.source_prefix": "Dades:",
     "guide.for": "Criteris per a",
+    "guide.for_prefix": "per a",
     "guide.ideal": "<strong>Ideal:</strong> Oest (O) o Nord-oest (NO), 5–15 km/h (ratxes ≤ 25).",
     "guide.ok": "<strong>Volable:</strong> Nord (N) o Sud-oest (SO), o vents fora del rang ideal però sota el límit.",
     "guide.bad": "<strong>Dolent:</strong> components Est (NE, E, SE) — pitjor com més a l'est.",
@@ -5705,17 +5711,8 @@ function renderCurrentTakeoffActions() {
   if (doc2?.volandooUrl && /^https?:/i.test(doc2.volandooUrl)) {
     actions.push({ icon: "🪶", label: "Volandoo", href: doc2.volandooUrl });
   }
-  // v0.186: brujula movida desde la cabecera a la barra de acciones.
-  actions.push({
-    icon: "🧭",
-    label: "Modo Brújula",
-    isActive: !!orientationEnabled,
-    run: async () => {
-      if (!orientationEnabled) await enableDeviceOrientation();
-      else disableDeviceOrientation();
-      try { renderCurrentTakeoffActions(); } catch {}
-    },
-  });
+  // v0.188: la brujula ya no es un chip; se renderiza como toggle (interruptor)
+  // a la izquierda del todo de la barra de acciones, dentro del footer.
 
   // v167: las acciones (✎ Editar, 🌬️ Windy, 📈 Sondeo, 🪶 Volandoo) ya no van
   // en un menu desplegable de la cabecera; se renderizan inline en el footer
@@ -5725,7 +5722,32 @@ function renderCurrentTakeoffActions() {
   const inlineHost = document.getElementById("tsActionsInline");
   if (inlineHost) {
     inlineHost.innerHTML = "";
+    // v0.188: toggle de brujula leftmost, estilo "Sin limite".
+    const compassLabel = document.createElement("label");
+    compassLabel.className = "ts-no-radius ts-compass-toggle";
+    compassLabel.title = t("act.orient_toggle") || "Modo Brújula";
+    compassLabel.innerHTML = `
+      <span class="ts-compass-ico" aria-hidden="true">🧭</span>
+      <input type="checkbox" id="tsCompassToggle" ${orientationEnabled ? "checked" : ""} />
+      <span class="ts-switch" aria-hidden="true"></span>
+    `;
+    inlineHost.appendChild(compassLabel);
+    const compassInput = compassLabel.querySelector("#tsCompassToggle");
+    compassInput?.addEventListener("change", async () => {
+      if (compassInput.checked) {
+        const ok = await enableDeviceOrientation();
+        if (!ok) compassInput.checked = false;
+      } else {
+        disableDeviceOrientation();
+      }
+    });
+
     if (actions.length) {
+      // Separador visual entre el toggle y los chips.
+      const sep0 = document.createElement("span");
+      sep0.className = "ts-actions-inline-sep";
+      sep0.textContent = "|";
+      inlineHost.appendChild(sep0);
       actions.forEach((a, i) => {
         if (i > 0) {
           const sep = document.createElement("span");
@@ -5744,7 +5766,9 @@ function renderCurrentTakeoffActions() {
       });
       inlineHost.hidden = false;
     } else {
-      inlineHost.hidden = true;
+      // v0.188: aunque no haya chips, mantenemos visible la barra para el
+      // toggle de brujula que siempre se inyecta al principio.
+      inlineHost.hidden = false;
     }
   }
 }

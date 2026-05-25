@@ -2506,3 +2506,27 @@ section.card.collapsed > h2 { margin-bottom: 0; }
   background: rgba(255, 255, 255, 0.1);
   color: var(--text);
 }
+
+/* === v0.188 === */
+.card-icon { display: inline-block; margin-right: 4px; font-size: 1.05em; }
+
+/* Pron\u00f3stico: rosa + botones a la derecha, sobre el gr\u00e1fico. */
+.fc-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 8px;
+  flex-wrap: wrap;
+}
+.fc-toolbar .fc-mini-compass-inline { margin: 0; }
+.fc-toolbar .range-buttons { display: inline-flex; }
+
+/* Toggle de br\u00fajula en la barra de acciones. */
+.ts-actions-inline .ts-compass-toggle {
+  margin-right: 4px;
+}
+.ts-actions-inline .ts-compass-toggle .ts-compass-ico {
+  font-size: 0.95rem;
+  margin-right: 2px;
+}
