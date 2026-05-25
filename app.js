@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.157";
+const APP_VERSION = "v0.158";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -2667,19 +2667,19 @@ function _renderSoundingFor(ts) {
       if (!yScale || !chart.$windPts) return;
       const xBase = chartArea.right + 6;
       const arrowSize = 14;
+      const minGap = 14;
       ctx.font = "bold 11px system-ui, sans-serif";
       ctx.textBaseline = "middle";
       ctx.textAlign = "left";
-      // Evitar superposición: ordena por altura y separa al menos 14 px.
+      // Ordena por altura ascendente y descarta los que quedarían solapados
+      // visualmente con el anterior (manteniendo la posición real de cada uno).
       const sorted = chart.$windPts.slice().sort((a, b) => a.alt - b.alt);
-      const placed = [];
+      let lastY = -Infinity;
       for (const p of sorted) {
-        let yPx = yScale.getPixelForValue(p.alt);
+        const yPx = yScale.getPixelForValue(p.alt);
         if (yPx < chartArea.top || yPx > chartArea.bottom) continue;
-        for (const q of placed) {
-          if (Math.abs(yPx - q) < 14) yPx = q + 14;
-        }
-        placed.push(yPx);
+        if (yPx - lastY < minGap) continue; // omite la flecha que se solaparía
+        lastY = yPx;
         // Flecha
         ctx.save();
         ctx.translate(xBase + arrowSize / 2, yPx);
@@ -2708,18 +2708,54 @@ function _renderSoundingFor(ts) {
     data: {
       datasets: [
         { label: "T",  data: tPts,  showLine: true, borderColor: "rgba(231,76,60,0.9)",  backgroundColor: "rgba(231,76,60,0.2)",  pointRadius: 3, tension: 0.2 },
-        { label: "Td", data: tdPts, showLine: true, borderColor: "rgba(46,204,113,0.9)", backgroundColor: "rgba(46,204,113,0.2)", pointRadius: 3, tension: 0.2 },
+        { label: "Td", data: tdPts, showLine: true, borderColor: "rgba(78,161,255,0.9)", backgroundColor: "rgba(78,161,255,0.2)", pointRadius: 3, tension: 0.2 },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       layout: { padding: { right: 56 } },
+      interaction: { mode: "nearest", axis: "y", intersect: false },
       plugins: {
         legend: { labels: { color: "#e8eef7" } },
         title: { display: true, text: t("snd.temp_chart") + " · → " + t("snd.wind_axis"), color: "#e8eef7" },
         tooltip: {
+          displayColors: false,
           callbacks: {
-            label: (ctx) => `${ctx.dataset.label}: ${fmtNum(ctx.parsed.x)} °C @ ${Math.round(ctx.parsed.y)} m`,
+            title: (items) => {
+              const y = items[0]?.parsed?.y;
+              if (y == null) return "";
+              // Buscar el nivel del perfil más cercano al Y del cursor.
+              const prof = _sndTempChart?.$profile || [];
+              let best = null, bestD = Infinity;
+              for (const p of prof) {
+                const d = Math.abs((p.alt ?? 0) - y);
+                if (d < bestD) { bestD = d; best = p; }
+              }
+              const lbl = best ? `${best.label} · ${Math.round(best.alt)} m` : `${Math.round(y)} m`;
+              return lbl;
+            },
+            label: () => "",
+            afterBody: (items) => {
+              const y = items[0]?.parsed?.y;
+              if (y == null) return [];
+              const prof = _sndTempChart?.$profile || [];
+              let best = null, bestD = Infinity;
+              for (const p of prof) {
+                const d = Math.abs((p.alt ?? 0) - y);
+                if (d < bestD) { bestD = d; best = p; }
+              }
+              if (!best) return [];
+              const lines = [];
+              if (best.t  != null) lines.push(`T:  ${fmtNum(best.t)}  °C`);
+              if (best.td != null) lines.push(`Td: ${fmtNum(best.td)} °C`);
+              if (best.ws != null) {
+                const dirInfo = (best.wd != null) ? classifyDirection(best.wd) : null;
+                const dirStr = dirInfo ? ` · ${dirInfo.name} (${Math.round(best.wd)}°)` : "";
+                lines.push(`💨 ${fmtNum(best.ws)} km/h${dirStr}`);
+              }
+              if (best.cld != null) lines.push(`☁ ${Math.round(best.cld)} %`);
+              return lines;
+            },
           },
         },
       },
@@ -2727,13 +2763,15 @@ function _renderSoundingFor(ts) {
         x: { type: "linear", position: "bottom",
              title: { display: true, text: "°C", color: "#e57777" },
              ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
-        y: { title: { display: true, text: "m", color: "#8aa0bb" },
-             ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
+        y: { title: { display: false },
+             ticks: { color: "#8aa0bb", callback: (v) => Math.round(v) },
+             grid: { color: "rgba(255,255,255,0.05)" } },
       },
     },
     plugins: [windRightPlugin],
   });
   _sndTempChart.$windPts = windPts;
+  _sndTempChart.$profile = profile;
   _sndTempChart.update();
 
   // --- Tabla colapsable de niveles. ---
@@ -6008,10 +6046,11 @@ function renderSearchRow(s, ctx) {
   // Aplica a TODOS los items selectables cuando hay criterios y datos meteo.
   try {
     let verdict = "unknown";
-    // 1) Despegue comunitario: criterios propios. Probamos primero Volandoo
-    //    (si el doc tiene volandooUrl, suele estar más cerca y vivo que la
-    //    AEMET vinculada) y caemos a la estación integrada como respaldo.
-    if (isCommunity && s.raw?.criteria) {
+    // 1) Despegue comunitario: usa sus propios criterios si existen; si no,
+    //    cae a los del despegue actual o a los valores neutros por defecto.
+    //    La fuente de viento prioriza Volandoo (si el doc tiene volandooUrl)
+    //    y, en su defecto, la estación integrada vinculada (AEMET/Holfuy).
+    if (isCommunity) {
       let snap = null;
       const vUrl = s.raw?.volandooUrl;
       if (vUrl) {
@@ -6028,7 +6067,8 @@ function renderSearchRow(s, ctx) {
         if (ls.avg != null || ls.dir != null) snap = ls;
       }
       if (snap) {
-        verdict = takeoffVerdictFromSnapshot(s.raw.criteria, snap);
+        const crit = s.raw?.criteria || currentTakeoffCriteria || null;
+        verdict = takeoffVerdictFromSnapshot(crit, snap);
       }
     }
     // 2) Pioupiou habilitada: sin criterios propios, usamos los del despegue
