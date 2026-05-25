@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.161";
+const APP_VERSION = "v0.162";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -219,6 +219,7 @@ const I18N = {
     "co.btn": "Mis criterios",
     "snd.title": "Sondeo atmosférico",
     "snd.btn": "Sondeo",
+    "act.menu": "Más acciones",
     "snd.btn_tip": "Ver perfil vertical (viento, temperatura y nubes por altitud)",
     "snd.btn_short": "📈",
     "snd.loading": "Cargando sondeo…",
@@ -551,6 +552,7 @@ const I18N = {
     "co.btn": "My criteria",
     "snd.title": "Atmospheric sounding",
     "snd.btn": "Sounding",
+    "act.menu": "More actions",
     "snd.btn_tip": "View vertical profile (wind, temperature and clouds by altitude)",
     "snd.btn_short": "📈",
     "snd.loading": "Loading sounding…",
@@ -868,6 +870,7 @@ const I18N = {
     "co.btn": "Meine Kriterien",
     "snd.title": "Atmosphärisches Sondieren",
     "snd.btn": "Sondierung",
+    "act.menu": "Weitere Aktionen",
     "snd.btn_tip": "Vertikales Profil ansehen (Wind, Temperatur und Wolken nach Höhe)",
     "snd.btn_short": "📈",
     "snd.loading": "Sondierung wird geladen…",
@@ -1185,6 +1188,7 @@ const I18N = {
     "co.btn": "Mes critères",
     "snd.title": "Sondage atmosphérique",
     "snd.btn": "Sondage",
+    "act.menu": "Plus d'actions",
     "snd.btn_tip": "Voir le profil vertical (vent, température et nuages par altitude)",
     "snd.btn_short": "📈",
     "snd.loading": "Chargement du sondage…",
@@ -1502,6 +1506,7 @@ const I18N = {
     "co.btn": "Nire irizpideak",
     "snd.title": "Atmosfera-sondaketa",
     "snd.btn": "Sondaketa",
+    "act.menu": "Ekintza gehiago",
     "snd.btn_tip": "Profil bertikala ikusi (haizea, tenperatura eta hodeiak altueraka)",
     "snd.btn_short": "📈",
     "snd.loading": "Sondaketa kargatzen…",
@@ -1773,6 +1778,7 @@ const I18N = {
     "co.btn": "Els meus criteris",
     "snd.title": "Sondatge atmosfèric",
     "snd.btn": "Sondatge",
+    "act.menu": "Més accions",
     "snd.btn_tip": "Veure el perfil vertical (vent, temperatura i núvols per altitud)",
     "snd.btn_short": "📈",
     "snd.loading": "Carregant sondatge…",
@@ -5617,47 +5623,45 @@ function renderCurrentTakeoffActions() {
     host.appendChild(bell);
   }
 
-  // ✎ sugerir cambios — siempre visible para usuarios registrados.
-  // Si existe origen comunitario, edita ese doc; si no, propone alta del despegue actual.
-  const sug = document.createElement("button");
-  sug.type = "button"; sug.className = "ts-icon-btn";
-  sug.title = currentTakeoffOriginId ? t("to.suggest") : t("to.propose");
-  sug.textContent = "✎";
-  sug.addEventListener("click", () => {
-    if (currentTakeoffOriginId) {
-      openTakeoffSuggest(currentTakeoffOriginId);
-    } else {
-      openTakeoffSubmit({
-        name: currentStation.name,
-        lat: currentTakeoff.lat,
-        lon: currentTakeoff.lon,
-        stationId: currentStation.provider === "pioupiou" ? currentStationId : null,
-        criteria: currentTakeoffCriteria || null,
-      });
-    }
-  });
-  host.appendChild(sug);
+  // v162: los iconos que disparan acciones (abren un dialogo o navegan a una
+  // pagina externa) se agrupan en un menu desplegable "⋮" con etiqueta corta
+  // (1-3 palabras) para liberar espacio en la cabecera. Los toggles (★ ♛ 🔔)
+  // se mantienen inline como botones rapidos.
+  const actions = []; // { icon, label, run, isActive }
 
-  // 🛠 mis criterios (override personal) — disponible siempre que haya despegue/estación.
+  // ✎ sugerir cambios / proponer alta.
+  actions.push({
+    icon: "✎",
+    label: currentTakeoffOriginId ? t("to.suggest") : t("to.propose"),
+    run: () => {
+      if (currentTakeoffOriginId) {
+        openTakeoffSuggest(currentTakeoffOriginId);
+      } else {
+        openTakeoffSubmit({
+          name: currentStation.name,
+          lat: currentTakeoff.lat,
+          lon: currentTakeoff.lon,
+          stationId: currentStation.provider === "pioupiou" ? currentStationId : null,
+          criteria: currentTakeoffCriteria || null,
+        });
+      }
+    },
+  });
+
+  // 🛠 mis criterios (override personal).
   if (_overrideKeyForCurrent()) {
-    const ov = document.createElement("button");
     const hasOv = !!getCurrentOverride();
-    ov.type = "button"; ov.className = "ts-icon-btn" + (hasOv ? " is-active" : "");
-    ov.title = t("co.btn");
-    ov.textContent = "🛠";
-    ov.addEventListener("click", openCriteriaOverride);
-    host.appendChild(ov);
+    actions.push({
+      icon: "🛠",
+      label: t("co.btn"),
+      run: openCriteriaOverride,
+      isActive: hasOv,
+    });
   }
 
-  // v146: enlaces externos. Por defecto siempre ofrecemos Windy con las coords
-  // del despegue. Si el documento del despegue tiene un windyUrl/volandooUrl
-  // personalizado, lo usamos en su lugar (o además, para Volandoo).
   const doc2 = (typeof getCurrentTakeoffDoc === "function") ? getCurrentTakeoffDoc() : null;
   const lat = Number(currentTakeoff.lat), lon = Number(currentTakeoff.lon);
-  // v153: por defecto el botón de Windy abre el panel de "sounding"
-  // (sondeo atmosférico) centrado en el despegue, mucho más útil para
-  // parapente que el mapa genérico. Si el doc tiene un windyUrl propio,
-  // lo respetamos.
+  // v153: por defecto el botón de Windy abre el panel de "sounding".
   const soundingHref = (Number.isFinite(lat) && Number.isFinite(lon))
     ? `https://www.windy.com/sounding/${lat.toFixed(3)}/${lon.toFixed(3)}?iconEu,900h,${lat.toFixed(3)},${lon.toFixed(3)},11,p:wind`
     : null;
@@ -5665,29 +5669,71 @@ function renderCurrentTakeoffActions() {
     ? doc2.windyUrl
     : soundingHref;
   if (windyHref) {
-    const a = document.createElement("a");
-    a.className = "ts-icon-btn";
-    a.href = windyHref; a.target = "_blank"; a.rel = "noopener";
-    a.title = "Windy";
-    a.textContent = "🌬️";
-    host.appendChild(a);
+    actions.push({ icon: "🌬️", label: "Windy", href: windyHref });
   }
-  // v155: botón de sondeo atmosférico (Open-Meteo, hora actual).
   if (Number.isFinite(lat) && Number.isFinite(lon)) {
-    const sb = document.createElement("button");
-    sb.type = "button"; sb.className = "ts-icon-btn";
-    sb.title = t("snd.btn") + " — " + t("snd.btn_tip");
-    sb.textContent = "📈";
-    sb.addEventListener("click", () => openSounding(Date.now()));
-    host.appendChild(sb);
+    actions.push({
+      icon: "📈",
+      label: t("snd.btn"),
+      run: () => openSounding(Date.now()),
+    });
   }
   if (doc2?.volandooUrl && /^https?:/i.test(doc2.volandooUrl)) {
-    const a = document.createElement("a");
-    a.className = "ts-icon-btn";
-    a.href = doc2.volandooUrl; a.target = "_blank"; a.rel = "noopener";
-    a.title = "Volandoo";
-    a.textContent = "🪶";
-    host.appendChild(a);
+    actions.push({ icon: "🪶", label: "Volandoo", href: doc2.volandooUrl });
+  }
+
+  if (actions.length) {
+    const wrap = document.createElement("div");
+    wrap.className = "ts-action-menu";
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "ts-icon-btn ts-action-trigger";
+    trigger.title = t("act.menu");
+    trigger.setAttribute("aria-haspopup", "true");
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.textContent = "⋮";
+    const list = document.createElement("div");
+    list.className = "ts-action-menu-list";
+    list.setAttribute("role", "menu");
+    list.hidden = true;
+    for (const a of actions) {
+      const it = (a.href) ? document.createElement("a") : document.createElement("button");
+      it.className = "ts-action-item" + (a.isActive ? " is-active" : "");
+      it.setAttribute("role", "menuitem");
+      if (a.href) { it.href = a.href; it.target = "_blank"; it.rel = "noopener"; }
+      else { it.type = "button"; }
+      it.innerHTML = `<span class="ts-action-icon">${a.icon}</span><span class="ts-action-label">${escapeHtml(a.label)}</span>`;
+      it.addEventListener("click", () => {
+        list.hidden = true;
+        trigger.setAttribute("aria-expanded", "false");
+        if (a.run) a.run();
+      });
+      list.appendChild(it);
+    }
+    const closeMenu = () => {
+      list.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+      document.removeEventListener("click", outside, true);
+      document.removeEventListener("keydown", onKey);
+    };
+    const outside = (e) => { if (!wrap.contains(e.target)) closeMenu(); };
+    const onKey = (e) => { if (e.key === "Escape") closeMenu(); };
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const willOpen = list.hidden;
+      list.hidden = !willOpen;
+      trigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      if (willOpen) {
+        document.addEventListener("click", outside, true);
+        document.addEventListener("keydown", onKey);
+      } else {
+        document.removeEventListener("click", outside, true);
+        document.removeEventListener("keydown", onKey);
+      }
+    });
+    wrap.appendChild(trigger);
+    wrap.appendChild(list);
+    host.appendChild(wrap);
   }
 }
 
@@ -6756,23 +6802,52 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       criteria,
       targetId: _suggestTargetId || null,
     });
-    // v161: al editar/sugerir cambios sobre un despegue comunitario existente,
-    // limpiamos cualquier override personal (🛠) guardado para ese mismo doc.
-    // De lo contrario el override seguia ocultando los nuevos criterios del doc
-    // y los valores no parecian actualizarse (la guia rapida, la barra vertical
-    // y la mini-brujula del pronostico se quedaban con los valores anteriores).
+    // v161/v162: al editar/sugerir cambios sobre un despegue comunitario
+    // existente, limpiamos cualquier override personal (🛠) guardado para ese
+    // mismo despegue. v161 solo borraba la clave "to:<targetId>", pero el
+    // override puede estar guardado bajo "<provider>:<stationId>" si el
+    // usuario lo creo cuando aun no se habia resuelto el origen comunitario.
+    // En v162 borramos ambas variantes ademas de cualquier clave que coincida
+    // con el stationId del doc para todos los proveedores conocidos.
     if (_suggestTargetId) {
-      const ovKey = "to:" + _suggestTargetId;
-      if (userTakeoffOverrides && userTakeoffOverrides[ovKey]) {
-        delete userTakeoffOverrides[ovKey];
-        _saveUserOverrides();
+      const targetDoc = (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === _suggestTargetId);
+      const toRemove = new Set();
+      toRemove.add("to:" + _suggestTargetId);
+      // Claves que aplican al contexto actual (incluye station-based si esta resuelto).
+      if (currentTakeoff.id === _suggestTargetId) {
+        for (const k of _overrideKeysForCurrent()) toRemove.add(k);
       }
-      // Si el doc afectado es el activo, forzamos un repaso completo en cuanto
-      // llegue el snapshot (onApprovedTakeoffsChange tambien lo hara, pero
-      // esto cubre el caso admin auto-approve donde el snapshot llega muy rapido).
+      // Cualquier clave de proveedor que apunte al mismo stationId del doc.
+      const sid = targetDoc?.stationId ?? null;
+      if (sid != null) {
+        for (const prov of ["pioupiou", "aemet", "holfuy", "ffvl"]) {
+          toRemove.add(prov + ":" + sid);
+        }
+      }
+      let changed = false;
+      for (const k of toRemove) {
+        if (userTakeoffOverrides && userTakeoffOverrides[k]) {
+          delete userTakeoffOverrides[k];
+          changed = true;
+        }
+      }
+      if (changed) _saveUserOverrides();
+      // Si el doc afectado es el activo, forzamos un repaso completo (cubre
+      // el camino admin auto-aprobado donde el snapshot puede tardar).
       if (currentTakeoff.id === _suggestTargetId) {
         const fresh = (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === _suggestTargetId);
         if (fresh) { try { _attachTakeoffDoc(fresh); } catch {} }
+        // Programamos una segunda pasada cuando llegue el snapshot fresco
+        // (admin auto-approve actualiza el doc y dispara onSnapshot).
+        setTimeout(() => {
+          try {
+            const f2 = (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === _suggestTargetId);
+            if (f2) _attachTakeoffDoc(f2);
+            renderTakeoffPanel();
+            renderCurrentTakeoffActions();
+            if (typeof refreshObservations === "function") refreshObservations();
+          } catch {}
+        }, 800);
         try { renderTakeoffPanel(); } catch {}
         try { renderCurrentTakeoffActions(); } catch {}
         try { if (typeof refreshObservations === "function") refreshObservations(); } catch {}

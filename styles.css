@@ -466,6 +466,52 @@ header.topbar .ts-current {
 .ts-icon-btn.is-home { color: #ff9800; }
 .ts-icon-btn.is-alert { color: #4ea1ff; }
 
+/* v162: Menu de acciones (⋮) en la cabecera de despegue actual. */
+.ts-action-menu { position: relative; display: inline-flex; }
+.ts-action-menu .ts-action-trigger { font-size: 1.05rem; line-height: 1; }
+.ts-action-menu-list[hidden] { display: none; }
+.ts-action-menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 50;
+  min-width: 160px;
+  background: var(--panel, #1e2530);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ts-action-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 0;
+  color: var(--fg, #e6e6e6);
+  font-size: .85rem;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  text-decoration: none;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.ts-action-item:hover { background: rgba(255,255,255,0.08); }
+.ts-action-item.is-active { color: #f1c40f; }
+.ts-action-item .ts-action-icon { font-size: 1rem; width: 1.2em; text-align: center; }
+.ts-action-item .ts-action-label { flex: 1; }
+:root[data-theme="light"] .ts-action-menu-list {
+  background: #fff;
+  border-color: rgba(0,0,0,0.12);
+}
+:root[data-theme="light"] .ts-action-item { color: #222; }
+:root[data-theme="light"] .ts-action-item:hover { background: rgba(0,0,0,0.06); }
+
 /* Favorite section header in search */
 .ts-section-header {
   font-size: .7rem; text-transform: uppercase; color: var(--muted);
@@ -1465,6 +1511,7 @@ main {
   border-radius: 3px;
   transition: height 0.4s ease, background 0.3s ease;
   box-shadow: 0 0 6px rgba(78,161,255,0.5);
+  z-index: 2; /* v162: por encima de las marcas y de sus etiquetas */
 }
 .wind-bar-vertical .wbv-fill.ideal { background: linear-gradient(to top, #2ecc71, #6bf093); box-shadow: 0 0 6px rgba(46,204,113,0.6); }
 .wind-bar-vertical .wbv-fill.ok    { background: linear-gradient(to top, #f1c40f, #ffdd55); box-shadow: 0 0 6px rgba(241,196,15,0.6); }
@@ -1473,6 +1520,7 @@ main {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 1; /* debajo del fill para que el valor lo tape si lo cubre */
 }
 .wind-bar-vertical .wbv-tick {
   position: absolute;
