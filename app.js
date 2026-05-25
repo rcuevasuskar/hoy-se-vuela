@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.178";
+const APP_VERSION = "v0.179";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -363,6 +363,7 @@ const I18N = {
     "ts.current": "Despegue:",
     "ts.radius": "Radio",
     "ts.no_radius": "Sin límite",
+    "ts.show_favs": "Favoritos",
     "theme.title": "Tema (auto/oscuro/claro)",
     "theme.auto": "Tema: automático",
     "theme.dark": "Tema: oscuro",
@@ -681,6 +682,7 @@ const I18N = {
     "ts.current": "Takeoff:",
     "ts.radius": "Radius",
     "ts.no_radius": "No limit",
+    "ts.show_favs": "Favorites",
     "theme.title": "Theme (auto/dark/light)",
     "menu.lang": "Language",
     "menu.theme": "Theme",
@@ -999,6 +1001,7 @@ const I18N = {
     "ts.current": "Startplatz:",
     "ts.radius": "Radius",
     "ts.no_radius": "Kein Limit",
+    "ts.show_favs": "Favoriten",
     "theme.title": "Design (auto/dunkel/hell)",
     "menu.lang": "Sprache",
     "menu.theme": "Design",
@@ -1317,6 +1320,7 @@ const I18N = {
     "ts.current": "Décollage :",
     "ts.radius": "Rayon",
     "ts.no_radius": "Sans limite",
+    "ts.show_favs": "Favoris",
     "theme.title": "Thème (auto/sombre/clair)",
     "menu.lang": "Langue",
     "menu.theme": "Thème",
@@ -1635,6 +1639,7 @@ const I18N = {
     "ts.current": "Irteguia:",
     "ts.radius": "Erradioa",
     "ts.no_radius": "Mugarik gabe",
+    "ts.show_favs": "Gogokoak",
     "theme.title": "Gaia (auto/iluna/argia)",
     "menu.lang": "Hizkuntza",
     "menu.theme": "Gaia",
@@ -1907,6 +1912,7 @@ const I18N = {
     "ts.current": "Enlairament:",
     "ts.radius": "Radi",
     "ts.no_radius": "Sense límit",
+    "ts.show_favs": "Preferits",
     "theme.title": "Tema (auto/fosc/clar)",
     "menu.lang": "Idioma",
     "menu.theme": "Tema",
@@ -5394,7 +5400,11 @@ let _nearbyResolvedRadius = 50;
 let _nearbyPioupiouCount = 0;
 let tsRadius = parseInt(localStorage.getItem("tsRadius") || "50", 10);
 let tsNoRadius = localStorage.getItem("tsNoRadius") === "1";
-const TS_PROVIDERS_ALL = ["community", "pioupiou", "aemet", "holfuy"];
+// v178: switch para mostrar/ocultar la seccion de Favoritos en el buscador.
+// Por defecto on. Se persiste como "1"/"0" en localStorage y en prefs de usuario.
+let tsShowFavs = (localStorage.getItem("tsShowFavs") ?? "1") !== "0";
+// v178: Holfuy retirado del chip por no devolver datos sin clave configurada.
+const TS_PROVIDERS_ALL = ["community", "pioupiou", "aemet"];
 let tsProviders = (function() {
   try {
     const raw = localStorage.getItem("tsProviders");
@@ -6139,7 +6149,7 @@ async function tsRunSearch() {
       window.PCAuth.removeFavorite(f.id).catch(e => console.warn("[fav] cleanup stale", e));
     });
   }
-  const favItems = favs.filter(f => f.source !== "community" || approvedCommunityIds.has(f.refId))
+  const favItems = !tsShowFavs ? [] : favs.filter(f => f.source !== "community" || approvedCommunityIds.has(f.refId))
     // v177: respeta los chips de proveedores (Comunidad / Pioupiou / AEMET / Holfuy).
     // Antes los favoritos se mostraban siempre, asi que al desmarcar "Comunidad"
     // los favoritos comunitarios seguian apareciendo.
@@ -6478,6 +6488,18 @@ function initTakeoffSelector() {
       window.PCAuth?.savePref?.("tsNoRadius", tsNoRadius);
       if (radiusEl) radiusEl.disabled = tsNoRadius;
       tsRunSearch();    });
+  }
+
+  // v178: switch Favoritos (muestra/oculta la seccion superior del listado).
+  const showFavsEl = document.getElementById("tsShowFavs");
+  if (showFavsEl) {
+    showFavsEl.checked = tsShowFavs;
+    showFavsEl.addEventListener("change", () => {
+      tsShowFavs = showFavsEl.checked;
+      localStorage.setItem("tsShowFavs", tsShowFavs ? "1" : "0");
+      window.PCAuth?.savePref?.("tsShowFavs", tsShowFavs);
+      tsRunSearch();
+    });
   }
 
   // Filtro de proveedores (servicios meteorol\u00f3gicos)
