@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.145";
+const APP_VERSION = "v0.146";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -179,6 +179,10 @@ const I18N = {
     "to.lat_label": "Latitud",
     "to.lon_label": "Longitud",
     "to.notes_label": "Notas (acceso, peligros…)",
+    "to.windy_label": "URL de Windy (opcional)",
+    "to.windy_ph": "https://www.windy.com/?…",
+    "to.volandoo_label": "URL de la estación en Volandoo (opcional)",
+    "to.volandoo_ph": "https://volandoo.com/weather/…",
     "to.pick_map": "📍 Usar coordenadas actuales del mapa",
     "to.submit": "Enviar para revisión",
     "to.cancel": "Cancelar",
@@ -475,6 +479,10 @@ const I18N = {
     "to.lat_label": "Latitude",
     "to.lon_label": "Longitude",
     "to.notes_label": "Notes (access, hazards…)",
+    "to.windy_label": "Windy URL (optional)",
+    "to.windy_ph": "https://www.windy.com/?…",
+    "to.volandoo_label": "Volandoo station URL (optional)",
+    "to.volandoo_ph": "https://volandoo.com/weather/…",
     "to.pick_map": "📍 Use current map coordinates",
     "to.submit": "Submit for review",
     "to.cancel": "Cancel",
@@ -756,6 +764,10 @@ const I18N = {
     "to.lat_label": "Breitengrad",
     "to.lon_label": "Längengrad",
     "to.notes_label": "Notizen (Zugang, Gefahren…)",
+    "to.windy_label": "Windy-URL (optional)",
+    "to.windy_ph": "https://www.windy.com/?…",
+    "to.volandoo_label": "Volandoo-Station URL (optional)",
+    "to.volandoo_ph": "https://volandoo.com/weather/…",
     "to.pick_map": "📍 Aktuelle Kartenkoordinaten verwenden",
     "to.submit": "Zur Prüfung senden",
     "to.cancel": "Abbrechen",
@@ -1037,6 +1049,10 @@ const I18N = {
     "to.lat_label": "Latitude",
     "to.lon_label": "Longitude",
     "to.notes_label": "Notes (accès, dangers…)",
+    "to.windy_label": "URL Windy (optionnelle)",
+    "to.windy_ph": "https://www.windy.com/?…",
+    "to.volandoo_label": "URL station Volandoo (optionnelle)",
+    "to.volandoo_ph": "https://volandoo.com/weather/…",
     "to.pick_map": "📍 Utiliser les coordonnées de la carte",
     "to.submit": "Envoyer pour validation",
     "to.cancel": "Annuler",
@@ -1318,6 +1334,10 @@ const I18N = {
     "to.lat_label": "Latitudea",
     "to.lon_label": "Longitudea",
     "to.notes_label": "Oharrak (sarbidea, arriskuak…)",
+    "to.windy_label": "Windy URLa (aukerakoa)",
+    "to.windy_ph": "https://www.windy.com/?…",
+    "to.volandoo_label": "Volandoo estazioaren URLa (aukerakoa)",
+    "to.volandoo_ph": "https://volandoo.com/weather/…",
     "to.pick_map": "📍 Erabili maparen koordenatuak",
     "to.submit": "Bidali berrikusteko",
     "to.cancel": "Utzi",
@@ -1553,6 +1573,10 @@ const I18N = {
     "to.lat_label": "Latitud",
     "to.lon_label": "Longitud",
     "to.notes_label": "Notes (accés, perills…)",
+    "to.windy_label": "URL de Windy (opcional)",
+    "to.windy_ph": "https://www.windy.com/?…",
+    "to.volandoo_label": "URL de l’estació a Volandoo (opcional)",
+    "to.volandoo_ph": "https://volandoo.com/weather/…",
     "to.pick_map": "📍 Utilitza les coordenades del mapa",
     "to.submit": "Envia per revisar",
     "to.cancel": "Cancel·la",
@@ -1954,6 +1978,57 @@ async function getForecast(days = 2) {
               `&past_days=3` +
               `&wind_speed_unit=kmh&timezone=auto&forecast_days=${days}`;
   return fetchJson(url);
+}
+
+// === Windy Point Forecast API (v146, opcional) ===
+// Para activarlo, obtener una clave gratuita en https://api.windy.com/keys
+// y exponerla como window.WINDY_API_KEY (p. ej. en un script inline antes
+// de app.js, o cargada desde Firebase Remote Config). Sin clave, devuelve null
+// y el resto de la app sigue usando Open-Meteo como hasta ahora.
+// Modelos utiles para parapente: "iconEu" (Europa, 7 km), "arome" (Francia,
+// 1.3 km, alta resolucion), "gfs" (global, 22 km). El viento llega como
+// componentes u/v en m/s y se convierte a km/h y grados.
+async function fetchWindyPointForecast(lat, lon, model = "iconEu", levels = ["surface"]) {
+  const key = (typeof window !== "undefined" && window.WINDY_API_KEY) || null;
+  if (!key) return null;
+  try {
+    const res = await fetch("https://api.windy.com/api/point-forecast/v2", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        lat: Number(lat), lon: Number(lon),
+        model,
+        parameters: ["wind", "windGust", "temp", "rh", "pressure"],
+        levels,
+        key,
+      }),
+    });
+    if (!res.ok) { console.warn("[windy] http", res.status); return null; }
+    const data = await res.json();
+    const ts = Array.isArray(data?.ts) ? data.ts : [];
+    const u = data["wind_u-surface"] || [];
+    const v = data["wind_v-surface"] || [];
+    const g = data["gust-surface"] || [];
+    const out = ts.map((tms, i) => {
+      const uu = u[i], vv = v[i];
+      const spd = (uu != null && vv != null) ? Math.hypot(uu, vv) * 3.6 : null;
+      let dir = null;
+      if (uu != null && vv != null) {
+        // viento "de donde sopla" = atan2(-u, -v) en grados meteorologicos
+        dir = (Math.atan2(-uu, -vv) * 180 / Math.PI + 360) % 360;
+      }
+      return {
+        date: new Date(tms),
+        wind_speed: spd,
+        wind_gust: g[i] != null ? g[i] * 3.6 : null,
+        wind_dir: dir,
+      };
+    });
+    return { model, points: out, units: data.units || {} };
+  } catch (e) {
+    console.warn("[windy] fetch:", e);
+    return null;
+  }
 }
 
 async function getAllStations() {
@@ -3474,6 +3549,7 @@ async function renderNearby() {
         <div class="nearby-meta">
           <div class="nearby-dir">—</div>
           <div class="nearby-avg"><b>—</b> <span>${t("near.avg_unit", { h: NEARBY_AVG_HOURS })}</span></div>
+          <div class="nearby-ext"><a href="https://www.windy.com/-?${n.lat},${n.lon},11" target="_blank" rel="noopener">🌬️ Windy</a></div>
         </div>
       `;
       grid.appendChild(card);
@@ -4528,6 +4604,31 @@ function renderCurrentTakeoffActions() {
     ov.addEventListener("click", openCriteriaOverride);
     host.appendChild(ov);
   }
+
+  // v146: enlaces externos. Por defecto siempre ofrecemos Windy con las coords
+  // del despegue. Si el documento del despegue tiene un windyUrl/volandooUrl
+  // personalizado, lo usamos en su lugar (o además, para Volandoo).
+  const doc2 = (typeof getCurrentTakeoffDoc === "function") ? getCurrentTakeoffDoc() : null;
+  const lat = Number(currentTakeoff.lat), lon = Number(currentTakeoff.lon);
+  const windyHref = (doc2?.windyUrl && /^https?:/i.test(doc2.windyUrl))
+    ? doc2.windyUrl
+    : (Number.isFinite(lat) && Number.isFinite(lon) ? `https://www.windy.com/-?${lat},${lon},11` : null);
+  if (windyHref) {
+    const a = document.createElement("a");
+    a.className = "ts-icon-btn";
+    a.href = windyHref; a.target = "_blank"; a.rel = "noopener";
+    a.title = "Windy";
+    a.textContent = "🌬️";
+    host.appendChild(a);
+  }
+  if (doc2?.volandooUrl && /^https?:/i.test(doc2.volandooUrl)) {
+    const a = document.createElement("a");
+    a.className = "ts-icon-btn";
+    a.href = doc2.volandooUrl; a.target = "_blank"; a.rel = "noopener";
+    a.title = "Volandoo";
+    a.textContent = "🪶";
+    host.appendChild(a);
+  }
 }
 
 function openTakeoffSuggest(originId) {
@@ -4539,6 +4640,8 @@ function openTakeoffSuggest(originId) {
     name: to.name, lat: to.lat, lon: to.lon, alt: to.alt,
     orientations: to.orientations || "",
     notes: to.notes || "",
+    windyUrl: to.windyUrl || "",
+    volandooUrl: to.volandooUrl || "",
     criteria: to.criteria || null,
   });
   const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.suggest_title");
@@ -5436,7 +5539,7 @@ function openTakeoffSubmit(prefill) {
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
   document.getElementById("toSubmitMsg").textContent = "";
-  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax"].forEach(id => {
+  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax","toWindyUrl","toVolandooUrl"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   // Restaura título y botón por si veníamos de modo sugerencia (será sobreescrito por openTakeoffSuggest si aplica)
@@ -5475,6 +5578,8 @@ function openTakeoffSubmit(prefill) {
     if (prefill.alt != null && prefill.alt !== "") document.getElementById("toAlt").value = String(prefill.alt);
     if (prefill.orientations) document.getElementById("toOrient").value = String(prefill.orientations);
     if (prefill.notes) document.getElementById("toNotes").value = String(prefill.notes);
+    if (prefill.windyUrl) document.getElementById("toWindyUrl").value = String(prefill.windyUrl);
+    if (prefill.volandooUrl) document.getElementById("toVolandooUrl").value = String(prefill.volandooUrl);
     setTimeout(() => { document.getElementById("toName")?.focus(); document.getElementById("toName")?.select(); }, 50);
   } else {
     const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
@@ -5531,6 +5636,8 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       alt: document.getElementById("toAlt").value,
       orientations: orientationsText,
       notes: document.getElementById("toNotes").value,
+      windyUrl: document.getElementById("toWindyUrl")?.value || null,
+      volandooUrl: document.getElementById("toVolandooUrl")?.value || null,
       criteria,
       targetId: _suggestTargetId || null,
     });

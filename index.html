@@ -425,6 +425,14 @@
         <textarea id="toNotes" rows="3" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
       </label>
 
+      <!-- v146: enlaces externos opcionales (Windy / Volandoo / otros) -->
+      <label class="to-field-block"><span data-i18n="to.windy_label">URL de Windy (opcional)</span>
+        <input id="toWindyUrl" type="url" placeholder="https://www.windy.com/?…" data-i18n-placeholder="to.windy_ph" />
+      </label>
+      <label class="to-field-block"><span data-i18n="to.volandoo_label">URL de la estación en Volandoo (opcional)</span>
+        <input id="toVolandooUrl" type="url" placeholder="https://volandoo.com/weather/…" data-i18n-placeholder="to.volandoo_ph" />
+      </label>
+
       <button id="toPickOnMapBtn" class="auth-link" type="button" data-i18n="to.pick_map">📍 Usar coordenadas actuales del mapa</button>
       <div class="to-actions">
         <button id="toCancelBtn" class="auth-secondary" type="button" data-i18n="to.cancel">Cancelar</button>
