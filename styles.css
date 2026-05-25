@@ -809,7 +809,7 @@ header.topbar .ts-current {
    no solo favoritos. */
 .ts-result[data-verdict] { border-left: 4px solid transparent; padding-left: 6px; }
 .ts-result[data-verdict="ideal"]   { border-left-color: var(--ideal); }
-.ts-result[data-verdict="ok"]      { border-left-color: var(--warn); }
+.ts-result[data-verdict="ok"]      { border-left-color: #f5b400; } /* v175: ambar (antes naranja --warn) */
 .ts-result[data-verdict="warn"]    { border-left-color: var(--bad); }
 .ts-result[data-verdict="bad"]     { border-left-color: var(--bad); }
 .ts-result[data-verdict="unknown"] { border-left-color: rgba(255,255,255,0.15); }
@@ -1184,21 +1184,6 @@ main {
 .last-source { color: var(--muted); }
 .last-source a { color: var(--accent); text-decoration: none; }
 .last-source a:hover { text-decoration: underline; }
-
-/* v173: panel debug admin */
-.tk-debug {
-  margin-top: 6px;
-  padding: 6px 8px;
-  background: rgba(255, 200, 60, 0.08);
-  border: 1px dashed rgba(255, 200, 60, 0.35);
-  border-radius: 4px;
-  color: var(--muted);
-  font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
-  font-size: 0.68rem;
-  line-height: 1.35;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
 
 /* Readings */
 .readings {
@@ -2133,7 +2118,7 @@ footer {
   padding-left: 6px;
 }
 :root[data-theme="light"] .ts-result[data-verdict="ideal"]   { border-left-color: var(--ideal); }
-:root[data-theme="light"] .ts-result[data-verdict="ok"]      { border-left-color: var(--warn); }
+:root[data-theme="light"] .ts-result[data-verdict="ok"]      { border-left-color: #c79100; }
 :root[data-theme="light"] .ts-result[data-verdict="warn"]    { border-left-color: var(--bad); }
 :root[data-theme="light"] .ts-result[data-verdict="bad"]     { border-left-color: var(--bad); }
 :root[data-theme="light"] .ts-result[data-verdict="unknown"] { border-left-color: rgba(0,0,0,0.18); }
@@ -2197,7 +2182,7 @@ footer {
     padding-left: 6px;
   }
   :root[data-theme="auto"] .ts-result[data-verdict="ideal"]   { border-left-color: var(--ideal); }
-  :root[data-theme="auto"] .ts-result[data-verdict="ok"]      { border-left-color: var(--warn); }
+  :root[data-theme="auto"] .ts-result[data-verdict="ok"]      { border-left-color: #c79100; }
   :root[data-theme="auto"] .ts-result[data-verdict="warn"]    { border-left-color: var(--bad); }
   :root[data-theme="auto"] .ts-result[data-verdict="bad"]     { border-left-color: var(--bad); }
   :root[data-theme="auto"] .ts-result[data-verdict="unknown"] { border-left-color: rgba(0,0,0,0.18); }
