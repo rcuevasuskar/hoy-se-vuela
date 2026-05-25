@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.184";
+const APP_VERSION = "v0.185";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5577,7 +5577,6 @@ function renderCurrentTakeoffActions() {
 
   // Localiza el favorito que corresponde al despegue actual.
   const favs = window.PCAuth?.favorites || [];
-  const homeId = window.PCAuth?.prefs?.homeFavId || null;
   let fav = null;
   if (currentTakeoffOriginId) {
     fav = favs.find(f => f.source === "community" && f.refId === currentTakeoffOriginId);
@@ -5586,7 +5585,6 @@ function renderCurrentTakeoffActions() {
   } else if (currentStation?.provider === "ffvl") {
     fav = favs.find(f => f.source === "ffvl" && String(f.refId) === String(currentStation.rawId || currentStationId));
   }
-  const isHome = !!(fav && fav.id === homeId);
   const favoritable = !!(currentTakeoffOriginId || (currentStation?.provider === "pioupiou") || (currentStation?.provider === "ffvl"));
 
   // ⭐ favorito
@@ -5598,7 +5596,6 @@ function renderCurrentTakeoffActions() {
     star.addEventListener("click", async () => {
       try {
         if (fav) {
-          if (fav.id === homeId) await window.PCAuth.setHomeFavorite(null);
           await window.PCAuth.removeFavorite(fav.id);
         } else {
           const source = currentTakeoffOriginId ? "community" : currentStation.provider;
@@ -5619,17 +5616,11 @@ function renderCurrentTakeoffActions() {
     host.appendChild(star);
   }
 
-  // ♛ habitual (solo si ya es favorito)
+  // v184: la corona "despegue habitual" (homeFavId) se elimina; los
+  // favoritos del usuario se ordenan por distancia a su posicion actual y el
+  // despegue por defecto al abrir la app es el favorito mas cercano.
+  // 🔔 alertas (solo si ya es favorito)
   if (fav) {
-    const crown = document.createElement("button");
-    crown.type = "button"; crown.className = "ts-icon-btn" + (isHome ? " is-home" : "");
-    crown.title = isHome ? t("fav.home_unset") : t("fav.home_set");
-    crown.textContent = isHome ? "👑" : "♛";
-    crown.addEventListener("click", async () => {
-      try { await window.PCAuth.setHomeFavorite(isHome ? null : fav.id); renderCurrentTakeoffActions(); }
-      catch (e) { console.warn("[home cur]", e); }
-    });
-    host.appendChild(crown);
     // 🔔 alertas
     const bell = document.createElement("button");
     bell.type = "button"; bell.className = "ts-icon-btn" + (fav.alertsEnabled ? " is-alert" : "");
@@ -6062,9 +6053,8 @@ async function tsRunSearch() {
     .filter(s => !query || s.name.toLowerCase().includes(query))
     .sort((a, b) => a.dist - b.dist);
 
-  // Identifica favoritos + home (solo comunitarios; el resto ya no se usa).
+  // Identifica favoritos (solo comunitarios; el resto ya no se usa).
   const favs = window.PCAuth?.favorites || [];
-  const homeId = window.PCAuth?.prefs?.homeFavId || null;
   const favKey = (s) => {
     if (s.community) return "co_" + (s.raw?.id || "");
     if (s.provider === "ffvl") return "ffvl_" + (s.rawId || s.id);
@@ -6105,7 +6095,6 @@ async function tsRunSearch() {
         raw: { id: f.refId, criteria: f.criteria, stationId: f.stationId, alt: doc?.alt ?? null },
         dist: haversineKm(center.lat, center.lon, f.lat, f.lon),
         _fav: f,
-        _isHome: f.id === homeId,
       };
       fakeItem._linkedStation = findLinkedStation(f.lat, f.lon);
       return fakeItem;
@@ -6133,7 +6122,7 @@ async function tsRunSearch() {
     h.className = "ts-section-header";
     h.textContent = t("fav.section");
     resultsEl.appendChild(h);
-    for (const s of favItems) resultsEl.appendChild(renderSearchRow(s, { loggedIn, favByKey, homeId, favKey }));
+    for (const s of favItems) resultsEl.appendChild(renderSearchRow(s, { loggedIn, favByKey, favKey }));
   }
   if (others.length) {
     if (favItems.length) {
@@ -6142,7 +6131,7 @@ async function tsRunSearch() {
       h2.textContent = t("fav.others");
       resultsEl.appendChild(h2);
     }
-    for (const s of others) resultsEl.appendChild(renderSearchRow(s, { loggedIn, favByKey, homeId, favKey }));
+    for (const s of others) resultsEl.appendChild(renderSearchRow(s, { loggedIn, favByKey, favKey }));
   }
 }
 
@@ -6294,7 +6283,6 @@ function renderSearchRow(s, ctx) {
     icons.className = "ts-result-icons";
     const key = ctx.favKey(s);
     const fav = ctx.favByKey[key];
-    const isHome = fav && fav.id === ctx.homeId;
 
     // Estrella (favorito)
     const star = document.createElement("button");
@@ -6305,7 +6293,6 @@ function renderSearchRow(s, ctx) {
       ev.stopPropagation();
       try {
         if (fav) {
-          if (fav.id === ctx.homeId) await window.PCAuth.setHomeFavorite(null);
           await window.PCAuth.removeFavorite(fav.id);
         } else {
           await window.PCAuth.addFavorite({
@@ -6324,19 +6311,9 @@ function renderSearchRow(s, ctx) {
     });
     icons.appendChild(star);
 
-    // Corona (home) — solo si es favorito
+    // v184: corona "habitual" eliminada. Los favoritos se ordenan por
+    // distancia a la posicion del usuario; ya no hay un favorito destacado.
     if (fav) {
-      const crown = document.createElement("button");
-      crown.type = "button"; crown.className = "ts-icon-btn" + (isHome ? " is-home" : "");
-      crown.title = isHome ? t("fav.home_unset") : t("fav.home_set");
-      crown.textContent = isHome ? "👑" : "♛";
-      crown.addEventListener("click", async (ev) => {
-        ev.stopPropagation();
-        try { await window.PCAuth.setHomeFavorite(isHome ? null : fav.id); tsRunSearch(); }
-        catch (e) { console.warn("[home]", e); }
-      });
-      icons.appendChild(crown);
-
       // Campana (alertas) — solo en favoritos
       const bell = document.createElement("button");
       bell.type = "button"; bell.className = "ts-icon-btn" + (fav.alertsEnabled ? " is-alert" : "");
@@ -6484,10 +6461,8 @@ function initTakeoffSelector() {
           userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
           locateBtn.classList.add("active");
           locateBtn.disabled = false;
-          // Si aún no había despegue resuelto por favoritos, intenta el más cercano.
-          if (!_userPickedStation && !(window.PCAuth?.favorites || []).length) {
-            resolveDefaultTakeoff();
-          }
+          // v184: reevalua el despegue por defecto (favorito mas cercano).
+          if (!_userPickedStation) resolveDefaultTakeoff();
           if (panel) {
             panel.hidden = false;
           }
@@ -7162,11 +7137,9 @@ function _hookTakeoffStreams() {
   window.PCAuth.onApprovedTakeoffsChange = () => {
     const panel = document.getElementById("tsPanel");
     if (panel && !panel.hidden) tsRunSearch();
-    // v147: si aun no se ha resuelto el despegue por defecto (sin favoritos), reintenta
-    // ahora que tenemos la lista comunitaria para poder elegir el mas cercano por GPS.
-    if (!_userPickedStation && !(window.PCAuth?.favorites || []).length) {
-      resolveDefaultTakeoff();
-    }
+    // v184: si aun no se ha seleccionado un despegue manualmente, reintenta
+    // ahora que tenemos la lista comunitaria fresca (favoritos o no).
+    if (!_userPickedStation) resolveDefaultTakeoff();
     // v107: re-engancha el doc del despegue actual con datos frescos del snapshot.
     // El bug previo era: limpiar aliases sin re-aplicar el doc dejaba la criteria
     // vieja en currentTakeoff y los alias en null → classifyDirection caía a neutro.
@@ -7217,22 +7190,22 @@ function _hookTakeoffStreams() {
 }
 _hookTakeoffStreams();
 
-// v147: la primera vez que se abre la app, pide permiso de ubicacion para poder
-// elegir como despegue por defecto el registrado mas cercano. Si ya se pidio antes
-// (concedido o denegado), no vuelve a molestar; el usuario siempre puede pulsar
-// el boton 📍 en la barra de busqueda.
+// v147: al abrir la app, pedimos permiso de geolocalizacion siempre. Si el
+// usuario ya lo concedio antes el navegador no muestra prompt y devuelve la
+// posicion al instante; si lo denego antes lo seguira denegando sin molestar.
+// Asi el pin de ubicacion queda activo por defecto y el despegue por defecto
+// puede ser el favorito mas cercano a la posicion actual.
 function requestInitialGeolocation() {
   if (!("geolocation" in navigator)) return;
-  try { if (localStorage.getItem("geoPromptedOnce")) return; } catch {}
-  try { localStorage.setItem("geoPromptedOnce", "1"); } catch {}
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-      const locateBtn = document.getElementById("locateBtn");
+      const locateBtn = document.getElementById("tsLocateBtn");
       if (locateBtn) locateBtn.classList.add("active");
-      if (!_userPickedStation && !(window.PCAuth?.favorites || []).length) {
-        resolveDefaultTakeoff();
-      }
+      // Recalcula el despegue por defecto incluso si ya hay favoritos:
+      // ahora que conocemos la posicion del usuario podemos elegir el
+      // favorito mas cercano.
+      if (!_userPickedStation) resolveDefaultTakeoff();
       if (typeof renderNearby === "function") renderNearby();
       if (typeof tsRunSearch === "function") {
         const panel = document.getElementById("tsPanel");
@@ -7244,15 +7217,15 @@ function requestInitialGeolocation() {
   );
 }
 // Lanzamos un poco mas tarde para no competir con el primer render
-setTimeout(requestInitialGeolocation, 1500);
+setTimeout(requestInitialGeolocation, 800);
 
 // === Despegue por defecto ===
-// Reglas:
-//   1) Favorito "habitual" (homeFavId)
-//   2) Favorito añadido primero (menor addedAt)
-//   3) Despegue registrado (comunitario) más cercano a la geolocalización del usuario,
-//      autovinculado a la estación integrada (Pioupiou/AEMET/Holfuy) más próxima con datos recientes.
-//   4) Cenes (DEFAULT_STATION)
+// v184: las reglas se simplifican (sin "habitual"):
+//   1) Despegue guardado (la sesion anterior tenia uno seleccionado).
+//   2) Favorito mas cercano a la geolocalizacion del usuario.
+//   3) Despegue comunitario aprobado mas cercano a la geolocalizacion.
+//   4) Cualquier favorito (si no hay geolocalizacion).
+//   5) Cenes (DEFAULT_STATION).
 let _userPickedStation = false;
 let _defaultResolvedOnce = false;
 
@@ -7278,134 +7251,121 @@ function _favToStation(f) {
   return null;
 }
 
-function _addedAtMs(f) {
-  const a = f.addedAt;
-  if (!a) return Infinity;
-  if (typeof a.toMillis === "function") return a.toMillis();
-  if (typeof a.seconds === "number") return a.seconds * 1000;
-  return Infinity;
+// v184: dada una estacion-candidata (lat/lon), elige la estacion meteo
+// integrada mas cercana con datos recientes dentro de LINK_KM.
+async function _findRecentNearbyStation(lat, lon, LINK_KM = 30) {
+  try {
+    const all = await ensureAllStations();
+    const pools = [
+      (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
+      (all.aemet || []),
+      (all.holfuy || []),
+    ];
+    let best = null, bestKm = LINK_KM + 1;
+    for (const pool of pools) for (const st of pool) {
+      if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
+      if (!isStationRecent(st, 24)) continue;
+      const km = haversineKm(lat, lon, st.lat, st.lon);
+      if (km < bestKm) { bestKm = km; best = st; }
+    }
+    return best;
+  } catch (e) {
+    console.warn("_findRecentNearbyStation:", e);
+    return null;
+  }
+}
+
+async function _selectCommunityTakeoff(to) {
+  const best = await _findRecentNearbyStation(to.lat, to.lon);
+  if (best) {
+    selectStation(
+      { id: best.id, provider: best.provider, name: to.name, shortName: to.shortName || to.name, lat: to.lat, lon: to.lon },
+      { criteria: to.criteria || null, originId: to.id }
+    );
+  } else {
+    // Sin estacion live: el propio despegue es el lugar (pseudo-station).
+    selectStation(
+      { id: "to_" + to.id, provider: "community", name: to.name, shortName: to.shortName || to.name, lat: to.lat, lon: to.lon },
+      { criteria: to.criteria || null, originId: to.id }
+    );
+  }
 }
 
 async function resolveDefaultTakeoff() {
   if (_userPickedStation) return;
-  // v168: si en la sesion anterior el usuario tenia seleccionado un despegue
-  // concreto (doc id), restauramos exactamente ese despegue. La estacion live
-  // se autovincula como en favoritos comunitarios.
+  // (1) Sesion anterior: restauramos el despegue concreto.
   const savedTakeoffId = loadSavedTakeoffId();
   if (savedTakeoffId) {
     const list = window.PCAuth?.approvedTakeoffs || [];
     const to = list.find(t => t.id === savedTakeoffId);
     if (to) {
       try {
-        const all = await ensureAllStations();
-        const LINK_KM = 30;
-        let best = null, bestKm = LINK_KM + 1;
-        const pools = [
-          (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
-          (all.aemet || []),
-          (all.holfuy || []),
-        ];
-        for (const pool of pools) for (const st of pool) {
-          if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
-          if (!isStationRecent(st, 24)) continue;
-          const km = haversineKm(to.lat, to.lon, st.lat, st.lon);
-          if (km < bestKm) { bestKm = km; best = st; }
-        }
-        if (best) {
-          selectStation(
-            { id: best.id, provider: best.provider, name: to.name, shortName: to.shortName || to.name, lat: to.lat, lon: to.lon },
-            { criteria: to.criteria || null, originId: to.id }
-          );
-        } else {
-          // Sin estacion live: el propio despegue es el lugar (pseudo-station).
-          selectStation(
-            { id: "to_" + to.id, provider: "community", name: to.name, shortName: to.shortName || to.name, lat: to.lat, lon: to.lon },
-            { criteria: to.criteria || null, originId: to.id }
-          );
-        }
+        await _selectCommunityTakeoff(to);
         _defaultResolvedOnce = true;
         return;
       } catch (e) { console.warn("resolveDefaultTakeoff saved takeoff:", e); }
     }
   }
-  // 1) Habitual
   const favs = window.PCAuth?.favorites || [];
-  const homeId = window.PCAuth?.prefs?.homeFavId || null;
-  let chosen = homeId ? favs.find(f => f.id === homeId) : null;
-  // 2) Favorito más antiguo
-  if (!chosen && favs.length) {
-    chosen = [...favs].sort((a, b) => _addedAtMs(a) - _addedAtMs(b))[0];
+  // (2) Favorito mas cercano a la posicion del usuario.
+  if (userLocation && favs.length) {
+    let bestFav = null, bestFavD = Infinity;
+    for (const f of favs) {
+      if (!Number.isFinite(f.lat) || !Number.isFinite(f.lon)) continue;
+      const d = haversineKm(userLocation.lat, userLocation.lon, f.lat, f.lon);
+      if (d < bestFavD) { bestFavD = d; bestFav = f; }
+    }
+    if (bestFav) {
+      // Si es comunitario y carece de stationId valido, autovincula con la
+      // estacion meteo mas cercana al despegue (igual que v113).
+      if (bestFav.source === "community") {
+        const list = window.PCAuth?.approvedTakeoffs || [];
+        const to = list.find(t => t.id === bestFav.refId) || {
+          id: bestFav.refId, name: bestFav.name, lat: bestFav.lat, lon: bestFav.lon,
+          criteria: bestFav.criteria || null,
+        };
+        await _selectCommunityTakeoff(to);
+        _defaultResolvedOnce = true;
+        return;
+      }
+      const conv = _favToStation(bestFav);
+      if (conv) { selectStation(conv.station, conv.opts); _defaultResolvedOnce = true; return; }
+    }
   }
-  if (chosen) {
-    // v113: para favoritos comunitarios sin stationId guardado, autovincula con
-    // la estacion mas cercana (cualquier proveedor) en el momento de cargar.
-    if (chosen.source === "community" && (chosen.stationId == null || Number.isNaN(Number(chosen.stationId)))) {
+  // (3) Despegue comunitario mas cercano a la geolocalizacion.
+  if (userLocation) {
+    const tlist = window.PCAuth?.approvedTakeoffs || [];
+    let bestT = null, bestD = Infinity;
+    for (const to of tlist) {
+      if (!Number.isFinite(to.lat) || !Number.isFinite(to.lon)) continue;
+      const d = haversineKm(userLocation.lat, userLocation.lon, to.lat, to.lon);
+      if (d < bestD) { bestD = d; bestT = to; }
+    }
+    if (bestT) {
       try {
-        const all = await ensureAllStations();
-        const LINK_KM = 30;
-        let best = null, bestKm = LINK_KM + 1;
-        const pools = [
-          (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
-          (all.aemet || []),
-          (all.holfuy || []),
-        ];
-        for (const pool of pools) for (const st of pool) {
-          if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
-          if (!isStationRecent(st, 24)) continue;
-          const km = haversineKm(chosen.lat, chosen.lon, st.lat, st.lon);
-          if (km < bestKm) { bestKm = km; best = st; }
-        }
-        if (best) {
-          selectStation(
-            { id: best.id, provider: best.provider, name: chosen.name, shortName: chosen.name, lat: chosen.lat, lon: chosen.lon },
-            { criteria: chosen.criteria || null, originId: chosen.refId }
-          );
-          _defaultResolvedOnce = true;
-          return;
-        }
-      } catch (e) { console.warn("resolveDefaultTakeoff community link:", e); }
+        await _selectCommunityTakeoff(bestT);
+        _defaultResolvedOnce = true;
+        return;
+      } catch (e) { console.warn("resolveDefaultTakeoff nearest takeoff:", e); }
+    }
+  }
+  // (4) Sin geolocalizacion pero con favoritos: cualquiera (el primero).
+  if (!userLocation && favs.length) {
+    const chosen = favs[0];
+    if (chosen.source === "community") {
+      const list = window.PCAuth?.approvedTakeoffs || [];
+      const to = list.find(t => t.id === chosen.refId) || {
+        id: chosen.refId, name: chosen.name, lat: chosen.lat, lon: chosen.lon,
+        criteria: chosen.criteria || null,
+      };
+      await _selectCommunityTakeoff(to);
+      _defaultResolvedOnce = true;
+      return;
     }
     const conv = _favToStation(chosen);
     if (conv) { selectStation(conv.station, conv.opts); _defaultResolvedOnce = true; return; }
   }
-  // 3) Despegue registrado mas cercano a la geolocalizacion (v147+)
-  if (userLocation) {
-    try {
-      const tlist = window.PCAuth?.approvedTakeoffs || [];
-      let bestT = null, bestD = Infinity;
-      for (const to of tlist) {
-        if (!Number.isFinite(to.lat) || !Number.isFinite(to.lon)) continue;
-        const d = haversineKm(userLocation.lat, userLocation.lon, to.lat, to.lon);
-        if (d < bestD) { bestD = d; bestT = to; }
-      }
-      if (bestT) {
-        // Autovincula con la estacion integrada con datos recientes mas cercana al despegue
-        const all = await ensureAllStations();
-        const LINK_KM = 30;
-        let best = null, bestKm = LINK_KM + 1;
-        const pools = [
-          (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
-          (all.aemet || []),
-          (all.holfuy || []),
-        ];
-        for (const pool of pools) for (const st of pool) {
-          if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
-          if (!isStationRecent(st, 24)) continue;
-          const km = haversineKm(bestT.lat, bestT.lon, st.lat, st.lon);
-          if (km < bestKm) { bestKm = km; best = st; }
-        }
-        if (best) {
-          selectStation(
-            { id: best.id, provider: best.provider, name: bestT.name, shortName: bestT.shortName || bestT.name, lat: bestT.lat, lon: bestT.lon },
-            { criteria: bestT.criteria || null, originId: bestT.id }
-          );
-          _defaultResolvedOnce = true;
-          return;
-        }
-      }
-    } catch (e) { console.warn("resolveDefaultTakeoff nearest takeoff:", e); }
-  }
-  // 4) Cenes (solo si aún no se resolvió en esta sesión)
+  // (5) Cenes (solo si aun no se resolvio en esta sesion)
   if (!_defaultResolvedOnce) {
     selectStation({ ...DEFAULT_STATION });
     _defaultResolvedOnce = true;
