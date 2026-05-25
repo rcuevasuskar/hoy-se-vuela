@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.158";
+const APP_VERSION = "v0.159";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -2199,6 +2199,40 @@ function _volandooSnapCached(url) {
   }
   return c?.snap || null;
 }
+
+// v158: fallback final para el verdict de despegues comunitarios que no
+// tienen volandooUrl ni estacion vinculada con datos: usamos el viento
+// actual de Open-Meteo (current_weather) cacheado por coordenada redondeada.
+const _omNowCache = new Map(); // key "lat,lon" -> { ts, snap }
+const _omNowInflight = new Set();
+const OM_NOW_CACHE_MS = 10 * 60 * 1000;
+function _omNowSnapCached(lat, lon) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+  const c = _omNowCache.get(key);
+  const fresh = c && (Date.now() - c.ts) < OM_NOW_CACHE_MS;
+  if (!fresh && !_omNowInflight.has(key)) {
+    _omNowInflight.add(key);
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kmh&timezone=auto`;
+    fetchJson(url).then(j => {
+      const cw = j?.current;
+      const snap = cw ? {
+        avg: cw.wind_speed_10m ?? null,
+        max: cw.wind_gusts_10m ?? null,
+        dir: cw.wind_direction_10m ?? null,
+      } : null;
+      _omNowCache.set(key, { ts: Date.now(), snap });
+      if (typeof tsRunSearch === "function") { try { tsRunSearch(); } catch {} }
+    }).catch(e => {
+      _omNowCache.set(key, { ts: Date.now(), snap: null });
+      console.warn("[om-now] cache fetch", key, e?.message || e);
+    }).finally(() => {
+      _omNowInflight.delete(key);
+    });
+  }
+  return c?.snap || null;
+}
+
 function parseWindyCoords(url) {
   if (!url) return null;
   const s = String(url);
@@ -2667,19 +2701,19 @@ function _renderSoundingFor(ts) {
       if (!yScale || !chart.$windPts) return;
       const xBase = chartArea.right + 6;
       const arrowSize = 14;
-      const minGap = 14;
+      const minAltGap = 500; // metros minimos entre flechas consecutivas
       ctx.font = "bold 11px system-ui, sans-serif";
       ctx.textBaseline = "middle";
       ctx.textAlign = "left";
-      // Ordena por altura ascendente y descarta los que quedarían solapados
-      // visualmente con el anterior (manteniendo la posición real de cada uno).
+      // Renderizamos la flecha mas baja y, a partir de ahi, solo las que
+      // esten al menos 500 m por encima de la ultima dibujada.
       const sorted = chart.$windPts.slice().sort((a, b) => a.alt - b.alt);
-      let lastY = -Infinity;
+      let lastAlt = -Infinity;
       for (const p of sorted) {
+        if (p.alt - lastAlt < minAltGap) continue;
         const yPx = yScale.getPixelForValue(p.alt);
         if (yPx < chartArea.top || yPx > chartArea.bottom) continue;
-        if (yPx - lastY < minGap) continue; // omite la flecha que se solaparía
-        lastY = yPx;
+        lastAlt = p.alt;
         // Flecha
         ctx.save();
         ctx.translate(xBase + arrowSize / 2, yPx);
@@ -6065,6 +6099,12 @@ function renderSearchRow(s, ctx) {
           dir: link.wind_heading ?? null,
         };
         if (ls.avg != null || ls.dir != null) snap = ls;
+      }
+      // v158: ultimo recurso para que despegues como Pegalajar (sin volandooUrl
+      // y sin estacion vinculada con datos) tambien muestren borde de color.
+      if (!snap && Number.isFinite(s.lat) && Number.isFinite(s.lon)) {
+        const om = _omNowSnapCached(s.lat, s.lon);
+        if (om && (om.avg != null || om.dir != null)) snap = om;
       }
       if (snap) {
         const crit = s.raw?.criteria || currentTakeoffCriteria || null;
