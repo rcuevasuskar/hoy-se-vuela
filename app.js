@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.170";
+const APP_VERSION = "v0.171";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -6849,6 +6849,14 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       return d ? JSON.stringify(d.criteria ?? null) : null;
     })();
     const submitResult = await window.PCAuth.submitTakeoff(submittedPayload);
+    // v171: log explicito para diagnosticar por que un edit no persiste.
+    console.info("[to] submit result", {
+      targetId: _suggestTargetId,
+      isAdmin: !!window.PCAuth?.isAdmin,
+      autoApplied: !!submitResult?.autoApplied,
+      submitId: submitResult?.id,
+      payload: submittedPayload,
+    });
     // v161/v162: al editar/sugerir cambios sobre un despegue comunitario
     // existente, limpiamos cualquier override personal (🛠) guardado para ese
     // mismo despegue. v161 solo borraba la clave "to:<targetId>", pero el
@@ -6942,8 +6950,17 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       }
     }
     msg.style.color = "#2ecc71";
-    msg.textContent = _suggestTargetId ? t("to.suggest_ok") : t("to.submit_ok");
-    setTimeout(closeTakeoffSubmit, 1400);
+    // v171: deja claro si la edicion se aplico directamente (admin) o si quedo
+    // pendiente de revision. Antes mostraba siempre "ok" y el usuario pensaba
+    // que se habia guardado.
+    if (_suggestTargetId) {
+      msg.textContent = submitResult?.autoApplied
+        ? (t("to.suggest_ok") + " • aplicado directamente (admin) • doc " + (submitResult.id || _suggestTargetId))
+        : (t("to.suggest_ok") + " • pendiente de revision (no aplicado)");
+    } else {
+      msg.textContent = t("to.submit_ok");
+    }
+    setTimeout(closeTakeoffSubmit, submitResult?.autoApplied || !_suggestTargetId ? 1400 : 3000);
   } catch (e) {
     console.error("[to] submit", e);
     msg.textContent = t("to.submit_err") + " [" + (e?.code || e?.message || "?") + "]";
