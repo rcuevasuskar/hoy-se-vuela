@@ -898,10 +898,10 @@ main {
   pointer-events: none;
   z-index: 1;
 }
-.cardinal.n { transform: translate(-50%, -50%) translateY(-45px); }
-.cardinal.s { transform: translate(-50%, -50%) translateY( 45px); }
-.cardinal.e { transform: translate(-50%, -50%) translateX( 45px); }
-.cardinal.w { transform: translate(-50%, -50%) translateX(-45px); }
+.cardinal.n { transform: translate(-50%, -50%) translateY(-54px); }
+.cardinal.s { transform: translate(-50%, -50%) translateY( 54px); }
+.cardinal.e { transform: translate(-50%, -50%) translateX( 54px); }
+.cardinal.w { transform: translate(-50%, -50%) translateX(-54px); }
 
 .sector {
   position: absolute;
