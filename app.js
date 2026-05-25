@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.146";
+const APP_VERSION = "v0.147";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -183,6 +183,16 @@ const I18N = {
     "to.windy_ph": "https://www.windy.com/?…",
     "to.volandoo_label": "URL de la estación en Volandoo (opcional)",
     "to.volandoo_ph": "https://volandoo.com/weather/…",
+    "menu.add_takeoff": "Añadir despegue",
+    "menu.add_takeoff_tip": "Crear un despegue nuevo a partir de un lugar buscado en el mapa",
+    "to.geocode_label": "Buscar un lugar en el mapa",
+    "to.geocode_ph": "Ej: Pegalajar, Jaén",
+    "to.geocode_search": "🔎 Buscar",
+    "to.geocode_empty": "Sin resultados",
+    "to.ref_station_label": "Estación de referencia (opcional, dentro de 30 km)",
+    "to.find_stations": "📡 Buscar",
+    "to.ref_need_coords": "Primero rellena la latitud y la longitud.",
+    "to.ref_empty": "No hay estaciones integradas a menos de 30 km.",
     "to.pick_map": "📍 Usar coordenadas actuales del mapa",
     "to.submit": "Enviar para revisión",
     "to.cancel": "Cancelar",
@@ -483,6 +493,16 @@ const I18N = {
     "to.windy_ph": "https://www.windy.com/?…",
     "to.volandoo_label": "Volandoo station URL (optional)",
     "to.volandoo_ph": "https://volandoo.com/weather/…",
+    "menu.add_takeoff": "Add takeoff",
+    "menu.add_takeoff_tip": "Create a new takeoff from a place searched on the map",
+    "to.geocode_label": "Search a place on the map",
+    "to.geocode_ph": "e.g. Pegalajar, Jaén",
+    "to.geocode_search": "🔎 Search",
+    "to.geocode_empty": "No results",
+    "to.ref_station_label": "Reference station (optional, within 30 km)",
+    "to.find_stations": "📡 Find",
+    "to.ref_need_coords": "Fill latitude and longitude first.",
+    "to.ref_empty": "No integrated stations within 30 km.",
     "to.pick_map": "📍 Use current map coordinates",
     "to.submit": "Submit for review",
     "to.cancel": "Cancel",
@@ -768,6 +788,16 @@ const I18N = {
     "to.windy_ph": "https://www.windy.com/?…",
     "to.volandoo_label": "Volandoo-Station URL (optional)",
     "to.volandoo_ph": "https://volandoo.com/weather/…",
+    "menu.add_takeoff": "Startplatz hinzufügen",
+    "menu.add_takeoff_tip": "Neuen Startplatz aus einem auf der Karte gesuchten Ort anlegen",
+    "to.geocode_label": "Ort auf der Karte suchen",
+    "to.geocode_ph": "z. B. Pegalajar, Jaén",
+    "to.geocode_search": "🔎 Suchen",
+    "to.geocode_empty": "Keine Ergebnisse",
+    "to.ref_station_label": "Referenzstation (optional, im Umkreis von 30 km)",
+    "to.find_stations": "📡 Suchen",
+    "to.ref_need_coords": "Bitte zuerst Breiten- und Längengrad ausfüllen.",
+    "to.ref_empty": "Keine integrierten Stationen innerhalb von 30 km.",
     "to.pick_map": "📍 Aktuelle Kartenkoordinaten verwenden",
     "to.submit": "Zur Prüfung senden",
     "to.cancel": "Abbrechen",
@@ -1053,6 +1083,16 @@ const I18N = {
     "to.windy_ph": "https://www.windy.com/?…",
     "to.volandoo_label": "URL station Volandoo (optionnelle)",
     "to.volandoo_ph": "https://volandoo.com/weather/…",
+    "menu.add_takeoff": "Ajouter un décollage",
+    "menu.add_takeoff_tip": "Créer un nouveau décollage à partir d'un lieu recherché sur la carte",
+    "to.geocode_label": "Rechercher un lieu sur la carte",
+    "to.geocode_ph": "Ex : Pegalajar, Jaén",
+    "to.geocode_search": "🔎 Rechercher",
+    "to.geocode_empty": "Aucun résultat",
+    "to.ref_station_label": "Station de référence (optionnelle, dans un rayon de 30 km)",
+    "to.find_stations": "📡 Rechercher",
+    "to.ref_need_coords": "Remplis d'abord la latitude et la longitude.",
+    "to.ref_empty": "Aucune station intégrée à moins de 30 km.",
     "to.pick_map": "📍 Utiliser les coordonnées de la carte",
     "to.submit": "Envoyer pour validation",
     "to.cancel": "Annuler",
@@ -1338,6 +1378,16 @@ const I18N = {
     "to.windy_ph": "https://www.windy.com/?…",
     "to.volandoo_label": "Volandoo estazioaren URLa (aukerakoa)",
     "to.volandoo_ph": "https://volandoo.com/weather/…",
+    "menu.add_takeoff": "Aireratzea gehitu",
+    "menu.add_takeoff_tip": "Mapan bilatutako leku batetik aireratze berri bat sortu",
+    "to.geocode_label": "Mapan leku bat bilatu",
+    "to.geocode_ph": "Adib: Pegalajar, Jaén",
+    "to.geocode_search": "🔎 Bilatu",
+    "to.geocode_empty": "Emaitzarik ez",
+    "to.ref_station_label": "Erreferentziazko estazioa (aukerakoa, 30 km-ra)",
+    "to.find_stations": "📡 Bilatu",
+    "to.ref_need_coords": "Lehenik latitudea eta longitudea bete.",
+    "to.ref_empty": "Ez dago estazio integraturik 30 km-ra.",
     "to.pick_map": "📍 Erabili maparen koordenatuak",
     "to.submit": "Bidali berrikusteko",
     "to.cancel": "Utzi",
@@ -1577,6 +1627,16 @@ const I18N = {
     "to.windy_ph": "https://www.windy.com/?…",
     "to.volandoo_label": "URL de l’estació a Volandoo (opcional)",
     "to.volandoo_ph": "https://volandoo.com/weather/…",
+    "menu.add_takeoff": "Afegir enlairament",
+    "menu.add_takeoff_tip": "Crear un enlairament nou a partir d'un lloc cercat al mapa",
+    "to.geocode_label": "Cerca un lloc al mapa",
+    "to.geocode_ph": "Ex: Pegalajar, Jaén",
+    "to.geocode_search": "🔎 Cercar",
+    "to.geocode_empty": "Sense resultats",
+    "to.ref_station_label": "Estació de referència (opcional, fins a 30 km)",
+    "to.find_stations": "📡 Cercar",
+    "to.ref_need_coords": "Omple primer la latitud i la longitud.",
+    "to.ref_empty": "No hi ha estacions integrades a menys de 30 km.",
     "to.pick_map": "📍 Utilitza les coordenades del mapa",
     "to.submit": "Envia per revisar",
     "to.cancel": "Cancel·la",
@@ -4215,6 +4275,137 @@ document.getElementById("helpModal")?.addEventListener("click", (e) => {
   if (e.target.id === "helpModal") closeHelp();
 });
 
+// v147: "Anadir despegue" abre el formulario en blanco (sin prefill desde el
+// despegue actual). Requiere usuario autenticado no anonimo.
+document.getElementById("addTakeoffBtn")?.addEventListener("click", () => {
+  const u = window.PCAuth?.user;
+  if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
+  // Cierra el menu de usuario si esta abierto.
+  document.getElementById("userMenuPanel")?.setAttribute("hidden", "");
+  openTakeoffSubmit({});
+});
+
+// v147: geocodificador (OSM Nominatim) que rellena lat/lon en el formulario
+// de alta de despegue. Sin clave; respetamos el User-Agent recomendado.
+async function geocodeAddress(query) {
+  const q = String(query || "").trim();
+  if (q.length < 3) return [];
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=8&addressdetails=1&q=${encodeURIComponent(q)}`;
+  try {
+    const res = await fetch(url, { headers: { "Accept-Language": currentLang || "es" } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (e) { console.warn("[geocode]", e); return []; }
+}
+
+document.getElementById("toGeocodeBtn")?.addEventListener("click", async () => {
+  const inp = document.getElementById("toGeocodeInput");
+  const out = document.getElementById("toGeocodeResults");
+  if (!inp || !out) return;
+  out.hidden = false;
+  out.innerHTML = `<div class="to-geocode-loading">${t("loading")}</div>`;
+  const items = await geocodeAddress(inp.value);
+  if (!items.length) {
+    out.innerHTML = `<div class="to-geocode-empty">${t("to.geocode_empty")}</div>`;
+    return;
+  }
+  out.innerHTML = "";
+  for (const it of items) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "to-geocode-item";
+    btn.innerHTML = `<b>${escapeHtml(it.display_name || "")}</b><br/><small>${Number(it.lat).toFixed(5)}, ${Number(it.lon).toFixed(5)}</small>`;
+    btn.addEventListener("click", () => {
+      document.getElementById("toLat").value = Number(it.lat).toFixed(5);
+      document.getElementById("toLon").value = Number(it.lon).toFixed(5);
+      const nameEl = document.getElementById("toName");
+      if (nameEl && !nameEl.value) {
+        // Toma la primera parte del display_name (la mas especifica) como sugerencia.
+        nameEl.value = String(it.display_name || "").split(",")[0].trim();
+      }
+      out.hidden = true;
+      // Resetea la seleccion de estacion de referencia: las coords cambiaron.
+      _toClearStationRef();
+    });
+    out.appendChild(btn);
+  }
+});
+document.getElementById("toGeocodeInput")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); document.getElementById("toGeocodeBtn")?.click(); }
+});
+
+// v147: estacion de referencia (opcional). Busca estaciones de cualquier
+// proveedor integrado (Pioupiou + AEMET + Holfuy) dentro de 30 km de las
+// coordenadas escritas en el formulario.
+function _toClearStationRef() {
+  const idEl = document.getElementById("toStationId"); if (idEl) idEl.value = "";
+  const sel = document.getElementById("toStationsSelected");
+  if (sel) { sel.hidden = true; sel.innerHTML = ""; }
+  const list = document.getElementById("toStationsList");
+  if (list) { list.hidden = true; list.innerHTML = ""; }
+}
+function _toRenderStationsList(stations) {
+  const list = document.getElementById("toStationsList");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!stations.length) {
+    list.innerHTML = `<div class="to-stations-empty">${t("to.ref_empty")}</div>`;
+    list.hidden = false;
+    return;
+  }
+  for (const s of stations) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "to-stations-item";
+    item.innerHTML = `<b>${escapeHtml(s.name)}</b> <small>· ${s.provider} · ${s.dist.toFixed(1)} km</small>`;
+    item.addEventListener("click", () => {
+      const idEl = document.getElementById("toStationId");
+      if (idEl) idEl.value = (s.provider === "pioupiou") ? String(s.rawId ?? s.id ?? "") : "";
+      const sel = document.getElementById("toStationsSelected");
+      if (sel) {
+        sel.hidden = false;
+        sel.innerHTML = `<span class="to-ref-pill">${escapeHtml(s.name)} · ${s.provider} · ${s.dist.toFixed(1)} km · <button type="button" class="to-ref-clear">✕</button></span>`;
+        sel.querySelector(".to-ref-clear")?.addEventListener("click", _toClearStationRef);
+      }
+      list.hidden = true;
+    });
+    list.appendChild(item);
+  }
+  list.hidden = false;
+}
+document.getElementById("toFindStationsBtn")?.addEventListener("click", async () => {
+  const lat = parseFloat(document.getElementById("toLat")?.value);
+  const lon = parseFloat(document.getElementById("toLon")?.value);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    alert(t("to.ref_need_coords"));
+    return;
+  }
+  const list = document.getElementById("toStationsList");
+  if (list) { list.hidden = false; list.innerHTML = `<div class="to-stations-loading">${t("loading")}</div>`; }
+  try {
+    const all = await ensureAllStations();
+    const flat = [];
+    for (const s of (all.pioupiou || [])) {
+      const ss = stationFromPioupiou(s); if (!ss) continue;
+      flat.push({ ...ss, dist: haversineKm(lat, lon, ss.lat, ss.lon) });
+    }
+    for (const s of (all.aemet || [])) {
+      if (s?.lat == null || s?.lon == null) continue;
+      flat.push({ provider: "aemet", id: s.id || s.idema, name: s.name || s.ubi || s.idema, lat: s.lat, lon: s.lon, dist: haversineKm(lat, lon, s.lat, s.lon) });
+    }
+    for (const s of (all.holfuy || [])) {
+      if (s?.lat == null || s?.lon == null) continue;
+      flat.push({ provider: "holfuy", id: s.id, name: s.name || ("Holfuy " + s.id), lat: s.lat, lon: s.lon, dist: haversineKm(lat, lon, s.lat, s.lon) });
+    }
+    const within = flat.filter(s => s.dist <= 30).sort((a, b) => a.dist - b.dist).slice(0, 20);
+    _toRenderStationsList(within);
+  } catch (e) {
+    console.warn("[to] find stations", e);
+    if (list) list.innerHTML = `<div class="to-stations-empty">${t("near.error")}</div>`;
+  }
+});
+
 document.querySelectorAll("#whRange button").forEach(btn => {
   btn.addEventListener("click", () => setWindHistoryHours(parseInt(btn.dataset.h, 10)));
 });
@@ -5395,6 +5586,9 @@ window.addEventListener("pcuserchange", (e) => {
   if (adminReviewBtn) adminReviewBtn.hidden = !isAdmin;
   const fbConsoleBtn = document.getElementById("firebaseConsoleBtn");
   if (fbConsoleBtn) fbConsoleBtn.hidden = !isAdmin;
+  // v147: "Anadir despegue" solo para usuarios autenticados (no anonimos).
+  const addTakeoffBtn = document.getElementById("addTakeoffBtn");
+  if (addTakeoffBtn) addTakeoffBtn.hidden = !user || user.isAnonymous;
   updateAdminPendingBadge();
   if (!prefs) return;
   let changed = false;
@@ -5539,9 +5733,11 @@ function openTakeoffSubmit(prefill) {
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
   document.getElementById("toSubmitMsg").textContent = "";
-  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax","toWindyUrl","toVolandooUrl"].forEach(id => {
+  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax","toWindyUrl","toVolandooUrl","toStationId","toGeocodeInput"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
+  _toClearStationRef?.();
+  const gres = document.getElementById("toGeocodeResults"); if (gres) { gres.hidden = true; gres.innerHTML = ""; }
   // Restaura título y botón por si veníamos de modo sugerencia (será sobreescrito por openTakeoffSuggest si aplica)
   if (!prefill || !prefill._suggesting) {
     _suggestTargetId = null;
@@ -5580,6 +5776,9 @@ function openTakeoffSubmit(prefill) {
     if (prefill.notes) document.getElementById("toNotes").value = String(prefill.notes);
     if (prefill.windyUrl) document.getElementById("toWindyUrl").value = String(prefill.windyUrl);
     if (prefill.volandooUrl) document.getElementById("toVolandooUrl").value = String(prefill.volandooUrl);
+    if (prefill.stationId != null && prefill.stationId !== "") {
+      const idEl = document.getElementById("toStationId"); if (idEl) idEl.value = String(prefill.stationId);
+    }
     setTimeout(() => { document.getElementById("toName")?.focus(); document.getElementById("toName")?.select(); }, 50);
   } else {
     const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
@@ -5638,6 +5837,7 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       notes: document.getElementById("toNotes").value,
       windyUrl: document.getElementById("toWindyUrl")?.value || null,
       volandooUrl: document.getElementById("toVolandooUrl")?.value || null,
+      stationId: document.getElementById("toStationId")?.value || null,
       criteria,
       targetId: _suggestTargetId || null,
     });

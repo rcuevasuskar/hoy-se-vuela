@@ -59,6 +59,10 @@
               <span class="um-item-icon" aria-hidden="true">❓</span>
               <span class="um-item-label" data-i18n="menu.help">Ayuda</span>
             </button>
+            <button id="addTakeoffBtn" class="um-item" type="button" role="menuitem" hidden data-i18n-title="menu.add_takeoff_tip" aria-haspopup="dialog">
+              <span class="um-item-icon" aria-hidden="true">➕</span>
+              <span class="um-item-label" data-i18n="menu.add_takeoff">Añadir despegue</span>
+            </button>
             <button id="adminReviewBtn" class="um-item" type="button" role="menuitem" hidden data-i18n-title="to.admin_open">
               <span class="um-item-icon" aria-hidden="true">🛡️</span>
               <span class="um-item-label" data-i18n="menu.admin_review">Revisar despegues</span>
@@ -411,6 +415,16 @@
       <label class="to-field-block"><span data-i18n="to.alt_label">Altitud (m)</span>
         <input id="toAlt" type="number" step="1" placeholder="Altitud (m)" data-i18n-placeholder="to.alt_ph" />
       </label>
+
+      <!-- v147: buscador de direccion (OSM Nominatim) que rellena lat/lon -->
+      <label class="to-field-block"><span data-i18n="to.geocode_label">Buscar un lugar en el mapa</span>
+        <div class="to-geocode-row">
+          <input id="toGeocodeInput" type="text" placeholder="Ej: Pegalajar, Jaén" data-i18n-placeholder="to.geocode_ph" />
+          <button id="toGeocodeBtn" class="auth-secondary" type="button" data-i18n="to.geocode_search">🔎 Buscar</button>
+        </div>
+        <div id="toGeocodeResults" class="to-geocode-results" hidden></div>
+      </label>
+
       <div class="to-row">
         <label class="to-field"><span data-i18n="to.lat_label">Latitud</span>
           <input id="toLat" type="number" step="0.00001" placeholder="Latitud" data-i18n-placeholder="to.lat_ph" />
@@ -420,6 +434,17 @@
         </label>
       </div>
       <input id="toOrient" type="hidden" />
+
+      <!-- v147: estacion de referencia (opcional, dentro de 30 km de las coords) -->
+      <div class="to-field-block">
+        <div class="to-station-ref-header">
+          <span data-i18n="to.ref_station_label">Estación de referencia (opcional, dentro de 30 km)</span>
+          <button id="toFindStationsBtn" class="auth-link" type="button" data-i18n="to.find_stations">📡 Buscar</button>
+        </div>
+        <input id="toStationId" type="hidden" />
+        <div id="toStationsList" class="to-stations-list" hidden></div>
+        <div id="toStationsSelected" class="to-stations-selected" hidden></div>
+      </div>
 
       <label class="to-field-block"><span data-i18n="to.notes_label">Notas (acceso, peligros…)</span>
         <textarea id="toNotes" rows="3" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
