@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.155";
+const APP_VERSION = "v0.156";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -235,6 +235,8 @@ const I18N = {
     "snd.col_ws": "Viento (km/h)",
     "snd.col_wd": "Dir",
     "snd.col_cld": "Nubes (%)",
+    "snd.show_raw": "Datos en bruto por nivel",
+    "snd.wind_axis": "Viento (km/h)",
     "to.propose_tip": "Esta estación no tiene datos de despegue registrados aún. Pulsa para proponer su alta (nombre, orientaciones y criterios). Lo revisará un administrador.",
     "to.suggest_tip": "Este despegue ya está en la comunidad. Pulsa para sugerir cambios (nombre, coords, orientaciones o criterios).",
     "co.title": "Mis criterios para este despegue",
@@ -563,6 +565,8 @@ const I18N = {
     "snd.col_ws": "Wind (km/h)",
     "snd.col_wd": "Dir",
     "snd.col_cld": "Clouds (%)",
+    "snd.show_raw": "Raw data per level",
+    "snd.wind_axis": "Wind (km/h)",
     "to.propose_tip": "This station has no takeoff data yet. Click to propose adding it (name, orientations and criteria). An admin will review it.",
     "to.suggest_tip": "This takeoff is already in the community. Click to suggest changes (name, coords, orientations or criteria).",
     "co.title": "My criteria for this takeoff",
@@ -876,6 +880,8 @@ const I18N = {
     "snd.col_ws": "Wind (km/h)",
     "snd.col_wd": "Richt.",
     "snd.col_cld": "Wolken (%)",
+    "snd.show_raw": "Rohdaten pro Niveau",
+    "snd.wind_axis": "Wind (km/h)",
     "to.propose_tip": "Diese Station hat noch keine Startplatzdaten. Klicke, um sie vorzuschlagen (Name, Ausrichtungen, Kriterien). Ein Admin prüft.",
     "to.suggest_tip": "Dieser Startplatz ist bereits in der Community. Klicke, um Änderungen vorzuschlagen.",
     "co.title": "Meine Kriterien für diesen Startplatz",
@@ -1189,6 +1195,8 @@ const I18N = {
     "snd.col_ws": "Vent (km/h)",
     "snd.col_wd": "Dir",
     "snd.col_cld": "Nuages (%)",
+    "snd.show_raw": "Données brutes par niveau",
+    "snd.wind_axis": "Vent (km/h)",
     "to.propose_tip": "Cette station n'a pas encore de données de déco. Cliquez pour proposer son ajout. Un admin l'examinera.",
     "to.suggest_tip": "Ce déco est déjà dans la communauté. Cliquez pour suggérer des modifications.",
     "co.title": "Mes critères pour ce déco",
@@ -1502,6 +1510,8 @@ const I18N = {
     "snd.col_ws": "Haizea (km/h)",
     "snd.col_wd": "Norabidea",
     "snd.col_cld": "Hodeiak (%)",
+    "snd.show_raw": "Datu gordinak mailaka",
+    "snd.wind_axis": "Haizea (km/h)",
     "to.propose_tip": "Estazio honek ez du oraindik irteguia daturik. Sakatu proposatzeko (izena, orientazioak, irizpideak). Administratzaileak berrikusiko du.",
     "to.suggest_tip": "Irteguia hau jada komunitatean dago. Sakatu aldaketak proposatzeko.",
     "co.title": "Nire irizpideak irteguia honetarako",
@@ -1769,6 +1779,8 @@ const I18N = {
     "snd.col_ws": "Vent (km/h)",
     "snd.col_wd": "Dir",
     "snd.col_cld": "Núvols (%)",
+    "snd.show_raw": "Dades en brut per nivell",
+    "snd.wind_axis": "Vent (km/h)",
     "to.propose_tip": "Aquesta estació encara no té dades d'enlairament. Prem per proposar-ne l'alta. Un administrador ho revisarà.",
     "to.suggest_tip": "Aquest enlairament ja està a la comunitat. Prem per suggerir canvis.",
     "co.title": "Els meus criteris per a aquest enlairament",
@@ -2468,8 +2480,61 @@ function _soundingBuildProfile(data, i, takeoffAlt) {
   return profile;
 }
 
-let _sndWindChart = null, _sndTempChart = null;
+let _sndTempChart = null;
 let _sndState = { lat: null, lon: null, takeoff: null, data: null, model: null, targetTs: null };
+
+// v156: color de la flecha de viento en el sondeo según velocidad
+// comparada con los criterios del despegue (windMin/windMax). Poco viento
+// en altura siempre se considera bueno → verde si spd ≤ windMax.
+function _soundingWindColor(spd) {
+  if (spd == null || !Number.isFinite(spd)) return "#888";
+  const c = currentTakeoffCriteria || {};
+  const wmax = Number.isFinite(c.windMax) ? c.windMax : 25;
+  const gmax = Number.isFinite(c.gustMax) ? c.gustMax : Math.max(wmax * 1.6, 35);
+  if (spd <= wmax) return "#2ecc71";          // ideal: por debajo del máximo medio
+  if (spd <= gmax) return "#f1c40f";          // aceptable hasta la racha máx tolerada
+  return "#e74c3c";                            // demasiado viento
+}
+
+// v156: punto canvas con flecha de viento + valor numérico en km/h al lado,
+// para usarlo como pointStyle de Chart.js en el sondeo.
+function _makeWindArrowWithLabel(deg, color, spdLabel, size = 22) {
+  const dpr = window.devicePixelRatio || 1;
+  const arrow = size;
+  const padText = 3;
+  const ctx0 = document.createElement("canvas").getContext("2d");
+  ctx0.font = "bold 11px system-ui, sans-serif";
+  const textW = Math.ceil(ctx0.measureText(spdLabel).width);
+  const w = arrow + padText + textW + 4;
+  const h = arrow;
+  const cv = document.createElement("canvas");
+  cv.width = w * dpr; cv.height = h * dpr;
+  cv.style.width = w + "px"; cv.style.height = h + "px";
+  const ctx = cv.getContext("2d");
+  ctx.scale(dpr, dpr);
+  // Flecha centrada en la mitad izquierda.
+  ctx.save();
+  ctx.translate(arrow / 2, h / 2);
+  const rot = ((deg || 0) + 180) * Math.PI / 180;
+  ctx.rotate(rot);
+  ctx.fillStyle = color || "#888";
+  const s = arrow / 2;
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.lineTo(s * 0.7, s * 0.6);
+  ctx.lineTo(0, s * 0.25);
+  ctx.lineTo(-s * 0.7, s * 0.6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+  // Texto km/h junto a la flecha.
+  ctx.fillStyle = color || "#888";
+  ctx.font = "bold 11px system-ui, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  ctx.fillText(spdLabel, arrow + padText, h / 2);
+  return cv;
+}
 
 function openSounding(targetTs) {
   const lat = Number(currentTakeoff?.lat);
@@ -2494,7 +2559,8 @@ function openSounding(targetTs) {
   document.getElementById("sndStatus").hidden = false;
   document.getElementById("sndStatus").textContent = t("snd.loading");
   modal.querySelector(".sounding-charts").hidden = true;
-  document.getElementById("sndTable").hidden = true;
+  const details = document.getElementById("sndTableDetails");
+  if (details) { details.hidden = true; details.open = false; }
   document.getElementById("sndMeta").innerHTML = "";
   modal.hidden = false;
   // Cargar y renderizar.
@@ -2513,7 +2579,6 @@ function openSounding(targetTs) {
 function closeSounding() {
   const m = document.getElementById("soundingModal");
   if (m) m.hidden = true;
-  if (_sndWindChart) { try { _sndWindChart.destroy(); } catch {} _sndWindChart = null; }
   if (_sndTempChart) { try { _sndTempChart.destroy(); } catch {} _sndTempChart = null; }
 }
 
@@ -2552,65 +2617,29 @@ function _renderSoundingFor(ts) {
   document.getElementById("sndStatus").hidden = true;
   const modal = document.getElementById("soundingModal");
   modal.querySelector(".sounding-charts").hidden = false;
-  document.getElementById("sndTable").hidden = false;
+  const details = document.getElementById("sndTableDetails");
+  if (details) details.hidden = false;
 
-  const alts = profile.map(p => p.alt);
-  // --- Gráfico de viento (velocidad vs altitud, con flechas según dirección). ---
-  const windPts = profile.filter(p => p.ws != null && p.wd != null).map(p => ({ x: p.ws, y: p.alt, dir: p.wd }));
-  const arrowImgs = windPts.map(p => makeArrowPoint(p.dir, dirColor(p.dir), 14));
-  const windCtx = document.getElementById("sndWindChart").getContext("2d");
-  if (_sndWindChart) { try { _sndWindChart.destroy(); } catch {} }
-  _sndWindChart = new Chart(windCtx, {
-    type: "scatter",
-    data: {
-      datasets: [
-        {
-          label: t("snd.wind_chart"),
-          data: windPts,
-          showLine: true,
-          borderColor: "rgba(78,161,255,0.9)",
-          backgroundColor: "rgba(78,161,255,0.2)",
-          pointStyle: arrowImgs,
-          pointRadius: 7,
-          tension: 0.2,
-        },
-      ],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        title: { display: true, text: t("snd.wind_chart"), color: "#e8eef7" },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const p = ctx.raw;
-              const info = classifyDirection(p.dir);
-              return `${Math.round(p.y)} m · ${fmtNum(p.x)} km/h · ${info.name} (${Math.round(p.dir)}°)`;
-            },
-          },
-        },
-      },
-      scales: {
-        x: { title: { display: true, text: "km/h", color: "#8aa0bb" },
-             ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" }, beginAtZero: true },
-        y: { title: { display: true, text: "m", color: "#8aa0bb" },
-             ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
-      },
-    },
-  });
-
-  // --- Gráfico de temperatura y rocío vs altitud. ---
+  // --- Gráfico único: temperatura/rocío (eje X inferior, °C) +
+  // viento (eje X superior, km/h) sobre el mismo eje Y de altitud.
   const tPts  = profile.filter(p => p.t  != null).map(p => ({ x: p.t,  y: p.alt }));
   const tdPts = profile.filter(p => p.td != null).map(p => ({ x: p.td, y: p.alt }));
+  const windPts = profile.filter(p => p.ws != null && p.wd != null)
+    .map(p => ({ x: p.ws, y: p.alt, dir: p.wd, spd: p.ws }));
+  const windStyles = windPts.map(p => {
+    const col = _soundingWindColor(p.spd);
+    return _makeWindArrowWithLabel(p.dir, col, `${Math.round(p.spd)}`, 20);
+  });
   const tempCtx = document.getElementById("sndTempChart").getContext("2d");
   if (_sndTempChart) { try { _sndTempChart.destroy(); } catch {} }
   _sndTempChart = new Chart(tempCtx, {
     type: "scatter",
     data: {
       datasets: [
-        { label: "T", data: tPts, showLine: true, borderColor: "rgba(231,76,60,0.9)", backgroundColor: "rgba(231,76,60,0.2)", pointRadius: 3, tension: 0.2 },
-        { label: "Td", data: tdPts, showLine: true, borderColor: "rgba(46,204,113,0.9)", backgroundColor: "rgba(46,204,113,0.2)", pointRadius: 3, tension: 0.2 },
+        { label: "T",  data: tPts,  showLine: true, borderColor: "rgba(231,76,60,0.9)",  backgroundColor: "rgba(231,76,60,0.2)",  pointRadius: 3, tension: 0.2, xAxisID: "x" },
+        { label: "Td", data: tdPts, showLine: true, borderColor: "rgba(46,204,113,0.9)", backgroundColor: "rgba(46,204,113,0.2)", pointRadius: 3, tension: 0.2, xAxisID: "x" },
+        { label: t("snd.wind_axis"), data: windPts, showLine: false,
+          pointStyle: windStyles, pointRadius: 14, xAxisID: "xWind" },
       ],
     },
     options: {
@@ -2618,18 +2647,33 @@ function _renderSoundingFor(ts) {
       plugins: {
         legend: { labels: { color: "#e8eef7" } },
         title: { display: true, text: t("snd.temp_chart"), color: "#e8eef7" },
-        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmtNum(ctx.parsed.x)} °C @ ${Math.round(ctx.parsed.y)} m` } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              if (ctx.dataset.label === t("snd.wind_axis")) {
+                const p = ctx.raw;
+                const info = classifyDirection(p.dir);
+                return `${Math.round(p.y)} m · ${fmtNum(p.spd)} km/h · ${info.name} (${Math.round(p.dir)}°)`;
+              }
+              return `${ctx.dataset.label}: ${fmtNum(ctx.parsed.x)} °C @ ${Math.round(ctx.parsed.y)} m`;
+            },
+          },
+        },
       },
       scales: {
-        x: { title: { display: true, text: "°C", color: "#8aa0bb" },
+        x: { type: "linear", position: "bottom",
+             title: { display: true, text: "°C", color: "#e57777" },
              ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
+        xWind: { type: "linear", position: "top",
+             title: { display: true, text: t("snd.wind_axis"), color: "#7fbfff" },
+             ticks: { color: "#8aa0bb" }, grid: { display: false }, beginAtZero: true },
         y: { title: { display: true, text: "m", color: "#8aa0bb" },
              ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
       },
     },
   });
 
-  // --- Tabla de niveles. ---
+  // --- Tabla colapsable de niveles. ---
   const tbl = document.getElementById("sndTable");
   const rows = profile.slice().reverse().map(p => {
     const info = (p.wd != null) ? classifyDirection(p.wd) : null;

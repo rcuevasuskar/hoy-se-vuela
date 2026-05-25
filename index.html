@@ -520,10 +520,12 @@
       <div id="sndBody" class="sounding-body">
         <div id="sndStatus" class="sounding-status" data-i18n="snd.loading">Cargando…</div>
         <div class="sounding-charts" hidden>
-          <div class="sounding-chart-wrap"><canvas id="sndWindChart"></canvas></div>
           <div class="sounding-chart-wrap"><canvas id="sndTempChart"></canvas></div>
         </div>
-        <div id="sndTable" class="sounding-table" hidden></div>
+        <details id="sndTableDetails" class="sounding-details" hidden>
+          <summary data-i18n="snd.show_raw">Datos en bruto por nivel</summary>
+          <div id="sndTable" class="sounding-table"></div>
+        </details>
       </div>
       <div class="sounding-footer">
         <a id="sndOpenWindy" class="auth-btn" target="_blank" rel="noopener" data-i18n="snd.open_windy">Abrir en Windy</a>
