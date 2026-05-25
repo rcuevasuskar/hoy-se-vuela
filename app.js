@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.168";
+const APP_VERSION = "v0.169";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5688,15 +5688,16 @@ function renderCurrentTakeoffActions() {
   const windyHref = (doc2?.windyUrl && /^https?:/i.test(doc2.windyUrl))
     ? doc2.windyUrl
     : soundingHref;
-  if (windyHref) {
-    actions.push({ icon: "🌬️", label: "Windy", href: windyHref });
-  }
+  // v168: orden solicitado: ✎ Editar, 📈 Ver sondeo, 🌬️ Ver Windy, 🪶 Volandoo.
   if (Number.isFinite(lat) && Number.isFinite(lon)) {
     actions.push({
       icon: "📈",
-      label: t("snd.btn"),
+      label: "Ver sondeo",
       run: () => openSounding(Date.now()),
     });
+  }
+  if (windyHref) {
+    actions.push({ icon: "🌬️", label: "Ver Windy", href: windyHref });
   }
   if (doc2?.volandooUrl && /^https?:/i.test(doc2.volandooUrl)) {
     actions.push({ icon: "🪶", label: "Volandoo", href: doc2.volandooUrl });
@@ -5712,9 +5713,16 @@ function renderCurrentTakeoffActions() {
     if (actions.length) {
       const label = document.createElement("span");
       label.className = "ts-actions-inline-label";
-      label.textContent = t("act.menu") + ":";
+      // v168: en minusculas, sin estilo uppercase en CSS.
+      label.textContent = "acciones:";
       inlineHost.appendChild(label);
-      for (const a of actions) {
+      actions.forEach((a, i) => {
+        if (i > 0) {
+          const sep = document.createElement("span");
+          sep.className = "ts-actions-inline-sep";
+          sep.textContent = "|";
+          inlineHost.appendChild(sep);
+        }
         const it = (a.href) ? document.createElement("a") : document.createElement("button");
         it.className = "ts-action-chip" + (a.isActive ? " is-active" : "");
         if (a.href) { it.href = a.href; it.target = "_blank"; it.rel = "noopener"; }
@@ -5723,7 +5731,7 @@ function renderCurrentTakeoffActions() {
         it.innerHTML = `<span class="ts-action-chip-icon">${a.icon}</span><span class="ts-action-chip-label">${escapeHtml(a.label)}</span>`;
         if (a.run) it.addEventListener("click", a.run);
         inlineHost.appendChild(it);
-      }
+      });
       inlineHost.hidden = false;
     } else {
       inlineHost.hidden = true;

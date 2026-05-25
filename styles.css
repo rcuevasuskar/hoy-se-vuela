@@ -466,57 +466,56 @@ header.topbar .ts-current {
 .ts-icon-btn.is-home { color: #ff9800; }
 .ts-icon-btn.is-alert { color: #4ea1ff; }
 
-/* v167: Acciones inline en el footer (junto a "Ultima lectura"). */
+/* v168: Acciones inline en el footer, en la misma linea que "Ultima lectura".
+   Texto plano (icono + label) separado por "|", sin estilo de chip/boton. */
+.last-update-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  margin-top: 8px;
+}
+.last-update-row .last-update { margin-top: 0; }
 .ts-actions-inline {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  font-size: .78rem;
+  gap: 4px 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
 }
 .ts-actions-inline-label {
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: .7rem;
+  font-size: 0.72rem;
   margin-right: 2px;
+}
+.ts-actions-inline-sep {
+  color: var(--muted);
+  opacity: 0.55;
+  user-select: none;
 }
 .ts-action-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px 3px 7px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 999px;
-  color: var(--fg, #e6e6e6);
-  font-size: .78rem;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--accent, #4ea1ff);
+  font-size: 0.72rem;
   line-height: 1.1;
   text-decoration: none;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .ts-action-chip:hover {
-  background: rgba(78,161,255,0.18);
-  border-color: rgba(78,161,255,0.5);
-  color: var(--fg);
+  text-decoration: underline;
+  color: var(--accent, #4ea1ff);
 }
-.ts-action-chip.is-active {
-  color: #f1c40f;
-  border-color: rgba(241,196,15,0.45);
-}
-.ts-action-chip-icon { font-size: .9rem; line-height: 1; }
+.ts-action-chip.is-active { color: #f1c40f; }
+.ts-action-chip-icon { font-size: 0.85rem; line-height: 1; }
 .ts-action-chip-label { white-space: nowrap; }
-:root[data-theme="light"] .ts-action-chip {
-  background: rgba(0,0,0,0.04);
-  border-color: rgba(0,0,0,0.14);
-}
-:root[data-theme="light"] .ts-action-chip:hover {
-  background: rgba(78,161,255,0.15);
-  border-color: rgba(78,161,255,0.45);
-}
 .ts-action-menu-list[hidden] { display: none; }
 .ts-action-menu-list {
   position: absolute;
