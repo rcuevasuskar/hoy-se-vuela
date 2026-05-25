@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.182";
+const APP_VERSION = "v0.183";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5229,14 +5229,19 @@ document.getElementById("toGeocodeInput")?.addEventListener("keydown", (e) => {
 // ubicacion.
 function _toClearStationRef() {
   const sel = document.getElementById("toStationId");
-  if (sel && sel.tagName === "SELECT") sel.value = "";
+  if (sel && sel.tagName === "SELECT") { sel.value = ""; delete sel.dataset.pendingValue; }
 }
 async function _toLoadStationsForCoords({ keepValue = false } = {}) {
   const sel = document.getElementById("toStationId");
   if (!sel || sel.tagName !== "SELECT") return;
   const lat = parseFloat(document.getElementById("toLat")?.value);
   const lon = parseFloat(document.getElementById("toLon")?.value);
-  const prev = keepValue ? sel.value : "";
+  // v182: "prev" puede venir de tres sitios: la seleccion actual del usuario,
+  // o un dataset.pendingValue depositado por openTakeoffSubmit al editar
+  // (porque al asignar <select>.value cuando el option aun no existia, no se
+  // queda "pegado"). Tomamos el primero que tenga contenido.
+  const pending = sel.dataset.pendingValue || "";
+  const prev = keepValue ? (sel.value || pending) : "";
   // Recrea opciones, conservando siempre "Sin estacion" como primera.
   while (sel.options.length > 1) sel.remove(1);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
@@ -5280,6 +5285,9 @@ async function _toLoadStationsForCoords({ keepValue = false } = {}) {
       sel.appendChild(opt);
       sel.value = prev;
     }
+    // Pending consumido: limpia el dataset para que un cambio posterior de
+    // coordenadas no vuelva a reaplicar el id viejo.
+    delete sel.dataset.pendingValue;
   } catch (e) {
     console.warn("[to] load stations", e);
   }
@@ -5754,11 +5762,6 @@ function openTakeoffSuggest(originId) {
   // v110: solo admins pueden borrar un despegue existente; se muestra en modo "Sugerir cambios".
   const delBtn = document.getElementById("toDeleteBtn");
   if (delBtn) delBtn.hidden = !window.PCAuth?.isAdmin;
-  // v170: muestra el id del documento Firestore que se va a actualizar (debug).
-  const idBlock = document.getElementById("toDocIdBlock");
-  const idInput = document.getElementById("toDocId");
-  if (idBlock) idBlock.hidden = false;
-  if (idInput) idInput.value = originId || "(sin id)";
 }
 let _suggestTargetId = null;
 
@@ -6719,8 +6722,11 @@ function openTakeoffSubmit(prefill) {
     if (prefill.stationId != null && prefill.stationId !== "") {
       const idEl = document.getElementById("toStationId");
       if (idEl) {
-        // <select>: el valor se aplicara cuando se rellene el listado.
-        idEl.value = String(prefill.stationId);
+        // v182: el <select> aun no tiene opciones (se rellenan via async
+        // _toLoadStationsForCoords). Asignar .value aqui no "engancha" porque
+        // el option no existe, asi que guardamos el id pendiente en un
+        // dataset y lo aplicamos despues de poblar las opciones.
+        idEl.dataset.pendingValue = String(prefill.stationId);
       }
     }
     setTimeout(() => { document.getElementById("toName")?.focus(); document.getElementById("toName")?.select(); }, 50);
