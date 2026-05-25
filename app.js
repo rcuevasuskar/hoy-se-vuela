@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.150";
+const APP_VERSION = "v0.151";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -41,9 +41,11 @@ const CORS_PROXY = "https://corsproxy.io/?";
 // Proxies CORS alternativos para reintentar si el primario falla (AEMET y otras APIs
 // sin CORS suelen dar 5xx o ERR_EMPTY_RESPONSE de forma intermitente).
 const CORS_PROXIES = [
-  (u) => "https://corsproxy.io/?" + encodeURIComponent(u),
+  // v150: codetabs requiere la barra antes de `?quest=` (sin ella devuelve 301
+  // que el fetch desde el navegador no sigue contra el host correcto).
+  (u) => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u),
   (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
-  (u) => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u),
+  (u) => "https://corsproxy.io/?" + encodeURIComponent(u),
 ];
 
 // === Tema (claro / oscuro / auto) ===
@@ -1981,8 +1983,12 @@ async function getLive() {
   if (voSlug) {
     try {
       const r = await fetchVolandooStationLive(voSlug, currentTakeoff?.volandooUrl);
-      if (r && r.measurements && r.measurements.wind_speed_avg != null) return r;
-    } catch (e) { console.warn("volandoo live:", e); }
+      if (r && r.measurements && r.measurements.wind_speed_avg != null) {
+        console.info("[live] fuente: Volandoo (" + voSlug + ")");
+        return r;
+      }
+      console.warn("[live] Volandoo respondio sin datos utiles, paso a siguiente fuente");
+    } catch (e) { console.warn("[live] volandoo fallo:", e); }
   }
   if (currentTakeoff?.windyUrl) {
     const c = parseWindyCoords(currentTakeoff.windyUrl)
