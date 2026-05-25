@@ -10,14 +10,20 @@ URL: https://rcuevasuskar.github.io/hoy-se-vuela/
 
 At a glance you see the state of the currently selected takeoff:
 
-- **Main compass**: shows the flying direction ranges defined for that takeoff (green = ideal, yellow = flyable, red = bad). An arrow turns with the current wind direction.
+- **Main compass**: a ring split into 16 sectors (one per wind-rose direction) colored according to the takeoff criteria — <span style="color:#2ecc71">**green**</span> = ideal directions, <span style="color:#f1c40f">**yellow**</span> = flyable and <span style="color:#e74c3c">**red**</span> = not recommended. An **arrow** on top points to where the live wind is coming from, and the number in the center is the current average speed (km/h). If the device supports it, the 🧭 button rotates the whole compass with the phone's real heading.
+- **Vertical speed bar** (next to the compass): a wind "thermometer" of the current average. The background is split into green / yellow / red zones matching the average-speed ranges defined for that takeoff, and the filled bar rises to the live value. At a glance you tell if intensity is optimal, marginal or too strong.
 - **Average / gust / minimum** speed and last update time.
 - **Wind history** for the last 2/4/6 h (configurable): each bar is one hour, with direction arrow and color by speed.
-- **Open‑Meteo forecast** (today / +24 h).
-- **Nearby stations**: mini-compass cards with other Pioupiou/FFVL stations and METAR airports within the chosen radius.
-- **Best window**: rough computation of the day's best slot.
+- **Open‑Meteo forecast** (today / +24 h). The chart includes:
+  - a **horizontal green band** showing the ideal average-speed range,
+  - a **mini wind-rose overlay** at the top-left with the same green/yellow/red sectors as the takeoff (no arrow), to cross-check forecast direction vs. criterion,
+  - **day separators** and skipping of night hours (🌙).
+- **Best window**: detects up to two daytime intervals where direction, average wind and gusts all fall in the ideal (green) zone. If no green slot exists, falls back to the best merely-flyable interval.
+- **Nearby stations**: mini-compass cards with other stations (Pioupiou, FFVL, Holfuy, AEMET) and METAR airports within the adaptive radius. To avoid clustering many close AEMET stations, the app **prioritizes non-AEMET stations first** by proximity and then fills up to 8 slots with AEMET using a *farthest-first* algorithm (most spread out from those already picked).
+- **Past-days comparison** (1, 7, 30 days) at the same hour.
 - **Quick guide**: list of ideal / flyable / bad directions, wind range and max gusts, plus the takeoff's **notes** if any.
 - **Map** with the takeoff position.
+- **↻ Refresh button** (header): manually reloads live observations, forecast, past-days comparison and nearby stations, without touching the session or the current takeoff.
 
 ## 2. Takeoff selector (header)
 
@@ -50,11 +56,12 @@ Enable 🔔 on a favorite and the app periodically checks its conditions and not
 
 ## 6. Proposing / editing takeoffs (community)
 
-Any signed-in user can:
+The app is **collaborative**: any signed-in user can contribute and improve the information of any takeoff. This covers both basic data and the technical criteria that feed the compass and the wind bar.
 
-- **Propose a takeoff** from the search panel or via ✎ on the current takeoff.
-- Provide **name, coordinates, altitude, linked Pioupiou station, flyable orientations and notes**.
-- Define **criteria**: per-direction (ideal/flyable/bad) using the compass rose, plus numeric ranges (min, max, gusts).
+- **Propose a new takeoff** with the **+** button in the search box (useful when a station isn't yet registered in the community).
+- **Suggest changes** for an existing takeoff with the **✎** button next to the current takeoff title.
+- Editable fields: **name, coordinates, altitude, linked station (Pioupiou/Holfuy/AEMET), flyable orientations, wind ranges (min, max, gusts), club, web and free-form notes**.
+- Define **directional criteria** by tagging each of the 16 directions as *ideal / flyable / bad* on a wind rose. These criteria drive the colored sectors of the main compass, the mini wind-rose on the forecast chart and the nearby-station cards.
 - An admin reviews and approves/rejects.
 - Once approved everyone sees it in the search list (with the Community badge) and can use it as the active takeoff with its own criteria.
 
@@ -70,6 +77,8 @@ Tap 📲 (when available) to install the app and use it offline. The service wor
 
 - **Pioupiou** (`api.pioupiou.fr`): community wind stations, live and archive.
 - **FFVL** (`data.ffvl.fr`): French balises.
+- **Holfuy** (`api.holfuy.com`): European Holfuy stations.
+- **AEMET** (`opendata.aemet.es`): Spain's official weather stations. Decoded as `iso-8859-15` to preserve accented station names.
 - **Open‑Meteo**: hourly and daily forecast.
 - **AviationWeather.gov (NOAA)**: nearby airport METAR.
 - **Firebase**: auth, favorites, community takeoffs.
