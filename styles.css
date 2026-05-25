@@ -1631,6 +1631,9 @@ main {
 .sounding-charts { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .sounding-chart-wrap { height: 480px; position: relative; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px; }
 @media (max-width: 700px) { .sounding-chart-wrap { height: 420px; } }
+.sounding-chart-toolbar { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: 0 2px 6px; }
+.snd-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
+.snd-toggle input { accent-color: var(--accent); }
 .sounding-details { margin-top: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
 .sounding-details > summary {
   cursor: pointer; padding: 8px 12px; color: var(--muted); font-size: 0.85rem;

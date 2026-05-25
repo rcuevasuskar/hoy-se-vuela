@@ -520,6 +520,12 @@
       <div id="sndBody" class="sounding-body">
         <div id="sndStatus" class="sounding-status" data-i18n="snd.loading">Cargando…</div>
         <div class="sounding-charts" hidden>
+          <div class="sounding-chart-toolbar">
+            <label class="snd-toggle">
+              <input type="checkbox" id="sndSkewToggle" checked>
+              <span data-i18n="snd.skew_t">Skew-T</span>
+            </label>
+          </div>
           <div class="sounding-chart-wrap"><canvas id="sndTempChart"></canvas></div>
         </div>
         <details id="sndTableDetails" class="sounding-details" hidden>

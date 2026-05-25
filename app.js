@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.159";
+const APP_VERSION = "v0.160";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -237,6 +237,7 @@ const I18N = {
     "snd.col_cld": "Nubes (%)",
     "snd.show_raw": "Datos en bruto por nivel",
     "snd.wind_axis": "Viento (km/h)",
+    "snd.skew_t": "Skew-T",
     "to.propose_tip": "Esta estación no tiene datos de despegue registrados aún. Pulsa para proponer su alta (nombre, orientaciones y criterios). Lo revisará un administrador.",
     "to.suggest_tip": "Este despegue ya está en la comunidad. Pulsa para sugerir cambios (nombre, coords, orientaciones o criterios).",
     "co.title": "Mis criterios para este despegue",
@@ -567,6 +568,7 @@ const I18N = {
     "snd.col_cld": "Clouds (%)",
     "snd.show_raw": "Raw data per level",
     "snd.wind_axis": "Wind (km/h)",
+    "snd.skew_t": "Skew-T",
     "to.propose_tip": "This station has no takeoff data yet. Click to propose adding it (name, orientations and criteria). An admin will review it.",
     "to.suggest_tip": "This takeoff is already in the community. Click to suggest changes (name, coords, orientations or criteria).",
     "co.title": "My criteria for this takeoff",
@@ -882,6 +884,7 @@ const I18N = {
     "snd.col_cld": "Wolken (%)",
     "snd.show_raw": "Rohdaten pro Niveau",
     "snd.wind_axis": "Wind (km/h)",
+    "snd.skew_t": "Skew-T",
     "to.propose_tip": "Diese Station hat noch keine Startplatzdaten. Klicke, um sie vorzuschlagen (Name, Ausrichtungen, Kriterien). Ein Admin prüft.",
     "to.suggest_tip": "Dieser Startplatz ist bereits in der Community. Klicke, um Änderungen vorzuschlagen.",
     "co.title": "Meine Kriterien für diesen Startplatz",
@@ -1197,6 +1200,7 @@ const I18N = {
     "snd.col_cld": "Nuages (%)",
     "snd.show_raw": "Données brutes par niveau",
     "snd.wind_axis": "Vent (km/h)",
+    "snd.skew_t": "Skew-T",
     "to.propose_tip": "Cette station n'a pas encore de données de déco. Cliquez pour proposer son ajout. Un admin l'examinera.",
     "to.suggest_tip": "Ce déco est déjà dans la communauté. Cliquez pour suggérer des modifications.",
     "co.title": "Mes critères pour ce déco",
@@ -1512,6 +1516,7 @@ const I18N = {
     "snd.col_cld": "Hodeiak (%)",
     "snd.show_raw": "Datu gordinak mailaka",
     "snd.wind_axis": "Haizea (km/h)",
+    "snd.skew_t": "Skew-T",
     "to.propose_tip": "Estazio honek ez du oraindik irteguia daturik. Sakatu proposatzeko (izena, orientazioak, irizpideak). Administratzaileak berrikusiko du.",
     "to.suggest_tip": "Irteguia hau jada komunitatean dago. Sakatu aldaketak proposatzeko.",
     "co.title": "Nire irizpideak irteguia honetarako",
@@ -1781,6 +1786,7 @@ const I18N = {
     "snd.col_cld": "Núvols (%)",
     "snd.show_raw": "Dades en brut per nivell",
     "snd.wind_axis": "Vent (km/h)",
+    "snd.skew_t": "Skew-T",
     "to.propose_tip": "Aquesta estació encara no té dades d'enlairament. Prem per proposar-ne l'alta. Un administrador ho revisarà.",
     "to.suggest_tip": "Aquest enlairament ja està a la comunitat. Prem per suggerir canvis.",
     "co.title": "Els meus criteris per a aquest enlairament",
@@ -2688,10 +2694,63 @@ function _renderSoundingFor(ts) {
   // --- Gráfico: temperatura/rocío (eje X inferior, °C) con eje Y de altitud.
   // Las flechas de viento se dibujan FUERA del chart en la banda derecha
   // (espacio reservado con layout.padding.right) mediante un plugin custom.
-  const tPts  = profile.filter(p => p.t  != null).map(p => ({ x: p.t,  y: p.alt }));
-  const tdPts = profile.filter(p => p.td != null).map(p => ({ x: p.td, y: p.alt }));
+  // v160: opcion Skew-T. Inclinamos las series T/Td ~45deg respecto a la
+  // vertical aplicando un desplazamiento horizontal proporcional a la
+  // altitud (skewSlope °C/m). El perfil real se mantiene en $profile para
+  // que el tooltip siga funcionando contra altitudes reales.
+  const skewToggle = document.getElementById("sndSkewToggle");
+  const skewOn = skewToggle ? !!skewToggle.checked : true;
+  // Pendiente del skew: que el rango total de altitud se desplace ~30 °C.
+  const altsAll = profile.map(p => p.alt).filter(a => Number.isFinite(a));
+  const altMin = altsAll.length ? Math.min(...altsAll) : 0;
+  const altMax = altsAll.length ? Math.max(...altsAll) : 1000;
+  const altSpan = Math.max(1, altMax - altMin);
+  const skewSlope = skewOn ? (30 / altSpan) : 0; // °C por metro
+  const skewX = (t, alt) => t + skewSlope * (alt - altMin);
+  const tPts  = profile.filter(p => p.t  != null).map(p => ({ x: skewX(p.t,  p.alt), y: p.alt }));
+  const tdPts = profile.filter(p => p.td != null).map(p => ({ x: skewX(p.td, p.alt), y: p.alt }));
   const windPts = profile.filter(p => p.ws != null && p.wd != null)
     .map(p => ({ alt: p.alt, dir: p.wd, spd: p.ws, color: _soundingWindColor(p.ws) }));
+
+  // Plugin: isotermas guia muy sutiles cuando el skew esta activado.
+  // Se dibujan como diagonales (T constante => x = T + skewSlope*(alt-altMin))
+  // cada 10 °C, desde altMin hasta altMax.
+  const isothermsPlugin = {
+    id: "sndIsotherms",
+    beforeDatasetsDraw(chart) {
+      if (!skewOn) return;
+      const { ctx, chartArea, scales } = chart;
+      const xScale = scales.x, yScale = scales.y;
+      if (!xScale || !yScale) return;
+      const tMin = Math.floor((xScale.min - skewSlope * altSpan) / 10) * 10;
+      const tMax = Math.ceil(xScale.max / 10) * 10;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+      ctx.clip();
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+      ctx.font = "10px system-ui, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.textBaseline = "bottom";
+      ctx.textAlign = "left";
+      for (let t = tMin; t <= tMax; t += 10) {
+        const x1 = xScale.getPixelForValue(skewX(t, altMin));
+        const y1 = yScale.getPixelForValue(altMin);
+        const x2 = xScale.getPixelForValue(skewX(t, altMax));
+        const y2 = yScale.getPixelForValue(altMax);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        // Rotulo discreto cerca del borde inferior
+        if (x1 >= chartArea.left && x1 <= chartArea.right) {
+          ctx.fillText(`${t}°`, x1 + 2, chartArea.bottom - 2);
+        }
+      }
+      ctx.restore();
+    },
+  };
 
   const windRightPlugin = {
     id: "sndWindRight",
@@ -2795,14 +2854,15 @@ function _renderSoundingFor(ts) {
       },
       scales: {
         x: { type: "linear", position: "bottom",
-             title: { display: true, text: "°C", color: "#e57777" },
-             ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
+             title: { display: true, text: skewOn ? "°C (skew-T)" : "°C", color: "#e57777" },
+             ticks: { color: "#8aa0bb", display: !skewOn },
+             grid: { color: "rgba(255,255,255,0.05)", display: !skewOn } },
         y: { title: { display: false },
              ticks: { color: "#8aa0bb", callback: (v) => Math.round(v) },
              grid: { color: "rgba(255,255,255,0.05)" } },
       },
     },
-    plugins: [windRightPlugin],
+    plugins: [isothermsPlugin, windRightPlugin],
   });
   _sndTempChart.$windPts = windPts;
   _sndTempChart.$profile = profile;
@@ -2836,6 +2896,21 @@ document.getElementById("sndClose")?.addEventListener("click", closeSounding);
 document.getElementById("soundingModal")?.addEventListener("click", (e) => {
   if (e.target.id === "soundingModal") closeSounding();
 });
+
+// v160: Skew-T toggle. Estado persistido en localStorage; al cambiar,
+// re-renderiza el sondeo del timestamp actual.
+(function initSkewToggle() {
+  const tg = document.getElementById("sndSkewToggle");
+  if (!tg) return;
+  try {
+    const saved = localStorage.getItem("snd.skewT");
+    if (saved != null) tg.checked = saved === "1";
+  } catch {}
+  tg.addEventListener("change", () => {
+    try { localStorage.setItem("snd.skewT", tg.checked ? "1" : "0"); } catch {}
+    if (_sndState?.targetTs != null) _renderSoundingFor(_sndState.targetTs);
+  });
+})();
 
 // v155: delegación para los botones "Sondeo" de cada slot de pronóstico.
 document.getElementById("forecastSummary")?.addEventListener("click", (e) => {
