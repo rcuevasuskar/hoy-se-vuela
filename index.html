@@ -107,11 +107,10 @@
     <section class="card status-card" id="statusCard">
       <div class="station-header">
         <div class="station-actions-row">
-          <h1 class="app-brand" data-i18n="app.brand">¿Hoy se vuela?</h1>
+          <strong id="tsCurrentName" class="station-name">Cenes de la Vega</strong>
           <span class="ts-current-actions station-actions" id="tsCurrentActions"></span>
           <button id="refreshBtn" class="ts-icon-btn ts-refresh" type="button" title="Actualizar">⟳</button>
         </div>
-        <strong id="tsCurrentName" class="station-name">Cenes de la Vega</strong>
       </div>
       <div class="status-grid">
         <div class="compass-wrap">
@@ -176,7 +175,6 @@
       </div>
       <div class="last-update-row">
         <div class="ts-actions-inline" id="tsActionsInline" hidden></div>
-        <div class="last-update"><span data-i18n="read.last">Última lectura</span>: <span id="lastUpdate">—</span><span id="lastUpdateSource" class="last-source"></span></div>
       </div>
 
       <div class="wind-history" id="windHistory" hidden>
@@ -241,6 +239,10 @@
       </div>
 
       <small class="panel-for panel-for-block" id="panelForBlock" hidden></small>
+
+      <p class="legend-note status-footer">
+        <span data-i18n="read.last">Última lectura</span>: <span id="lastUpdate">—</span><span id="lastUpdateSource" class="last-source"></span>
+      </p>
     </section>
 
     <!-- Guía (movida encima de Análisis de nubes en v0.188) -->
@@ -296,7 +298,10 @@
         <span id="forecastTitleText" data-i18n="fc.title">Pronóstico (Open-Meteo)</span>
       </h2>
       <div class="fc-toolbar">
-        <span id="forecastMiniCompass" class="fc-mini-compass-inline" aria-hidden="true"></span>
+        <div class="fc-toolbar-left">
+          <span class="fc-dirs-label" data-i18n="fc.dirs_apt">Direcciones apropiadas:</span>
+          <span id="forecastMiniCompass" class="fc-mini-compass-inline" aria-hidden="true"></span>
+        </div>
         <div class="range-buttons" id="forecastButtons">
           <button data-days="1" class="active" data-i18n="fc.today">Hoy</button>
           <button data-days="2">+24 h</button>

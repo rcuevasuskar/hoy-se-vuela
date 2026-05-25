@@ -2532,17 +2532,46 @@ section.card.collapsed > h2 { margin-bottom: 0; }
 /* === v0.188 === */
 .card-icon { display: inline-block; margin-right: 4px; font-size: 1.05em; }
 
-/* Pron\u00f3stico: rosa + botones a la derecha, sobre el gr\u00e1fico. */
+/* Pronostico: etiqueta + rosa a la izquierda, botones a la derecha. */
 .fc-toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 10px;
   margin: 4px 0 8px;
   flex-wrap: wrap;
 }
+.fc-toolbar-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.fc-dirs-label { color: var(--muted); font-size: 0.85rem; }
 .fc-toolbar .fc-mini-compass-inline { margin: 0; }
 .fc-toolbar .range-buttons { display: inline-flex; }
+
+/* v0.191: titulo "Mostrar en el grafico:" sin uppercase. */
+.fc-legend-title { text-transform: none; letter-spacing: 0; font-size: 0.85rem; }
+
+/* v0.191: nombre del despegue + acciones en la misma linea (top del panel). */
+.status-card .station-header .station-actions-row {
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+}
+.status-card .station-header .station-actions-row .station-name {
+  display: inline-block;
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+}
+.status-card .station-header .station-actions-row .station-actions,
+.status-card .station-header .station-actions-row #refreshBtn {
+  flex: 0 0 auto;
+}
+
+/* v0.191: "Ultima lectura" como footer del panel de estado. */
+.status-footer { text-align: left; margin-top: 8px; }
 
 /* Toggle de br\u00fajula en la barra de acciones. */
 .ts-actions-inline .ts-compass-toggle {

@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.190";
+const APP_VERSION = "v0.191";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -159,6 +159,7 @@ const I18N = {
     "fc.today": "Hoy",
     "fc.night": "Noche",
     "fc.show": "Mostrar en el gráfico:",
+    "fc.dirs_apt": "Direcciones apropiadas:",
     "auth.title": "Cuenta",
     "auth.guest": "Invitado",
     "auth.anon": "Anónimo",
@@ -497,6 +498,7 @@ const I18N = {
     "fc.today": "Today",
     "fc.night": "Night",
     "fc.show": "Show on chart:",
+    "fc.dirs_apt": "Suitable directions:",
     "auth.title": "Account",
     "auth.guest": "Guest",
     "auth.anon": "Anonymous",
@@ -820,6 +822,7 @@ const I18N = {
     "fc.today": "Heute",
     "fc.night": "Nacht",
     "fc.show": "Im Diagramm anzeigen:",
+    "fc.dirs_apt": "Geeignete Richtungen:",
     "auth.title": "Konto",
     "auth.guest": "Gast",
     "auth.anon": "Anonym",
@@ -1143,6 +1146,7 @@ const I18N = {
     "fc.today": "Aujourd'hui",
     "fc.night": "Nuit",
     "fc.show": "Afficher sur le graphique :",
+    "fc.dirs_apt": "Directions adaptées :",
     "auth.title": "Compte",
     "auth.guest": "Invité",
     "auth.anon": "Anonyme",
@@ -1466,6 +1470,7 @@ const I18N = {
     "fc.today": "Gaur",
     "fc.night": "Gaua",
     "fc.show": "Erakutsi grafikoan:",
+    "fc.dirs_apt": "Norabide egokiak:",
     "auth.title": "Kontua",
     "auth.guest": "Gonbidatua",
     "auth.anon": "Anonimoa",
@@ -1743,6 +1748,7 @@ const I18N = {
     "fc.today": "Avui",
     "fc.night": "Nit",
     "fc.show": "Mostra al gràfic:",
+    "fc.dirs_apt": "Direccions adequades:",
     "auth.title": "Compte",
     "auth.guest": "Convidat",
     "auth.anon": "Anònim",
@@ -3745,7 +3751,7 @@ function chartCommonOptions() {
       x: { type: "time", time: { tooltipFormat: "dd MMM HH:mm" },
            ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
       y: { beginAtZero: true,
-           title: { display: true, text: "km/h", color: "#8aa0bb" },
+           title: { display: false },
            ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
     },
   };
