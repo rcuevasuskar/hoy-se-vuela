@@ -11,7 +11,7 @@ URL: https://rcuevasuskar.github.io/hoy-se-vuela/
 Al abrir la app verás de un vistazo el estado del despegue actualmente seleccionado:
 
 - **Brújula principal**: un anillo dividido en 16 sectores (uno por cada dirección de la rosa de los vientos) coloreados según los criterios definidos para ese despegue — <span style="color:#2ecc71">**verde**</span> = direcciones ideales, <span style="color:#f1c40f">**amarillo**</span> = volables y <span style="color:#e74c3c">**rojo**</span> = no recomendadas. Sobre el anillo, una **flecha** apunta a la dirección de la que viene el viento en vivo y el número del centro muestra la velocidad media (km/h). Si el dispositivo lo soporta, el botón 🧭 rota toda la brújula con la orientación real del móvil.
-- **Barra vertical de velocidad** (junto a la brújula): es un "termómetro" del viento medio actual. El fondo se divide en franjas verde / amarillo / rojo correspondientes a los rangos de velocidad media definidos para ese despegue, y la barra rellena sube hasta el valor en directo. Con un golpe de vista compruebas si la intensidad es óptima, justa o excesiva.
+- **Barra vertical de velocidad** (junto a la brújula): es un "anemómetro" del viento medio actual. El fondo se divide en franjas verde / amarillo / rojo correspondientes a los rangos de velocidad media definidos para ese despegue, y la barra rellena sube hasta el valor en directo. Con un golpe de vista compruebas si la intensidad es óptima, justa o excesiva.
 - **Velocidad media / rachas / mínima** y hora de la última lectura.
 - **Histórico** de las últimas 2/4/6 h (configurable): cada barra es una hora, con flecha de dirección y color por velocidad.
 - **Pronóstico** Open‑Meteo (hoy / +24 h). El gráfico incluye:

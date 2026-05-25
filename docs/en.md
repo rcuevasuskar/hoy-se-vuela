@@ -11,7 +11,7 @@ URL: https://rcuevasuskar.github.io/hoy-se-vuela/
 At a glance you see the state of the currently selected takeoff:
 
 - **Main compass**: a ring split into 16 sectors (one per wind-rose direction) colored according to the takeoff criteria — <span style="color:#2ecc71">**green**</span> = ideal directions, <span style="color:#f1c40f">**yellow**</span> = flyable and <span style="color:#e74c3c">**red**</span> = not recommended. An **arrow** on top points to where the live wind is coming from, and the number in the center is the current average speed (km/h). If the device supports it, the 🧭 button rotates the whole compass with the phone's real heading.
-- **Vertical speed bar** (next to the compass): a wind "thermometer" of the current average. The background is split into green / yellow / red zones matching the average-speed ranges defined for that takeoff, and the filled bar rises to the live value. At a glance you tell if intensity is optimal, marginal or too strong.
+- **Vertical speed bar** (next to the compass): a wind "anemometer" of the current average. The background is split into green / yellow / red zones matching the average-speed ranges defined for that takeoff, and the filled bar rises to the live value. At a glance you tell if intensity is optimal, marginal or too strong.
 - **Average / gust / minimum** speed and last update time.
 - **Wind history** for the last 2/4/6 h (configurable): each bar is one hour, with direction arrow and color by speed.
 - **Open‑Meteo forecast** (today / +24 h). The chart includes:

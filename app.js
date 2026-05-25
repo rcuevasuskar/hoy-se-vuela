@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.136";
+const APP_VERSION = "v0.137";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -124,6 +124,7 @@ const I18N = {
     "hist.legend": "Línea azul: velocidad media · Línea roja: racha máx · Flechas: dirección (color = aptitud)",
     "chart.avg": "Velocidad media (km/h)",
     "chart.ideal_band": "Velocidad ideal",
+    "forecast.mini_compass_label": "Direcciones de viento adecuadas para {name}",
     "chart.gust": "Racha máx (km/h)",
     "chart.dir": "Dirección",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
@@ -266,7 +267,7 @@ const I18N = {
     "guide.range_max": ", hasta {max} km/h",
     "guide.notes_title": "Notas del despegue",
     "help.title": "Ayuda",
-    "help.quick": "<p><strong>Guía rápida:</strong></p><ul><li>🧭 La <strong>brújula principal</strong> dibuja un anillo con todas las direcciones de viento coloreadas según los criterios del despegue: <span style=\"color:#2ecc71\">verde</span> = direcciones ideales, <span style=\"color:#f1c40f\">amarillo</span> = aceptables y <span style=\"color:#e74c3c\">rojo</span> = no recomendadas. La <strong>flecha</strong> apunta a la dirección de la que viene el viento en vivo y el número del centro es la velocidad media en km/h.</li><li>📊 La <strong>barra vertical</strong> junto a la brújula es un \"termómetro\" de viento: las franjas verde/amarillo/rojo del fondo son los rangos de velocidad media definidos para <em>ese</em> despegue, y la barra rellena sube hasta el valor actual. Si está en verde y la flecha cae en un sector verde, las condiciones son óptimas.</li><li>✎ <strong>Cualquiera puede añadir o editar</strong> la información de un despegue: sectores de dirección, rangos de viento, altitud, notas… Usa ✎ junto al título para sugerir cambios sobre el despegue actual, o + en el buscador para proponer uno nuevo. Las propuestas se revisan y se publican para toda la comunidad.</li><li>📍 Pulsa el botón de ubicación para que las distancias se midan desde tu posición real.</li><li>🔍 Escribe en el buscador para filtrar despegues; los favoritos aparecen primero.</li><li>★ marca favoritos · 👑 fija tu \"hogar\" (despegue habitual) · 🔔 activa alertas cuando las condiciones sean ideales.</li><li>📲 Instala la app como PWA para usarla offline desde el móvil o el ordenador.</li><li>⚠️ Los datos son orientativos. Valora siempre las condiciones in situ.</li></ul>",
+    "help.quick": "<p><strong>Guía rápida:</strong></p><ul><li>🧭 La <strong>brújula principal</strong> dibuja un anillo con todas las direcciones de viento coloreadas según los criterios del despegue: <span style=\"color:#2ecc71\">verde</span> = direcciones ideales, <span style=\"color:#f1c40f\">amarillo</span> = aceptables y <span style=\"color:#e74c3c\">rojo</span> = no recomendadas. La <strong>flecha</strong> apunta a la dirección de la que viene el viento en vivo y el número del centro es la velocidad media en km/h.</li><li>📊 La <strong>barra vertical</strong> junto a la brújula es un \"anemómetro\" de viento: las franjas verde/amarillo/rojo del fondo son los rangos de velocidad media definidos para <em>ese</em> despegue, y la barra rellena sube hasta el valor actual. Si está en verde y la flecha cae en un sector verde, las condiciones son óptimas.</li><li>✎ <strong>Cualquiera puede añadir o editar</strong> la información de un despegue: sectores de dirección, rangos de viento, altitud, notas… Usa ✎ junto al título para sugerir cambios sobre el despegue actual, o + en el buscador para proponer uno nuevo. Las propuestas se revisan y se publican para toda la comunidad.</li><li>📍 Pulsa el botón de ubicación para que las distancias se midan desde tu posición real.</li><li>🔍 Escribe en el buscador para filtrar despegues; los favoritos aparecen primero.</li><li>★ marca favoritos · 👑 fija tu \"hogar\" (despegue habitual) · 🔔 activa alertas cuando las condiciones sean ideales.</li><li>📲 Instala la app como PWA para usarla offline desde el móvil o el ordenador.</li><li>⚠️ Los datos son orientativos. Valora siempre las condiciones in situ.</li></ul>",
     "help.full_docs": "Ver documentación completa",
     "loading": "Cargando…",
     "footer": 'Datos en tiempo real: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Pronóstico: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Mapa: © OpenStreetMap. No oficial. Valora siempre las condiciones in situ.',
@@ -416,6 +417,7 @@ const I18N = {
     "hist.legend": "Blue line: average speed · Red line: max gust · Dots: direction (color = suitability)",
     "chart.avg": "Average speed (km/h)",
     "chart.ideal_band": "Ideal speed",
+    "forecast.mini_compass_label": "Suitable wind directions for {name}",
     "chart.gust": "Max gust (km/h)",
     "chart.dir": "Direction",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
@@ -543,7 +545,7 @@ const I18N = {
     "guide.bad": "<strong>Bad:</strong> Easterly components (NE, E, SE) — worse the further east.",
     "guide.warn": "<strong>Too strong:</strong> avg ≥ 20 km/h or gusts ≥ 30 km/h.",
     "help.title": "Help",
-    "help.quick": "<p><strong>Quick guide:</strong></p><ul><li>🧭 The <strong>main compass</strong> draws a ring with every wind direction colored by this takeoff's criteria: <span style=\"color:#2ecc71\">green</span> = ideal, <span style=\"color:#f1c40f\">yellow</span> = acceptable, <span style=\"color:#e74c3c\">red</span> = not recommended. The <strong>arrow</strong> points to where the live wind is coming from, and the number in the center is the average speed in km/h.</li><li>📊 The <strong>vertical bar</strong> next to the compass is a wind \"thermometer\": the green/yellow/red background bands are the average-speed ranges defined for <em>that</em> takeoff, and the filled bar rises to the current value. If the bar is green and the arrow lands on a green sector, conditions are optimal.</li><li>✎ <strong>Anyone can add or edit</strong> takeoff information: direction sectors, wind ranges, altitude, notes… Use ✎ next to the title to suggest changes for the current takeoff, or + in the search box to propose a new one. Submissions are reviewed and published for the whole community.</li><li>📍 Tap the location button so distances are measured from your real position.</li><li>🔍 Type in the search to filter takeoffs; favorites appear first.</li><li>★ marks favorites · 👑 sets your \"home\" (usual takeoff) · 🔔 enables alerts for ideal conditions.</li><li>📲 Install the app as a PWA to use it offline from phone or desktop.</li><li>⚠️ Data is indicative. Always assess conditions on site.</li></ul>",
+    "help.quick": "<p><strong>Quick guide:</strong></p><ul><li>🧭 The <strong>main compass</strong> draws a ring with every wind direction colored by this takeoff's criteria: <span style=\"color:#2ecc71\">green</span> = ideal, <span style=\"color:#f1c40f\">yellow</span> = acceptable, <span style=\"color:#e74c3c\">red</span> = not recommended. The <strong>arrow</strong> points to where the live wind is coming from, and the number in the center is the average speed in km/h.</li><li>📊 The <strong>vertical bar</strong> next to the compass is a wind \"anemometer\": the green/yellow/red background bands are the average-speed ranges defined for <em>that</em> takeoff, and the filled bar rises to the current value. If the bar is green and the arrow lands on a green sector, conditions are optimal.</li><li>✎ <strong>Anyone can add or edit</strong> takeoff information: direction sectors, wind ranges, altitude, notes… Use ✎ next to the title to suggest changes for the current takeoff, or + in the search box to propose a new one. Submissions are reviewed and published for the whole community.</li><li>📍 Tap the location button so distances are measured from your real position.</li><li>🔍 Type in the search to filter takeoffs; favorites appear first.</li><li>★ marks favorites · 👑 sets your \"home\" (usual takeoff) · 🔔 enables alerts for ideal conditions.</li><li>📲 Install the app as a PWA to use it offline from phone or desktop.</li><li>⚠️ Data is indicative. Always assess conditions on site.</li></ul>",
     "help.full_docs": "View full documentation",
     "loading": "Loading…",
     "footer": 'Real-time data: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Forecast: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Map: © OpenStreetMap. Unofficial. Always assess conditions on site.',
@@ -693,6 +695,7 @@ const I18N = {
     "hist.legend": "Blaue Linie: Mittelgeschwindigkeit · Rote Linie: max. Böe · Punkte: Richtung (Farbe = Eignung)",
     "chart.avg": "Mittelgeschwindigkeit (km/h)",
     "chart.ideal_band": "Ideale Geschwindigkeit",
+    "forecast.mini_compass_label": "Geeignete Windrichtungen für {name}",
     "chart.gust": "Max. Böe (km/h)",
     "chart.dir": "Richtung",
     "chart.dir_tooltip": "Richt.: {name} ({deg}°)",
@@ -820,7 +823,7 @@ const I18N = {
     "guide.bad": "<strong>Schlecht:</strong> Ostkomponenten (NO, O, SO) — schlechter je östlicher.",
     "guide.warn": "<strong>Zu stark:</strong> Mittel ≥ 20 km/h oder Böen ≥ 30 km/h.",
     "help.title": "Hilfe",
-    "help.quick": "<p><strong>Kurzanleitung:</strong></p><ul><li>🧭 Der <strong>Hauptkompass</strong> zeichnet einen Ring mit allen Windrichtungen, eingefärbt nach den Kriterien des Startplatzes: <span style=\"color:#2ecc71\">grün</span> = ideal, <span style=\"color:#f1c40f\">gelb</span> = akzeptabel, <span style=\"color:#e74c3c\">rot</span> = nicht empfohlen. Der <strong>Pfeil</strong> zeigt, woher der Live-Wind kommt; die Zahl in der Mitte ist die Durchschnittsgeschwindigkeit in km/h.</li><li>📊 Die <strong>vertikale Balkenanzeige</strong> neben dem Kompass ist ein Wind-\"Thermometer\": die grün/gelb/roten Hintergrundzonen sind die für <em>diesen</em> Startplatz definierten Geschwindigkeitsbereiche; der gefüllte Balken steigt bis zum aktuellen Wert. Grüner Balken + Pfeil im grünen Sektor = ideale Bedingungen.</li><li>✎ <strong>Jeder kann Startplatzdaten ergänzen oder bearbeiten</strong>: Richtungssektoren, Windbereiche, Höhe, Notizen… ✎ neben dem Titel schlägt Änderungen zum aktuellen Startplatz vor, + im Suchfeld schlägt einen neuen vor. Vorschläge werden geprüft und für die gesamte Community veröffentlicht.</li><li>📍 Tippe auf den Standort-Button, damit Distanzen ab deiner echten Position gemessen werden.</li><li>🔍 Tippe im Suchfeld, um Startplätze zu filtern; Favoriten zuerst.</li><li>★ markiert Favoriten · 👑 setzt \"Zuhause\" (Stamm-Startplatz) · 🔔 aktiviert Benachrichtigungen bei idealen Bedingungen.</li><li>📲 App als PWA installieren für Offline-Nutzung am Handy oder Desktop.</li><li>⚠️ Daten sind Richtwerte. Bedingungen immer vor Ort prüfen.</li></ul>",
+    "help.quick": "<p><strong>Kurzanleitung:</strong></p><ul><li>🧭 Der <strong>Hauptkompass</strong> zeichnet einen Ring mit allen Windrichtungen, eingefärbt nach den Kriterien des Startplatzes: <span style=\"color:#2ecc71\">grün</span> = ideal, <span style=\"color:#f1c40f\">gelb</span> = akzeptabel, <span style=\"color:#e74c3c\">rot</span> = nicht empfohlen. Der <strong>Pfeil</strong> zeigt, woher der Live-Wind kommt; die Zahl in der Mitte ist die Durchschnittsgeschwindigkeit in km/h.</li><li>📊 Die <strong>vertikale Balkenanzeige</strong> neben dem Kompass ist ein Wind-\"Anemometer\": die grün/gelb/roten Hintergrundzonen sind die für <em>diesen</em> Startplatz definierten Geschwindigkeitsbereiche; der gefüllte Balken steigt bis zum aktuellen Wert. Grüner Balken + Pfeil im grünen Sektor = ideale Bedingungen.</li><li>✎ <strong>Jeder kann Startplatzdaten ergänzen oder bearbeiten</strong>: Richtungssektoren, Windbereiche, Höhe, Notizen… ✎ neben dem Titel schlägt Änderungen zum aktuellen Startplatz vor, + im Suchfeld schlägt einen neuen vor. Vorschläge werden geprüft und für die gesamte Community veröffentlicht.</li><li>📍 Tippe auf den Standort-Button, damit Distanzen ab deiner echten Position gemessen werden.</li><li>🔍 Tippe im Suchfeld, um Startplätze zu filtern; Favoriten zuerst.</li><li>★ markiert Favoriten · 👑 setzt \"Zuhause\" (Stamm-Startplatz) · 🔔 aktiviert Benachrichtigungen bei idealen Bedingungen.</li><li>📲 App als PWA installieren für Offline-Nutzung am Handy oder Desktop.</li><li>⚠️ Daten sind Richtwerte. Bedingungen immer vor Ort prüfen.</li></ul>",
     "help.full_docs": "Vollständige Dokumentation anzeigen",
     "loading": "Lädt…",
     "footer": 'Echtzeitdaten: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Vorhersage: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Karte: © OpenStreetMap. Inoffiziell. Bedingungen immer vor Ort bewerten.',
@@ -970,6 +973,7 @@ const I18N = {
     "hist.legend": "Ligne bleue : vitesse moyenne · Ligne rouge : rafale max · Points : direction (couleur = aptitude)",
     "chart.avg": "Vitesse moyenne (km/h)",
     "chart.ideal_band": "Vitesse idéale",
+    "forecast.mini_compass_label": "Directions de vent adaptées pour {name}",
     "chart.gust": "Rafale max (km/h)",
     "chart.dir": "Direction",
     "chart.dir_tooltip": "Dir : {name} ({deg}°)",
@@ -1097,7 +1101,7 @@ const I18N = {
     "guide.bad": "<strong>Mauvais :</strong> composantes Est (NE, E, SE) — pire vers l'est.",
     "guide.warn": "<strong>Trop fort :</strong> moy. ≥ 20 km/h ou rafales ≥ 30 km/h.",
     "help.title": "Aide",
-    "help.quick": "<p><strong>Guide rapide :</strong></p><ul><li>🧭 La <strong>boussole principale</strong> dessine un anneau avec toutes les directions de vent colorées selon les critères du déco : <span style=\"color:#2ecc71\">vert</span> = idéal, <span style=\"color:#f1c40f\">jaune</span> = acceptable, <span style=\"color:#e74c3c\">rouge</span> = déconseillé. La <strong>flèche</strong> pointe vers la direction d'où vient le vent en direct ; le chiffre au centre est la vitesse moyenne en km/h.</li><li>📊 La <strong>barre verticale</strong> à côté de la boussole est un \"thermomètre\" de vent : les bandes vert/jaune/rouge du fond sont les plages de vitesse moyenne définies pour <em>ce</em> déco, et la barre pleine monte jusqu'à la valeur actuelle. Barre verte + flèche dans un secteur vert = conditions optimales.</li><li>✎ <strong>Chacun peut ajouter ou modifier</strong> les infos d'un déco : secteurs de direction, plages de vent, altitude, notes… Utilise ✎ à côté du titre pour proposer des changements sur le déco actuel, ou + dans la recherche pour proposer un nouveau déco. Les propositions sont relues puis publiées pour toute la communauté.</li><li>📍 Appuie sur le bouton de localisation pour que les distances soient mesurées depuis ta position réelle.</li><li>🔍 Tape dans la recherche pour filtrer ; les favoris apparaissent en premier.</li><li>★ marque les favoris · 👑 définit ton \"déco habituel\" · 🔔 active les alertes en conditions idéales.</li><li>📲 Installe l'app en PWA pour l'utiliser hors ligne depuis mobile ou ordinateur.</li><li>⚠️ Données indicatives. Évalue toujours les conditions sur place.</li></ul>",
+    "help.quick": "<p><strong>Guide rapide :</strong></p><ul><li>🧭 La <strong>boussole principale</strong> dessine un anneau avec toutes les directions de vent colorées selon les critères du déco : <span style=\"color:#2ecc71\">vert</span> = idéal, <span style=\"color:#f1c40f\">jaune</span> = acceptable, <span style=\"color:#e74c3c\">rouge</span> = déconseillé. La <strong>flèche</strong> pointe vers la direction d'où vient le vent en direct ; le chiffre au centre est la vitesse moyenne en km/h.</li><li>📊 La <strong>barre verticale</strong> à côté de la boussole est un \"anémomètre\" de vent : les bandes vert/jaune/rouge du fond sont les plages de vitesse moyenne définies pour <em>ce</em> déco, et la barre pleine monte jusqu'à la valeur actuelle. Barre verte + flèche dans un secteur vert = conditions optimales.</li><li>✎ <strong>Chacun peut ajouter ou modifier</strong> les infos d'un déco : secteurs de direction, plages de vent, altitude, notes… Utilise ✎ à côté du titre pour proposer des changements sur le déco actuel, ou + dans la recherche pour proposer un nouveau déco. Les propositions sont relues puis publiées pour toute la communauté.</li><li>📍 Appuie sur le bouton de localisation pour que les distances soient mesurées depuis ta position réelle.</li><li>🔍 Tape dans la recherche pour filtrer ; les favoris apparaissent en premier.</li><li>★ marque les favoris · 👑 définit ton \"déco habituel\" · 🔔 active les alertes en conditions idéales.</li><li>📲 Installe l'app en PWA pour l'utiliser hors ligne depuis mobile ou ordinateur.</li><li>⚠️ Données indicatives. Évalue toujours les conditions sur place.</li></ul>",
     "help.full_docs": "Voir la documentation complète",
     "loading": "Chargement…",
     "footer": 'Données temps réel : <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Prévision : <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Carte : © OpenStreetMap. Non officiel. Évaluez toujours les conditions sur site.',
@@ -1247,6 +1251,7 @@ const I18N = {
     "hist.legend": "Lerro urdina: batez besteko abiadura · Lerro gorria: bolada max · Geziak: norabidea (kolorea = aproposa)",
     "chart.avg": "Batez besteko abiadura (km/h)",
     "chart.ideal_band": "Abiadura ezin hobea",
+    "forecast.mini_compass_label": "{name}rako haize norabide egokiak",
     "chart.gust": "Bolada max (km/h)",
     "chart.dir": "Norabidea",
     "chart.dir_tooltip": "Norab.: {name} ({deg}°)",
@@ -1374,7 +1379,7 @@ const I18N = {
     "guide.bad": "<strong>Txarra:</strong> Ekialdeko osagaiak (IE, E, HE) — okerragoa ekialderago.",
     "guide.warn": "<strong>Indartsuegia:</strong> batez beste ≥ 20 km/h edo boladak ≥ 30 km/h.",
     "help.title": "Laguntza",
-    "help.quick": "<p><strong>Gida azkarra:</strong></p><ul><li>🧭 <strong>Iparrorratz nagusiak</strong> haize norabide guztiak biltzen dituen eraztun bat marrazten du, irteguiaren irizpideen arabera koloreztatuta: <span style=\"color:#2ecc71\">berdea</span> = aproposa, <span style=\"color:#f1c40f\">horia</span> = onargarria, <span style=\"color:#e74c3c\">gorria</span> = ez gomendatua. <strong>Geziak</strong> haizea nondik datorren erakusten du eta erdiko zenbakia batez besteko abiadura da (km/h).</li><li>📊 Iparrorratzaren ondoko <strong>barra bertikala</strong> haize \"termometroa\" da: hondoko berde/hori/gorri zerrendak irtegui horretarako definitutako abiadura tarteak dira, eta beteta dagoen barra uneko balioraino igotzen da. Barra berdea + gezia sektore berdean = baldintza ezin hobeak.</li><li>✎ <strong>Edonork gehitu edo aldatu</strong> dezake irtegui baten informazioa: norabide sektoreak, haize tarteak, altuera, oharrak… Erabili ✎ izenburuaren ondoan uneko irteguian aldaketak proposatzeko, edo + bilaketan irtegui berria proposatzeko. Proposamenak berrikusi eta komunitate osoarentzat argitaratzen dira.</li><li>📍 Sakatu kokapen botoia distantziak zure benetako kokapenetik neur daitezen.</li><li>🔍 Bilaketa kutxan idatzi irteguiak iragazteko; gogokoak lehenengo agertzen dira.</li><li>★ gogokoak markatu · 👑 zure \"etxea\" (ohiko irteguia) finkatu · 🔔 abisuak aktibatu baldintza ezin hobeetan.</li><li>📲 PWA gisa instalatu konexiorik gabe erabiltzeko mugikorrean edo ordenagailuan.</li><li>⚠️ Datuak orientagarriak dira. Beti ebaluatu baldintzak lekuan bertan.</li></ul>",
+    "help.quick": "<p><strong>Gida azkarra:</strong></p><ul><li>🧭 <strong>Iparrorratz nagusiak</strong> haize norabide guztiak biltzen dituen eraztun bat marrazten du, irteguiaren irizpideen arabera koloreztatuta: <span style=\"color:#2ecc71\">berdea</span> = aproposa, <span style=\"color:#f1c40f\">horia</span> = onargarria, <span style=\"color:#e74c3c\">gorria</span> = ez gomendatua. <strong>Geziak</strong> haizea nondik datorren erakusten du eta erdiko zenbakia batez besteko abiadura da (km/h).</li><li>📊 Iparrorratzaren ondoko <strong>barra bertikala</strong> haize \"anemometroa\" da: hondoko berde/hori/gorri zerrendak irtegui horretarako definitutako abiadura tarteak dira, eta beteta dagoen barra uneko balioraino igotzen da. Barra berdea + gezia sektore berdean = baldintza ezin hobeak.</li><li>✎ <strong>Edonork gehitu edo aldatu</strong> dezake irtegui baten informazioa: norabide sektoreak, haize tarteak, altuera, oharrak… Erabili ✎ izenburuaren ondoan uneko irteguian aldaketak proposatzeko, edo + bilaketan irtegui berria proposatzeko. Proposamenak berrikusi eta komunitate osoarentzat argitaratzen dira.</li><li>📍 Sakatu kokapen botoia distantziak zure benetako kokapenetik neur daitezen.</li><li>🔍 Bilaketa kutxan idatzi irteguiak iragazteko; gogokoak lehenengo agertzen dira.</li><li>★ gogokoak markatu · 👑 zure \"etxea\" (ohiko irteguia) finkatu · 🔔 abisuak aktibatu baldintza ezin hobeetan.</li><li>📲 PWA gisa instalatu konexiorik gabe erabiltzeko mugikorrean edo ordenagailuan.</li><li>⚠️ Datuak orientagarriak dira. Beti ebaluatu baldintzak lekuan bertan.</li></ul>",
     "help.full_docs": "Ikusi dokumentazio osoa",
     "loading": "Kargatzen…",
     "footer": 'Denbora errealeko datuak: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Iragarpena: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Mapa: © OpenStreetMap. Ez ofiziala. Beti egiaztatu baldintzak in situ.',
@@ -1478,6 +1483,7 @@ const I18N = {
     "hist.legend": "Línia blava: velocitat mitjana · Línia vermella: ratxa màx · Fletxes: direcció (color = aptitud)",
     "chart.avg": "Velocitat mitjana (km/h)",
     "chart.ideal_band": "Velocitat ideal",
+    "forecast.mini_compass_label": "Direccions de vent adequades per a {name}",
     "chart.gust": "Ratxa màx (km/h)",
     "chart.dir": "Direcció",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
@@ -1605,7 +1611,7 @@ const I18N = {
     "guide.bad": "<strong>Dolent:</strong> components Est (NE, E, SE) — pitjor com més a l'est.",
     "guide.warn": "<strong>Massa fort:</strong> mitjana ≥ 20 km/h o ratxes ≥ 30 km/h.",
     "help.title": "Ajuda",
-    "help.quick": "<p><strong>Guia ràpida:</strong></p><ul><li>🧭 La <strong>brúixola principal</strong> dibuixa un anell amb totes les direccions de vent acolorides segons els criteris de l'enlairament: <span style=\"color:#2ecc71\">verd</span> = ideal, <span style=\"color:#f1c40f\">groc</span> = acceptable, <span style=\"color:#e74c3c\">vermell</span> = no recomanat. La <strong>fletxa</strong> apunta a la direcció d'on ve el vent en directe i el número del centre és la velocitat mitjana en km/h.</li><li>📊 La <strong>barra vertical</strong> al costat de la brúixola és un \"termòmetre\" de vent: les franges verd/groc/vermell del fons són els rangs de velocitat mitjana definits per a <em>aquest</em> enlairament i la barra plena puja fins al valor actual. Barra verda + fletxa en un sector verd = condicions òptimes.</li><li>✎ <strong>Qualsevol pot afegir o editar</strong> la informació d'un enlairament: sectors de direcció, rangs de vent, altitud, notes… Fes servir ✎ al costat del títol per suggerir canvis a l'enlairament actual, o + al cercador per proposar-ne un de nou. Les propostes es revisen i es publiquen per a tota la comunitat.</li><li>📍 Prem el botó d'ubicació perquè les distàncies es mesurin des de la teva posició real.</li><li>🔍 Escriu al cercador per filtrar; els preferits surten primer.</li><li>★ marca preferits · 👑 fixa la \"llar\" (enlairament habitual) · 🔔 activa alertes en condicions ideals.</li><li>📲 Instal·la l'app com a PWA per usar-la sense connexió des del mòbil o l'ordinador.</li><li>⚠️ Dades orientatives. Avalua sempre les condicions in situ.</li></ul>",
+    "help.quick": "<p><strong>Guia ràpida:</strong></p><ul><li>🧭 La <strong>brúixola principal</strong> dibuixa un anell amb totes les direccions de vent acolorides segons els criteris de l'enlairament: <span style=\"color:#2ecc71\">verd</span> = ideal, <span style=\"color:#f1c40f\">groc</span> = acceptable, <span style=\"color:#e74c3c\">vermell</span> = no recomanat. La <strong>fletxa</strong> apunta a la direcció d'on ve el vent en directe i el número del centre és la velocitat mitjana en km/h.</li><li>📊 La <strong>barra vertical</strong> al costat de la brúixola és un \"anemòmetre\" de vent: les franges verd/groc/vermell del fons són els rangs de velocitat mitjana definits per a <em>aquest</em> enlairament i la barra plena puja fins al valor actual. Barra verda + fletxa en un sector verd = condicions òptimes.</li><li>✎ <strong>Qualsevol pot afegir o editar</strong> la informació d'un enlairament: sectors de direcció, rangs de vent, altitud, notes… Fes servir ✎ al costat del títol per suggerir canvis a l'enlairament actual, o + al cercador per proposar-ne un de nou. Les propostes es revisen i es publiquen per a tota la comunitat.</li><li>📍 Prem el botó d'ubicació perquè les distàncies es mesurin des de la teva posició real.</li><li>🔍 Escriu al cercador per filtrar; els preferits surten primer.</li><li>★ marca preferits · 👑 fixa la \"llar\" (enlairament habitual) · 🔔 activa alertes en condicions ideals.</li><li>📲 Instal·la l'app com a PWA per usar-la sense connexió des del mòbil o l'ordinador.</li><li>⚠️ Dades orientatives. Avalua sempre les condicions in situ.</li></ul>",
     "help.full_docs": "Veure documentació completa",
     "loading": "Carregant…",
     "footer": 'Dades en temps real: <a href="https://developers.pioupiou.fr/" target="_blank" rel="noopener">api.pioupiou.fr</a> · Pronòstic: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> · Mapa: © OpenStreetMap. No oficial. Valora sempre les condicions in situ.',
@@ -2819,19 +2825,25 @@ function renderForecastMiniCompass() {
     const start = i * 22.5 - 11.25;
     const end = start + 22.5;
     const color = COLORS[q] || COLORS.bad;
-    const opacity = q === "bad" ? 0.5 : 0.75;
+    // v136: colores mas vivos para que se vean bien sobre el grafico
+    const opacity = q === "bad" ? 0.9 : 1.0;
     return `<path d="${sectorPath(start, end)}" fill="${color}" opacity="${opacity}" />`;
   }).join("");
+  const takeoffName =
+    (typeof getCurrentTakeoffDoc === "function" && getCurrentTakeoffDoc()?.name) ||
+    (typeof currentTakeoff !== "undefined" && currentTakeoff?.name) || "";
+  const labelText = t("forecast.mini_compass_label", { name: takeoffName });
   host.innerHTML = `
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="${cx}" cy="${cy}" r="${rOut + 0.5}" fill="rgba(15,22,33,0.55)" stroke="rgba(255,255,255,0.10)" stroke-width="0.5"/>
+      <circle cx="${cx}" cy="${cy}" r="${rOut + 0.5}" fill="rgba(15,22,33,0.65)" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
       ${sectors}
-      <circle cx="${cx}" cy="${cy}" r="${rIn - 0.5}" fill="rgba(15,22,33,0.75)"/>
+      <circle cx="${cx}" cy="${cy}" r="${rIn - 0.5}" fill="rgba(15,22,33,0.82)"/>
       <text x="${cx}" y="9"  text-anchor="middle" class="cardinal">N</text>
       <text x="${cx}" y="67" text-anchor="middle" class="cardinal">S</text>
       <text x="66" y="${cy + 3}" text-anchor="middle" class="cardinal">E</text>
       <text x="6"  y="${cy + 3}" text-anchor="middle" class="cardinal">O</text>
-    </svg>`;
+    </svg>
+    <div class="fc-mini-label" title="${labelText.replace(/"/g, "&quot;")}">${labelText}</div>`;
 }
 
 // v135: actualiza la barra vertical de viento junto a la brujula principal.
