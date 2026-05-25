@@ -870,11 +870,19 @@ main {
   align-items: center;
   gap: 8px;
 }
+/* v142: etiqueta de ancho fijo para que las tres columnas tengan el mismo
+   espaciado entre si independientemente del idioma. Usamos abreviaturas en
+   los textos para que quepan en 72px. */
 .compass-wrap .cw-label {
-  font-size: 0.78rem;
+  width: 72px;
+  text-align: center;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .compass {
   position: relative;
