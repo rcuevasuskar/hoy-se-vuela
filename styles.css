@@ -1185,6 +1185,21 @@ main {
 .last-source a { color: var(--accent); text-decoration: none; }
 .last-source a:hover { text-decoration: underline; }
 
+/* v173: panel debug admin */
+.tk-debug {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: rgba(255, 200, 60, 0.08);
+  border: 1px dashed rgba(255, 200, 60, 0.35);
+  border-radius: 4px;
+  color: var(--muted);
+  font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
 /* Readings */
 .readings {
   display: grid;

@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.172";
+const APP_VERSION = "v0.173";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5472,6 +5472,29 @@ function getCurrentTakeoffDoc() {
   return list.find(t => t.id === currentTakeoffOriginId) || null;
 }
 
+// v173: panel debug visible solo para admin. Muestra los criterios efectivos
+// (currentTakeoffCriteria) y los del doc remoto en window.PCAuth.approvedTakeoffs.
+// Si difieren, la UI esta pintando con datos viejos.
+function renderTakeoffDebug(tag) {
+  const host = document.getElementById("tkDebug");
+  if (!host) return;
+  if (!window.PCAuth?.isAdmin) { host.hidden = true; host.textContent = ""; return; }
+  const id = currentTakeoffOriginId || currentTakeoff?.id || null;
+  const doc = id ? (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === id) : null;
+  const fmt = (c) => c
+    ? `wMin=${c.windMin ?? "·"} wMax=${c.windMax ?? "·"} gMax=${c.gustMax ?? "·"} q=[${(c.qualityByIndex || []).map(q => q ? q[0] : "·").join("")}]`
+    : "null";
+  const lines = [
+    `[debug${tag ? " " + tag : ""}] v=${APP_VERSION}`,
+    `id=${id || "—"}  name=${currentTakeoff?.name || "—"}`,
+    `currentCriteria: ${fmt(currentTakeoffCriteria)}`,
+    `remoteDoc.criteria: ${fmt(doc?.criteria)}`,
+    `approvedCount=${(window.PCAuth?.approvedTakeoffs || []).length}  override=${getCurrentOverride() ? "ON" : "off"}`,
+  ];
+  host.textContent = lines.join("\n");
+  host.hidden = false;
+}
+
 // Renderiza la brújula principal (sectores), la guía rápida y las notas
 // con la información del despegue actualmente seleccionado.
 function renderTakeoffPanel() {
@@ -5824,6 +5847,8 @@ function _attachTakeoffDoc(doc) {
   currentTakeoffOriginId = doc.id;
   currentTakeoffCriteria = doc.criteria || null;
   applyCurrentOverride();
+  // v173: refresca el panel debug si el modulo esta cargado.
+  try { renderTakeoffDebug("attach"); } catch {}
 }
 
 // v104: override personal de criterios por despegue. Se guarda en localStorage
@@ -7226,6 +7251,8 @@ function _hookTakeoffStreams() {
     renderCurrentTakeoffActions();
     renderTakeoffPanel();
     updatePanelForLabels();
+    // v173: debug visible (admin) en el footer.
+    try { renderTakeoffDebug("snapshot@" + new Date().toLocaleTimeString()); } catch {}
     // Recalcula los indicadores con los nuevos criterios (sin recargar pronóstico/histórico).
     if (typeof refreshObservations === "function") refreshObservations();
   };
