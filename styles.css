@@ -467,16 +467,21 @@ header.topbar .ts-current {
 .ts-icon-btn.is-alert { color: #4ea1ff; }
 
 /* v168: Acciones inline en el footer, en la misma linea que "Ultima lectura".
-   Texto plano (icono + label) separado por "|", sin estilo de chip/boton. */
+   v170: acciones a la izquierda, última lectura a la derecha (se envuelve
+   alineada a la derecha si no caben en una linea). */
 .last-update-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px 14px;
+  gap: 4px 14px;
   margin-top: 8px;
 }
-.last-update-row .last-update { margin-top: 0; }
+.last-update-row .last-update {
+  margin-top: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+}
 .ts-actions-inline {
   display: flex;
   flex-wrap: wrap;
@@ -484,6 +489,7 @@ header.topbar .ts-current {
   gap: 4px 8px;
   font-size: 0.72rem;
   color: var(--muted);
+  flex: 0 1 auto;
 }
 .ts-actions-inline-label {
   color: var(--muted);

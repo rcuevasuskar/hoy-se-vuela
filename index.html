@@ -181,8 +181,8 @@
         </div>
       </div>
       <div class="last-update-row">
-        <div class="last-update"><span data-i18n="read.last">Última lectura</span>: <span id="lastUpdate">—</span><span id="lastUpdateSource" class="last-source"></span></div>
         <div class="ts-actions-inline" id="tsActionsInline" hidden></div>
+        <div class="last-update"><span data-i18n="read.last">Última lectura</span>: <span id="lastUpdate">—</span><span id="lastUpdateSource" class="last-source"></span></div>
       </div>
 
       <div class="wind-history" id="windHistory" hidden>
@@ -398,6 +398,10 @@
       <button id="toSubmitClose" class="auth-close" title="Cerrar">✕</button>
       <h2 id="toTitle" data-i18n="to.submit_title">Añadir datos de despegue</h2>
       <p class="auth-account-info" data-i18n="to.submit_hint">Tu propuesta será revisada por un administrador antes de publicarse.</p>
+      <!-- v170: id del documento en Firestore, visible solo al editar un despegue existente (debug). -->
+      <label class="to-field-block" id="toDocIdBlock" hidden><span>ID del despegue (Firestore)</span>
+        <input id="toDocId" type="text" readonly />
+      </label>
       <label class="to-field-block"><span data-i18n="to.name_label">Nombre del despegue</span>
         <input id="toName" type="text" placeholder="Nombre del despegue" data-i18n-placeholder="to.name_ph" />
       </label>

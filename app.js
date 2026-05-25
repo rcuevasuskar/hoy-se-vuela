@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.169";
+const APP_VERSION = "v0.170";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5713,8 +5713,8 @@ function renderCurrentTakeoffActions() {
     if (actions.length) {
       const label = document.createElement("span");
       label.className = "ts-actions-inline-label";
-      // v168: en minusculas, sin estilo uppercase en CSS.
-      label.textContent = "acciones:";
+      // v170: con mayuscula inicial.
+      label.textContent = "Acciones:";
       inlineHost.appendChild(label);
       actions.forEach((a, i) => {
         if (i > 0) {
@@ -5763,6 +5763,11 @@ function openTakeoffSuggest(originId) {
   // v110: solo admins pueden borrar un despegue existente; se muestra en modo "Sugerir cambios".
   const delBtn = document.getElementById("toDeleteBtn");
   if (delBtn) delBtn.hidden = !window.PCAuth?.isAdmin;
+  // v170: muestra el id del documento Firestore que se va a actualizar (debug).
+  const idBlock = document.getElementById("toDocIdBlock");
+  const idInput = document.getElementById("toDocId");
+  if (idBlock) idBlock.hidden = false;
+  if (idInput) idInput.value = originId || "(sin id)";
 }
 let _suggestTargetId = null;
 
@@ -6733,6 +6738,11 @@ function openTakeoffSubmit(prefill) {
     const title = document.getElementById("toTitle"); if (title) title.textContent = t("to.submit_title");
     const sb = document.getElementById("toSubmitBtn"); if (sb) sb.textContent = t("to.submit");
     const delBtn = document.getElementById("toDeleteBtn"); if (delBtn) delBtn.hidden = true;
+    // v170: oculta el id de doc cuando no estamos editando.
+    const idBlock = document.getElementById("toDocIdBlock");
+    const idInput = document.getElementById("toDocId");
+    if (idBlock) idBlock.hidden = true;
+    if (idInput) idInput.value = "";
   }
   // Roseta inicial: si prefill.criteria.qualityByIndex existe, lo usamos; si no, derivamos de prefill.orientations.
   let initialQ = new Array(16).fill(null);
