@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.174";
+const APP_VERSION = "v0.175";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5963,21 +5963,25 @@ function selectStation(station, opts) {
                    : null;
   // v152: cuando solo tenemos el originId, completamos con el doc comunitario
   // aprobado para no perder URLs externas (volandooUrl/windyUrl), notas, etc.
+  // v174: PRIORIZAMOS el doc fresco de approvedTakeoffs sobre los valores que
+  // nos llegan en `takeoff` (que pueden venir cacheados de un render anterior
+  // del buscador). Antes hacia `takeoff.criteria || doc.criteria`, lo que
+  // dejaba la criteria vieja si el callsite la pasaba.
   if (takeoff && takeoff.id) {
     const doc = (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === takeoff.id);
     if (doc) {
       takeoff = {
         ...takeoff,
-        name: takeoff.name || doc.name,
-        shortName: takeoff.shortName || doc.shortName || doc.name,
-        lat: takeoff.lat ?? doc.lat,
-        lon: takeoff.lon ?? doc.lon,
-        alt: takeoff.alt ?? doc.alt ?? null,
-        orientations: takeoff.orientations || doc.orientations || "",
-        notes: takeoff.notes || doc.notes || "",
-        windyUrl: takeoff.windyUrl || doc.windyUrl || "",
-        volandooUrl: takeoff.volandooUrl || doc.volandooUrl || "",
-        criteria: takeoff.criteria || doc.criteria || null,
+        name: doc.name || takeoff.name,
+        shortName: doc.shortName || doc.name || takeoff.shortName,
+        lat: doc.lat ?? takeoff.lat,
+        lon: doc.lon ?? takeoff.lon,
+        alt: doc.alt ?? takeoff.alt ?? null,
+        orientations: doc.orientations || takeoff.orientations || "",
+        notes: doc.notes || takeoff.notes || "",
+        windyUrl: doc.windyUrl || takeoff.windyUrl || "",
+        volandooUrl: doc.volandooUrl || takeoff.volandooUrl || "",
+        criteria: doc.criteria || takeoff.criteria || null,
       };
     }
   }
@@ -6326,19 +6330,29 @@ function renderSearchRow(s, ctx) {
         // clave unica). Sintetizamos un "pseudo-station" a partir del propio
         // takeoff para que el resto de la UI funcione (sin datos live, pero
         // con pronostico/edicion del despegue).
+        // v174: el objeto `s.raw` se capturo cuando se renderizo el panel; si
+        // mientras tanto el snapshot de Firestore actualizo el doc (p.ej. tras
+        // una edicion), `s.raw` esta OBSOLETO. Releemos el doc fresco de
+        // approvedTakeoffs por id antes de seleccionarlo, para que la criteria
+        // y las URLs externas reflejen el estado actual del servidor.
+        const docId = s.raw?.id || null;
+        const fresh = docId
+          ? (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === docId)
+          : null;
+        const useRaw = fresh || s.raw || null;
         const link = s._linkedStation;
         if (link) {
           selectStation({
             id: link.id, provider: link.provider,
-            name: s.name, shortName: s.name,
-            lat: s.lat, lon: s.lon,
-          }, { criteria: s.raw?.criteria || null, originId: s.raw?.id || null, userPicked: true });
-        } else if (s.raw?.id) {
+            name: useRaw?.name || s.name, shortName: useRaw?.shortName || s.name,
+            lat: useRaw?.lat ?? s.lat, lon: useRaw?.lon ?? s.lon,
+          }, { criteria: useRaw?.criteria || null, originId: docId, userPicked: true });
+        } else if (docId) {
           selectStation({
-            id: "to_" + s.raw.id, provider: "community",
-            name: s.name, shortName: s.name,
-            lat: s.lat, lon: s.lon,
-          }, { criteria: s.raw?.criteria || null, originId: s.raw.id, userPicked: true });
+            id: "to_" + docId, provider: "community",
+            name: useRaw?.name || s.name, shortName: useRaw?.shortName || s.name,
+            lat: useRaw?.lat ?? s.lat, lon: useRaw?.lon ?? s.lon,
+          }, { criteria: useRaw?.criteria || null, originId: docId, userPicked: true });
         }
       } else {
         selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon }, { userPicked: true });
