@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.137";
+const APP_VERSION = "v0.138";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -2825,14 +2825,12 @@ function renderForecastMiniCompass() {
     const start = i * 22.5 - 11.25;
     const end = start + 22.5;
     const color = COLORS[q] || COLORS.bad;
-    // v136: colores mas vivos para que se vean bien sobre el grafico
+    // v137: colores mas vivos para que se vean bien sobre el grafico
     const opacity = q === "bad" ? 0.9 : 1.0;
     return `<path d="${sectorPath(start, end)}" fill="${color}" opacity="${opacity}" />`;
   }).join("");
-  const takeoffName =
-    (typeof getCurrentTakeoffDoc === "function" && getCurrentTakeoffDoc()?.name) ||
-    (typeof currentTakeoff !== "undefined" && currentTakeoff?.name) || "";
-  const labelText = t("forecast.mini_compass_label", { name: takeoffName });
+  // v138: mini-brujula inline en la cabecera del pronostico, sin etiqueta
+  // (la cabecera ya muestra el nombre del despegue).
   host.innerHTML = `
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <circle cx="${cx}" cy="${cy}" r="${rOut + 0.5}" fill="rgba(15,22,33,0.65)" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
@@ -2842,8 +2840,7 @@ function renderForecastMiniCompass() {
       <text x="${cx}" y="67" text-anchor="middle" class="cardinal">S</text>
       <text x="66" y="${cy + 3}" text-anchor="middle" class="cardinal">E</text>
       <text x="6"  y="${cy + 3}" text-anchor="middle" class="cardinal">O</text>
-    </svg>
-    <div class="fc-mini-label" title="${labelText.replace(/"/g, "&quot;")}">${labelText}</div>`;
+    </svg>`;
 }
 
 // v135: actualiza la barra vertical de viento junto a la brujula principal.
@@ -2885,9 +2882,11 @@ function renderWindBarVertical(avgKmh) {
     ticks.appendChild(t);
   });
   // Relleno
+  const valEl = document.getElementById("wbvValue");
   if (avgKmh == null || !Number.isFinite(avgKmh)) {
     fill.style.height = "0%";
     fill.className = "wbv-fill";
+    if (valEl) valEl.textContent = "—";
     return;
   }
   const h = pct(avgKmh);
@@ -2897,6 +2896,7 @@ function renderWindBarVertical(avgKmh) {
   else if (avgKmh >= wmin && avgKmh <= wmax) cls += "ideal";
   else cls += "ok";
   fill.className = cls;
+  if (valEl) valEl.textContent = String(Math.round(avgKmh));
 }
 
 function renderForecast(fc) {
@@ -4231,7 +4231,7 @@ function applyCurrentTakeoffLabel() {
   const guideEl = document.getElementById("guideTakeoffName");
   if (guideEl) guideEl.textContent = baseName + altLabel;
   // v125: el titulo del pronostico incluye el nombre del despegue.
-  const fcTitleEl = document.getElementById("forecastTitle");
+  const fcTitleEl = document.getElementById("forecastTitleText");
   if (fcTitleEl && baseName) fcTitleEl.textContent = t("fc.title_for", { name: baseName });
   renderCurrentTakeoffActions();
   renderTakeoffPanel();

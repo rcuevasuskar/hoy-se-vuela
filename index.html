@@ -132,10 +132,11 @@
             </div>
             <div class="compass-center"><span id="compassAvg">—</span></div>
           </div>
-          <div class="wind-bar-vertical" id="windBarVertical" aria-hidden="true">
+          <div class="wind-bar-vertical" id="windBarVertical" role="img" aria-label="Velocidad media">
             <div class="wbv-zones" id="wbvZones"></div>
             <div class="wbv-fill" id="wbvFill"></div>
             <div class="wbv-ticks" id="wbvTicks"></div>
+            <span class="wbv-value" id="wbvValue">—</span>
           </div>
         </div>
         <div class="readings">
@@ -269,7 +270,10 @@
     <!-- Pronóstico -->
     <section class="card">
       <div class="chart-header">
-        <h2 id="forecastTitle" data-i18n="fc.title">Pronóstico (Open-Meteo)</h2>
+        <h2 class="forecast-title">
+          <span id="forecastTitleText" data-i18n="fc.title">Pronóstico (Open-Meteo)</span>
+          <span id="forecastMiniCompass" class="fc-mini-compass-inline" aria-hidden="true"></span>
+        </h2>
         <div class="range-buttons" id="forecastButtons">
           <button data-days="1" class="active" data-i18n="fc.today">Hoy</button>
           <button data-days="2">+24 h</button>
@@ -278,7 +282,6 @@
       </div>
       <div class="chart-wrap">
         <canvas id="forecastChart"></canvas>
-        <div id="forecastMiniCompass" class="fc-mini-compass" aria-hidden="true"></div>
       </div>
       <div id="forecastLegend" class="fc-legend"></div>
       <div id="forecastSummary" class="forecast-summary"></div>
