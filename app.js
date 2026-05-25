@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.144";
+const APP_VERSION = "v0.145";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -3297,7 +3297,10 @@ function drawTakeoffOnMap() {
   takeoffMapLayers.push(marker, circle);
   // Asegura el reflow por si el contenedor cambió de tamaño y centra/panea suavemente.
   try { map.invalidateSize(); } catch {}
-  map.flyTo([lat, lon], 11, { duration: 0.6 });
+  // v145: ya no centramos en el despegue con un zoom fijo. Cuando renderNearby
+  // termine llamara a fitMapToNearby() y el mapa quedara ajustado a las
+  // estaciones mostradas. Mientras tanto, encuadre provisional al circulo de 50 km.
+  map.fitBounds(circle.getBounds(), { padding: [30, 30], maxZoom: 11, animate: false });
 }
 
 // === Estaciones cercanas ===
@@ -3307,10 +3310,14 @@ const NEARBY_AVG_HOURS = 3;
 let nearbyLatLngs = [];
 
 function fitMapToNearby() {
-  if (!map || !nearbyLatLngs.length) return;
+  if (!map) return;
   const pts = [[currentTakeoff.lat, currentTakeoff.lon], ...nearbyLatLngs];
+  if (pts.length < 2) return;
   const bounds = L.latLngBounds(pts);
-  map.fitBounds(bounds, { padding: [40, 40], maxZoom: 11 });
+  // Padding generoso para que las etiquetas (tooltips permanentes) no queden
+  // recortadas. maxZoom alto permite acercarse cuando todas las estaciones
+  // estan agrupadas; el minZoom lo gestiona Leaflet.
+  map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13, animate: true });
 }
 
 async function renderNearby() {
@@ -3686,8 +3693,13 @@ async function renderMetarStations() {
         .bindTooltip(label, {
           permanent: true, direction: "right", offset: [8, 0], className: "station-label airport"
         });
+      nearbyLatLngs.push([ap.lat, ap.lon]);
     }
   }
+  // v145: una vez pintadas todas las estaciones cercanas (Pioupiou/AEMET/Holfuy
+  // + aeropuertos METAR), ajustamos el zoom del mapa para que entren todas las
+  // que se muestran en el panel "Estaciones cercanas".
+  fitMapToNearby();
 }
 
 function escapeHtml(s) {
