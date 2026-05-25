@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.167";
+const APP_VERSION = "v0.168";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -89,9 +89,21 @@ function loadSavedStation() {
   } catch {}
   return null;
 }
+// v168: persistimos tambien el id del despegue (doc en `takeoffs`) seleccionado.
+// El despegue es la entidad unica; la estacion solo es una fuente de datos
+// asociada. Asi en recargas restauramos exactamente el mismo doc, sin depender
+// de resoluciones por nombre/proximidad que pueden enganchar duplicados.
+function loadSavedTakeoffId() {
+  try { return localStorage.getItem("selectedTakeoffId") || null; } catch { return null; }
+}
 function saveSelectedStation(s) {
   try { localStorage.setItem("selectedStation", JSON.stringify(s)); } catch {}
   window.PCAuth?.savePref?.("selectedStation", JSON.stringify(s));
+  // v168: guarda el id del despegue actual (si lo hay) en paralelo.
+  try {
+    if (currentTakeoff?.id) localStorage.setItem("selectedTakeoffId", currentTakeoff.id);
+    else localStorage.removeItem("selectedTakeoffId");
+  } catch {}
 }
 
 const REFRESH_MS = 60_000;
@@ -5747,29 +5759,37 @@ function openTakeoffSuggest(originId) {
 let _suggestTargetId = null;
 
 function resolveCurrentTakeoffOrigin() {
+  // v168: el id del documento de despegue es la clave unica. Si ya esta fijado
+  // (porque el usuario eligio el despegue en busqueda/favoritos), respetamos esa
+  // identidad y NO intentamos resolver por estacion/nombre/proximidad, que podria
+  // enganchar un doc distinto (p.ej. duplicado) y romper el ciclo de edicion.
   if (currentTakeoff.id) return;
   const list = window.PCAuth?.approvedTakeoffs || [];
   if (!list.length) return;
-  // 1) Coincidencia por stationId.
+  // 1) Coincidencia por stationId (solo si es 1:1, sin ambiguedad).
   if (currentStationId != null) {
-    const byStation = list.find(t => t.stationId != null && Number(t.stationId) === Number(currentStationId));
-    if (byStation) { _attachTakeoffDoc(byStation); return; }
+    const byStation = list.filter(t => t.stationId != null && Number(t.stationId) === Number(currentStationId));
+    if (byStation.length === 1) { _attachTakeoffDoc(byStation[0]); return; }
   }
-  // 2) Coincidencia por nombre (case-insensitive, trim).
+  // 2) Coincidencia por nombre (case-insensitive, trim). Solo si es unica.
   const curName = (currentStation?.name || currentTakeoff?.name || "").trim().toLowerCase();
   if (curName) {
-    const byName = list.find(t => (t.name || "").trim().toLowerCase() === curName);
-    if (byName) { _attachTakeoffDoc(byName); return; }
+    const byName = list.filter(t => (t.name || "").trim().toLowerCase() === curName);
+    if (byName.length === 1) { _attachTakeoffDoc(byName[0]); return; }
   }
-  // 3) Coincidencia por coordenadas: despegue comunitario más cercano dentro de 3 km (v101).
+  // 3) Coincidencia por coordenadas: despegue comunitario mas cercano dentro de
+  // 3 km (v101). v168: requerimos que sea claramente el mas cercano (margen 1km
+  // sobre el segundo) para evitar enganchar el doc equivocado.
   const lat = currentTakeoff?.lat, lon = currentTakeoff?.lon;
   if (lat == null || lon == null) return;
-  let bestT = null, bestKm = Infinity;
+  let bestT = null, bestKm = Infinity, secondKm = Infinity;
   for (const t of list) {
+    if (!Number.isFinite(t.lat) || !Number.isFinite(t.lon)) continue;
     const km = haversineKm(lat, lon, t.lat, t.lon);
-    if (km < bestKm && km <= 3) { bestKm = km; bestT = t; }
+    if (km < bestKm) { secondKm = bestKm; bestKm = km; bestT = t; }
+    else if (km < secondKm) { secondKm = km; }
   }
-  if (bestT) _attachTakeoffDoc(bestT);
+  if (bestT && bestKm <= 3 && (secondKm - bestKm) >= 1) _attachTakeoffDoc(bestT);
 }
 
 // v103: aplica los datos de un documento `takeoffs` al currentTakeoff actual
@@ -6254,6 +6274,11 @@ function renderSearchRow(s, ctx) {
       if (isCommunity) {
         // v113: usa la estacion mas cercana autovinculada (cualquier proveedor)
         // en lugar del stationId guardado en el doc.
+        // v168: si el despegue NO tiene estacion live vinculada, igualmente lo
+        // seleccionamos: el despegue es la entidad principal (su doc id es la
+        // clave unica). Sintetizamos un "pseudo-station" a partir del propio
+        // takeoff para que el resto de la UI funcione (sin datos live, pero
+        // con pronostico/edicion del despegue).
         const link = s._linkedStation;
         if (link) {
           selectStation({
@@ -6261,6 +6286,12 @@ function renderSearchRow(s, ctx) {
             name: s.name, shortName: s.name,
             lat: s.lat, lon: s.lon,
           }, { criteria: s.raw?.criteria || null, originId: s.raw?.id || null, userPicked: true });
+        } else if (s.raw?.id) {
+          selectStation({
+            id: "to_" + s.raw.id, provider: "community",
+            name: s.name, shortName: s.name,
+            lat: s.lat, lon: s.lon,
+          }, { criteria: s.raw?.criteria || null, originId: s.raw.id, userPicked: true });
         }
       } else {
         selectStation({ id: s.id, provider: s.provider, name: s.name, shortName: s.name, lat: s.lat, lon: s.lon }, { userPicked: true });
@@ -7224,6 +7255,46 @@ function _addedAtMs(f) {
 
 async function resolveDefaultTakeoff() {
   if (_userPickedStation) return;
+  // v168: si en la sesion anterior el usuario tenia seleccionado un despegue
+  // concreto (doc id), restauramos exactamente ese despegue. La estacion live
+  // se autovincula como en favoritos comunitarios.
+  const savedTakeoffId = loadSavedTakeoffId();
+  if (savedTakeoffId) {
+    const list = window.PCAuth?.approvedTakeoffs || [];
+    const to = list.find(t => t.id === savedTakeoffId);
+    if (to) {
+      try {
+        const all = await ensureAllStations();
+        const LINK_KM = 30;
+        let best = null, bestKm = LINK_KM + 1;
+        const pools = [
+          (all.pioupiou || []).map(stationFromPioupiou).filter(Boolean),
+          (all.aemet || []),
+          (all.holfuy || []),
+        ];
+        for (const pool of pools) for (const st of pool) {
+          if (!Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
+          if (!isStationRecent(st, 24)) continue;
+          const km = haversineKm(to.lat, to.lon, st.lat, st.lon);
+          if (km < bestKm) { bestKm = km; best = st; }
+        }
+        if (best) {
+          selectStation(
+            { id: best.id, provider: best.provider, name: to.name, shortName: to.shortName || to.name, lat: to.lat, lon: to.lon },
+            { criteria: to.criteria || null, originId: to.id }
+          );
+        } else {
+          // Sin estacion live: el propio despegue es el lugar (pseudo-station).
+          selectStation(
+            { id: "to_" + to.id, provider: "community", name: to.name, shortName: to.shortName || to.name, lat: to.lat, lon: to.lon },
+            { criteria: to.criteria || null, originId: to.id }
+          );
+        }
+        _defaultResolvedOnce = true;
+        return;
+      } catch (e) { console.warn("resolveDefaultTakeoff saved takeoff:", e); }
+    }
+  }
   // 1) Habitual
   const favs = window.PCAuth?.favorites || [];
   const homeId = window.PCAuth?.prefs?.homeFavId || null;
