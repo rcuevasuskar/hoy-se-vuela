@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.162";
+const APP_VERSION = "v0.163";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -219,7 +219,7 @@ const I18N = {
     "co.btn": "Mis criterios",
     "snd.title": "Sondeo atmosférico",
     "snd.btn": "Sondeo",
-    "act.menu": "Más acciones",
+    "act.menu": "Acciones",
     "snd.btn_tip": "Ver perfil vertical (viento, temperatura y nubes por altitud)",
     "snd.btn_short": "📈",
     "snd.loading": "Cargando sondeo…",
@@ -552,7 +552,7 @@ const I18N = {
     "co.btn": "My criteria",
     "snd.title": "Atmospheric sounding",
     "snd.btn": "Sounding",
-    "act.menu": "More actions",
+    "act.menu": "Actions",
     "snd.btn_tip": "View vertical profile (wind, temperature and clouds by altitude)",
     "snd.btn_short": "📈",
     "snd.loading": "Loading sounding…",
@@ -870,7 +870,7 @@ const I18N = {
     "co.btn": "Meine Kriterien",
     "snd.title": "Atmosphärisches Sondieren",
     "snd.btn": "Sondierung",
-    "act.menu": "Weitere Aktionen",
+    "act.menu": "Aktionen",
     "snd.btn_tip": "Vertikales Profil ansehen (Wind, Temperatur und Wolken nach Höhe)",
     "snd.btn_short": "📈",
     "snd.loading": "Sondierung wird geladen…",
@@ -1188,7 +1188,7 @@ const I18N = {
     "co.btn": "Mes critères",
     "snd.title": "Sondage atmosphérique",
     "snd.btn": "Sondage",
-    "act.menu": "Plus d'actions",
+    "act.menu": "Actions",
     "snd.btn_tip": "Voir le profil vertical (vent, température et nuages par altitude)",
     "snd.btn_short": "📈",
     "snd.loading": "Chargement du sondage…",
@@ -1506,7 +1506,7 @@ const I18N = {
     "co.btn": "Nire irizpideak",
     "snd.title": "Atmosfera-sondaketa",
     "snd.btn": "Sondaketa",
-    "act.menu": "Ekintza gehiago",
+    "act.menu": "Ekintzak",
     "snd.btn_tip": "Profil bertikala ikusi (haizea, tenperatura eta hodeiak altueraka)",
     "snd.btn_short": "📈",
     "snd.loading": "Sondaketa kargatzen…",
@@ -1778,7 +1778,7 @@ const I18N = {
     "co.btn": "Els meus criteris",
     "snd.title": "Sondatge atmosfèric",
     "snd.btn": "Sondatge",
-    "act.menu": "Més accions",
+    "act.menu": "Accions",
     "snd.btn_tip": "Veure el perfil vertical (vent, temperatura i núvols per altitud)",
     "snd.btn_short": "📈",
     "snd.loading": "Carregant sondatge…",
@@ -5691,7 +5691,7 @@ function renderCurrentTakeoffActions() {
     trigger.title = t("act.menu");
     trigger.setAttribute("aria-haspopup", "true");
     trigger.setAttribute("aria-expanded", "false");
-    trigger.textContent = "⋮";
+    trigger.innerHTML = `<span class="ts-action-trigger-icon">⋮</span><span class="ts-action-trigger-label">${escapeHtml(t("act.menu"))}</span>`;
     const list = document.createElement("div");
     list.className = "ts-action-menu-list";
     list.setAttribute("role", "menu");
@@ -6789,7 +6789,7 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
           gustMax: Number.isFinite(gustMaxV) ? gustMaxV : null,
         }
       : null;
-    await window.PCAuth.submitTakeoff({
+    const submittedPayload = {
       name: document.getElementById("toName").value,
       lat: document.getElementById("toLat").value,
       lon: document.getElementById("toLon").value,
@@ -6801,7 +6801,8 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       stationId: document.getElementById("toStationId")?.value || null,
       criteria,
       targetId: _suggestTargetId || null,
-    });
+    };
+    const submitResult = await window.PCAuth.submitTakeoff(submittedPayload);
     // v161/v162: al editar/sugerir cambios sobre un despegue comunitario
     // existente, limpiamos cualquier override personal (🛠) guardado para ese
     // mismo despegue. v161 solo borraba la clave "to:<targetId>", pero el
@@ -6832,6 +6833,31 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
         }
       }
       if (changed) _saveUserOverrides();
+
+      // v163: en lugar de esperar al snapshot de Firestore (que puede tardar
+      // varios segundos incluso para admin auto-aprobado), aplicamos
+      // localmente los datos que el usuario acaba de enviar. Esto garantiza
+      // que la UI refleje los cambios instantaneamente. El snapshot
+      // posterior los confirmara/sobrescribira con los del servidor.
+      const list = window.PCAuth?.approvedTakeoffs;
+      if (Array.isArray(list) && submitResult?.autoApplied) {
+        const idx = list.findIndex(t => t.id === _suggestTargetId);
+        const merged = {
+          ...(idx >= 0 ? list[idx] : { id: _suggestTargetId }),
+          name: String(submittedPayload.name || "").trim(),
+          lat: Number(submittedPayload.lat),
+          lon: Number(submittedPayload.lon),
+          alt: (submittedPayload.alt !== "" && submittedPayload.alt != null) ? Number(submittedPayload.alt) : null,
+          orientations: String(submittedPayload.orientations || "").trim(),
+          stationId: (submittedPayload.stationId !== "" && submittedPayload.stationId != null) ? Number(submittedPayload.stationId) : null,
+          notes: String(submittedPayload.notes || "").trim() || null,
+          windyUrl: submittedPayload.windyUrl || null,
+          volandooUrl: submittedPayload.volandooUrl || null,
+          criteria: submittedPayload.criteria || null,
+        };
+        if (idx >= 0) list[idx] = merged; else list.push(merged);
+      }
+
       // Si el doc afectado es el activo, forzamos un repaso completo (cubre
       // el camino admin auto-aprobado donde el snapshot puede tardar).
       if (currentTakeoff.id === _suggestTargetId) {
