@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.156";
+const APP_VERSION = "v0.157";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -2167,6 +2167,38 @@ function parseVolandooSlug(url) {
   const m = String(url).match(/volandoo\.com\/weather\/([^\/?#]+)/i);
   return m ? decodeURIComponent(m[1]) : null;
 }
+
+// v157: cache para snapshots de viento de Volandoo, usado por la lista de
+// despegues para calcular el verdict (borde de color) cuando la estación
+// integrada vinculada no tiene datos recientes. Devuelve la snap cacheada
+// (puede ser null) y, si está obsoleta o no existe, dispara un fetch en
+// segundo plano que rerenderiza la búsqueda al terminar.
+const _volandooSnapCache = new Map(); // slug -> { ts, snap }
+const _volandooInflight = new Set();
+const VOLANDOO_CACHE_MS = 5 * 60 * 1000;
+function _volandooSnapCached(url) {
+  const slug = parseVolandooSlug(url);
+  if (!slug) return null;
+  const c = _volandooSnapCache.get(slug);
+  const fresh = c && (Date.now() - c.ts) < VOLANDOO_CACHE_MS;
+  if (!fresh && !_volandooInflight.has(slug)) {
+    _volandooInflight.add(slug);
+    fetchVolandooStationLive(slug, url).then(live => {
+      const m = live?.measurements || null;
+      const snap = m ? { avg: m.wind_speed_avg ?? null, max: m.wind_speed_max ?? null, dir: m.wind_heading ?? null } : null;
+      _volandooSnapCache.set(slug, { ts: Date.now(), snap });
+      if (typeof tsRunSearch === "function") {
+        try { tsRunSearch(); } catch {}
+      }
+    }).catch(e => {
+      _volandooSnapCache.set(slug, { ts: Date.now(), snap: null });
+      console.warn("[volandoo] cache fetch", slug, e?.message || e);
+    }).finally(() => {
+      _volandooInflight.delete(slug);
+    });
+  }
+  return c?.snap || null;
+}
 function parseWindyCoords(url) {
   if (!url) return null;
   const s = String(url);
@@ -2185,8 +2217,7 @@ async function fetchVolandooStationLive(slug, fallbackUrl) {
   const data = await fetchJson(`https://api.volandoo.com/v1/weather/${encodeURIComponent(slug)}`);
   const st = data?.data?.station;
   const d = st?.data;
-  if (!d) return null;
-  const iso = d.time ? new Date(d.time * 1000).toISOString() : null;
+  if (!d) return null;  const iso = d.time ? new Date(d.time * 1000).toISOString() : null;
   return {
     measurements: {
       wind_heading:   d.dir  ?? null,
@@ -2620,43 +2651,75 @@ function _renderSoundingFor(ts) {
   const details = document.getElementById("sndTableDetails");
   if (details) details.hidden = false;
 
-  // --- Gráfico único: temperatura/rocío (eje X inferior, °C) +
-  // viento (eje X superior, km/h) sobre el mismo eje Y de altitud.
+  // --- Gráfico: temperatura/rocío (eje X inferior, °C) con eje Y de altitud.
+  // Las flechas de viento se dibujan FUERA del chart en la banda derecha
+  // (espacio reservado con layout.padding.right) mediante un plugin custom.
   const tPts  = profile.filter(p => p.t  != null).map(p => ({ x: p.t,  y: p.alt }));
   const tdPts = profile.filter(p => p.td != null).map(p => ({ x: p.td, y: p.alt }));
   const windPts = profile.filter(p => p.ws != null && p.wd != null)
-    .map(p => ({ x: p.ws, y: p.alt, dir: p.wd, spd: p.ws }));
-  const windStyles = windPts.map(p => {
-    const col = _soundingWindColor(p.spd);
-    return _makeWindArrowWithLabel(p.dir, col, `${Math.round(p.spd)}`, 20);
-  });
+    .map(p => ({ alt: p.alt, dir: p.wd, spd: p.ws, color: _soundingWindColor(p.ws) }));
+
+  const windRightPlugin = {
+    id: "sndWindRight",
+    afterDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      const yScale = scales.y;
+      if (!yScale || !chart.$windPts) return;
+      const xBase = chartArea.right + 6;
+      const arrowSize = 14;
+      ctx.font = "bold 11px system-ui, sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      // Evitar superposición: ordena por altura y separa al menos 14 px.
+      const sorted = chart.$windPts.slice().sort((a, b) => a.alt - b.alt);
+      const placed = [];
+      for (const p of sorted) {
+        let yPx = yScale.getPixelForValue(p.alt);
+        if (yPx < chartArea.top || yPx > chartArea.bottom) continue;
+        for (const q of placed) {
+          if (Math.abs(yPx - q) < 14) yPx = q + 14;
+        }
+        placed.push(yPx);
+        // Flecha
+        ctx.save();
+        ctx.translate(xBase + arrowSize / 2, yPx);
+        ctx.rotate(((p.dir || 0) + 180) * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        const s = arrowSize / 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -s);
+        ctx.lineTo(s * 0.7, s * 0.6);
+        ctx.lineTo(0, s * 0.25);
+        ctx.lineTo(-s * 0.7, s * 0.6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        // Valor km/h al lado
+        ctx.fillStyle = p.color;
+        ctx.fillText(String(Math.round(p.spd)), xBase + arrowSize + 3, yPx);
+      }
+    },
+  };
+
   const tempCtx = document.getElementById("sndTempChart").getContext("2d");
   if (_sndTempChart) { try { _sndTempChart.destroy(); } catch {} }
   _sndTempChart = new Chart(tempCtx, {
     type: "scatter",
     data: {
       datasets: [
-        { label: "T",  data: tPts,  showLine: true, borderColor: "rgba(231,76,60,0.9)",  backgroundColor: "rgba(231,76,60,0.2)",  pointRadius: 3, tension: 0.2, xAxisID: "x" },
-        { label: "Td", data: tdPts, showLine: true, borderColor: "rgba(46,204,113,0.9)", backgroundColor: "rgba(46,204,113,0.2)", pointRadius: 3, tension: 0.2, xAxisID: "x" },
-        { label: t("snd.wind_axis"), data: windPts, showLine: false,
-          pointStyle: windStyles, pointRadius: 14, xAxisID: "xWind" },
+        { label: "T",  data: tPts,  showLine: true, borderColor: "rgba(231,76,60,0.9)",  backgroundColor: "rgba(231,76,60,0.2)",  pointRadius: 3, tension: 0.2 },
+        { label: "Td", data: tdPts, showLine: true, borderColor: "rgba(46,204,113,0.9)", backgroundColor: "rgba(46,204,113,0.2)", pointRadius: 3, tension: 0.2 },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 56 } },
       plugins: {
         legend: { labels: { color: "#e8eef7" } },
-        title: { display: true, text: t("snd.temp_chart"), color: "#e8eef7" },
+        title: { display: true, text: t("snd.temp_chart") + " · → " + t("snd.wind_axis"), color: "#e8eef7" },
         tooltip: {
           callbacks: {
-            label: (ctx) => {
-              if (ctx.dataset.label === t("snd.wind_axis")) {
-                const p = ctx.raw;
-                const info = classifyDirection(p.dir);
-                return `${Math.round(p.y)} m · ${fmtNum(p.spd)} km/h · ${info.name} (${Math.round(p.dir)}°)`;
-              }
-              return `${ctx.dataset.label}: ${fmtNum(ctx.parsed.x)} °C @ ${Math.round(ctx.parsed.y)} m`;
-            },
+            label: (ctx) => `${ctx.dataset.label}: ${fmtNum(ctx.parsed.x)} °C @ ${Math.round(ctx.parsed.y)} m`,
           },
         },
       },
@@ -2664,14 +2727,14 @@ function _renderSoundingFor(ts) {
         x: { type: "linear", position: "bottom",
              title: { display: true, text: "°C", color: "#e57777" },
              ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
-        xWind: { type: "linear", position: "top",
-             title: { display: true, text: t("snd.wind_axis"), color: "#7fbfff" },
-             ticks: { color: "#8aa0bb" }, grid: { display: false }, beginAtZero: true },
         y: { title: { display: true, text: "m", color: "#8aa0bb" },
              ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
       },
     },
+    plugins: [windRightPlugin],
   });
+  _sndTempChart.$windPts = windPts;
+  _sndTempChart.update();
 
   // --- Tabla colapsable de niveles. ---
   const tbl = document.getElementById("sndTable");
@@ -5945,15 +6008,26 @@ function renderSearchRow(s, ctx) {
   // Aplica a TODOS los items selectables cuando hay criterios y datos meteo.
   try {
     let verdict = "unknown";
-    // 1) Despegue comunitario: criterios propios + estacion vinculada.
-    if (isCommunity && s._linkedStation && s.raw?.criteria) {
-      const link = s._linkedStation;
-      const snap = {
-        avg: link.wind_speed_avg ?? null,
-        max: link.wind_speed_max ?? null,
-        dir: link.wind_heading ?? null,
-      };
-      if (snap.avg != null || snap.dir != null) {
+    // 1) Despegue comunitario: criterios propios. Probamos primero Volandoo
+    //    (si el doc tiene volandooUrl, suele estar más cerca y vivo que la
+    //    AEMET vinculada) y caemos a la estación integrada como respaldo.
+    if (isCommunity && s.raw?.criteria) {
+      let snap = null;
+      const vUrl = s.raw?.volandooUrl;
+      if (vUrl) {
+        const vsnap = _volandooSnapCached(vUrl);
+        if (vsnap && (vsnap.avg != null || vsnap.dir != null)) snap = vsnap;
+      }
+      if (!snap && s._linkedStation) {
+        const link = s._linkedStation;
+        const ls = {
+          avg: link.wind_speed_avg ?? null,
+          max: link.wind_speed_max ?? null,
+          dir: link.wind_heading ?? null,
+        };
+        if (ls.avg != null || ls.dir != null) snap = ls;
+      }
+      if (snap) {
         verdict = takeoffVerdictFromSnapshot(s.raw.criteria, snap);
       }
     }
