@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.181";
+const APP_VERSION = "v0.182";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -6108,12 +6108,9 @@ async function tsRunSearch() {
       return fakeItem;
     })
     .filter(f => !query || f.name.toLowerCase().includes(query));
-  // Home siempre primero; resto alfabético.
-  favItems.sort((a, b) => {
-    if (a._isHome && !b._isHome) return -1;
-    if (!a._isHome && b._isHome) return 1;
-    return a.name.localeCompare(b.name);
-  });
+  // v181: favoritos ordenados por distancia a la posicion actual del usuario
+  // (igual criterio que la lista comunitaria de abajo).
+  favItems.sort((a, b) => a.dist - b.dist);
 
   // Quita de la lista comunitaria los que ya estan en favoritos para no duplicar.
   const favKeys = new Set(favItems.map(f => favKey(f)));
