@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.160";
+const APP_VERSION = "v0.161";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -286,6 +286,7 @@ const I18N = {
     "near.popup_view": "Ver estación",
     "map.title": "Ubicación del despegue",
     "guide.title": "Guía rápida",
+    "fc.source_prefix": "Datos:",
     "guide.for": "Criterios para",
     "guide.ideal": "<strong>Ideal:</strong> Oeste (O) o Noroeste (NO), 5–15 km/h (rachas ≤ 25).",
     "guide.ok": "<strong>Volable:</strong> Norte (N) o Suroeste (SO), o vientos fuera del rango ideal pero por debajo del límite.",
@@ -617,6 +618,7 @@ const I18N = {
     "near.popup_view": "View station",
     "map.title": "Takeoff location",
     "guide.title": "Quick guide",
+    "fc.source_prefix": "Data:",
     "guide.for": "Criteria for",
     "guide.ideal": "<strong>Ideal:</strong> West (W) or Northwest (NW), 5–15 km/h (gusts ≤ 25).",
     "guide.ok": "<strong>Flyable:</strong> North (N) or Southwest (SW), or winds outside the ideal range but below the limit.",
@@ -933,6 +935,7 @@ const I18N = {
     "near.popup_view": "Station ansehen",
     "map.title": "Standort des Startplatzes",
     "guide.title": "Kurzanleitung",
+    "fc.source_prefix": "Daten:",
     "guide.for": "Kriterien für",
     "guide.ideal": "<strong>Ideal:</strong> West (W) oder Nordwest (NW), 5–15 km/h (Böen ≤ 25).",
     "guide.ok": "<strong>Fliegbar:</strong> Nord (N) oder Südwest (SW), oder Wind außerhalb des Idealbereichs aber unter dem Limit.",
@@ -1249,6 +1252,7 @@ const I18N = {
     "near.popup_view": "Voir la station",
     "map.title": "Emplacement du décollage",
     "guide.title": "Guide rapide",
+    "fc.source_prefix": "Données :",
     "guide.for": "Critères pour",
     "guide.ideal": "<strong>Idéal :</strong> Ouest (O) ou Nord-Ouest (NO), 5–15 km/h (rafales ≤ 25).",
     "guide.ok": "<strong>Volable :</strong> Nord (N) ou Sud-Ouest (SO), ou vents hors plage idéale mais sous la limite.",
@@ -1565,6 +1569,7 @@ const I18N = {
     "near.popup_view": "Ikusi estazioa",
     "map.title": "Irteguiaren kokapena",
     "guide.title": "Gida azkarra",
+    "fc.source_prefix": "Datuak:",
     "guide.for": "Irizpideak honentzat",
     "guide.ideal": "<strong>Aproposa:</strong> Mendebal (M) edo Ipar-Mendebal (IM), 5–15 km/h (boladak ≤ 25).",
     "guide.ok": "<strong>Hegagarria:</strong> Ipar (I) edo Hego-Mendebal (HM), edo tarte aproposetik kanpoko haizeak baina mugaren azpitik.",
@@ -1835,6 +1840,7 @@ const I18N = {
     "near.popup_view": "Veure estació",
     "map.title": "Ubicació de l'enlairament",
     "guide.title": "Guia ràpida",
+    "fc.source_prefix": "Dades:",
     "guide.for": "Criteris per a",
     "guide.ideal": "<strong>Ideal:</strong> Oest (O) o Nord-oest (NO), 5–15 km/h (ratxes ≤ 25).",
     "guide.ok": "<strong>Volable:</strong> Nord (N) o Sud-oest (SO), o vents fora del rang ideal però sota el límit.",
@@ -3860,6 +3866,12 @@ function renderWindBarVertical(avgKmh, gustKmh) {
       const t = document.createElement("div");
       t.className = "wbv-tick";
       t.style.bottom = `${p}%`;
+      // v161: etiqueta numerica (sin unidades) para cada marca del rango,
+      // asi el usuario ve de un vistazo los umbrales que estan aplicandose.
+      const lab = document.createElement("span");
+      lab.className = "wbv-tick-label";
+      lab.textContent = String(Math.round(v));
+      t.appendChild(lab);
       ticks.appendChild(t);
     });
     if (value == null || !Number.isFinite(value)) {
@@ -6744,6 +6756,28 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       criteria,
       targetId: _suggestTargetId || null,
     });
+    // v161: al editar/sugerir cambios sobre un despegue comunitario existente,
+    // limpiamos cualquier override personal (🛠) guardado para ese mismo doc.
+    // De lo contrario el override seguia ocultando los nuevos criterios del doc
+    // y los valores no parecian actualizarse (la guia rapida, la barra vertical
+    // y la mini-brujula del pronostico se quedaban con los valores anteriores).
+    if (_suggestTargetId) {
+      const ovKey = "to:" + _suggestTargetId;
+      if (userTakeoffOverrides && userTakeoffOverrides[ovKey]) {
+        delete userTakeoffOverrides[ovKey];
+        _saveUserOverrides();
+      }
+      // Si el doc afectado es el activo, forzamos un repaso completo en cuanto
+      // llegue el snapshot (onApprovedTakeoffsChange tambien lo hara, pero
+      // esto cubre el caso admin auto-approve donde el snapshot llega muy rapido).
+      if (currentTakeoff.id === _suggestTargetId) {
+        const fresh = (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === _suggestTargetId);
+        if (fresh) { try { _attachTakeoffDoc(fresh); } catch {} }
+        try { renderTakeoffPanel(); } catch {}
+        try { renderCurrentTakeoffActions(); } catch {}
+        try { if (typeof refreshObservations === "function") refreshObservations(); } catch {}
+      }
+    }
     msg.style.color = "#2ecc71";
     msg.textContent = _suggestTargetId ? t("to.suggest_ok") : t("to.submit_ok");
     setTimeout(closeTakeoffSubmit, 1400);
