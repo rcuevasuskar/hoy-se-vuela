@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.179";
+const APP_VERSION = "v0.180";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5161,11 +5161,11 @@ document.getElementById("helpModal")?.addEventListener("click", (e) => {
 
 // v147: "Anadir despegue" abre el formulario en blanco (sin prefill desde el
 // despegue actual). Requiere usuario autenticado no anonimo.
-document.getElementById("addTakeoffBtn")?.addEventListener("click", () => {
+// v179: el boton vive ahora en la topbar (junto al input del buscador) con id
+// tsAddTakeoffBtn. Antes estaba dentro del menu de usuario como addTakeoffBtn.
+document.getElementById("tsAddTakeoffBtn")?.addEventListener("click", () => {
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
-  // Cierra el menu de usuario si esta abierto.
-  document.getElementById("userMenuPanel")?.setAttribute("hidden", "");
   openTakeoffSubmit({});
 });
 
@@ -5400,20 +5400,6 @@ let _nearbyResolvedRadius = 50;
 let _nearbyPioupiouCount = 0;
 let tsRadius = parseInt(localStorage.getItem("tsRadius") || "50", 10);
 let tsNoRadius = localStorage.getItem("tsNoRadius") === "1";
-// v178: switch para mostrar/ocultar la seccion de Favoritos en el buscador.
-// Por defecto on. Se persiste como "1"/"0" en localStorage y en prefs de usuario.
-let tsShowFavs = (localStorage.getItem("tsShowFavs") ?? "1") !== "0";
-// v178: Holfuy retirado del chip por no devolver datos sin clave configurada.
-const TS_PROVIDERS_ALL = ["community", "pioupiou", "aemet"];
-let tsProviders = (function() {
-  try {
-    const raw = localStorage.getItem("tsProviders");
-    if (!raw) return new Set(TS_PROVIDERS_ALL);
-    const arr = JSON.parse(raw);
-    if (!Array.isArray(arr) || !arr.length) return new Set(TS_PROVIDERS_ALL);
-    return new Set(arr.filter(p => TS_PROVIDERS_ALL.includes(p)));
-  } catch { return new Set(TS_PROVIDERS_ALL); }
-})();
 
 function refreshAllForCurrentTakeoff() {
   // Limpia el mapa de marcadores Pioupiou y vuelve a pintar el despegue
@@ -6015,33 +6001,14 @@ async function tsRunSearch() {
   resultsEl.innerHTML = `<div class="ts-loading">${t("ts.loading")}</div>`;
   const all = await ensureAllStations();
   const maxDist = tsNoRadius ? Infinity : tsRadius;
-  const provOn = (p) => tsProviders.has(p);
 
-  let items = !provOn("pioupiou") ? [] : (all.pioupiou || [])
-    .map(stationFromPioupiou)
-    .filter(Boolean)
-    .filter(s => isStationRecent(s, 24))
-    .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
-    .filter(s => s.dist <= maxDist);
+  // v179: el buscador solo lista despegues registrados en Comunidad.
+  // Los chips de proveedores (Pioupiou/AEMET/Holfuy) y el switch Favoritos
+  // han desaparecido. Los favoritos del usuario salen siempre arriba.
+  // Las estaciones no asociadas a un despegue de la comunidad no se muestran.
 
-  // AEMET: estaciones con datos en las últimas 24 h
-  const aemetItems = !provOn("aemet") ? [] : (all.aemet || [])
-    .filter(s => isStationRecent(s, 24))
-    .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
-    .filter(s => s.dist <= maxDist);
-  items = items.concat(aemetItems);
-
-  // Holfuy: estaciones autorizadas (configuradas en holfuy-config.js)
-  const holfuyItems = !provOn("holfuy") ? [] : (all.holfuy || [])
-    .filter(s => isStationRecent(s, 24))
-    .map(s => ({ ...s, dist: haversineKm(center.lat, center.lon, s.lat, s.lon) }))
-    .filter(s => s.dist <= maxDist);
-  items = items.concat(holfuyItems);
-
-  // Mezcla despegues comunitarios aprobados
-  // v113: en lugar de exigir stationId guardado, autovincula con la estacion mas
-  // cercana (cualquier proveedor) dentro de LINK_KM. Asi el creador no necesita
-  // especificar el id de la estacion; la fuente de viento se elige por proximidad.
+  // findLinkedStation sigue siendo necesario para autovincular el despegue a
+  // la estacion de viento mas cercana (cualquier proveedor) al hacer click.
   const LINK_KM = 30;
   const findLinkedStation = (lat, lon) => {
     let best = null, bestKm = LINK_KM + 1;
@@ -6059,12 +6026,12 @@ async function tsRunSearch() {
         if (isStationRecent(st, 24) && km < bestRecentKm) { bestRecentKm = km; bestRecent = st; }
       }
     }
-    // v116: preferimos estacion con datos recientes; si no la hay, usamos la
-    // mas cercana aunque no tenga datos frescos (la fila se queda habilitada y
-    // el panel mostrara "sin viento" si la API no responde).
     return bestRecent || best;
   };
-  const community = !provOn("community") ? [] : (window.PCAuth?.approvedTakeoffs || []).map(to => {
+
+  // Lista comunitaria: todos los despegues aprobados dentro del radio,
+  // filtrados por la query y ordenados por distancia.
+  const community = (window.PCAuth?.approvedTakeoffs || []).map(to => {
     const link = findLinkedStation(to.lat, to.lon);
     return {
       id: "to_" + to.id,
@@ -6078,50 +6045,12 @@ async function tsRunSearch() {
       raw: to,
       dist: haversineKm(center.lat, center.lon, to.lat, to.lon),
     };
-  }).filter(s => s.dist <= maxDist);
-  items = items.concat(community);
+  })
+    .filter(s => s.dist <= maxDist)
+    .filter(s => !query || s.name.toLowerCase().includes(query))
+    .sort((a, b) => a.dist - b.dist);
 
-  // Evita duplicados: si una estación Pioupiou/FFVL/AEMET/Holfuy ya está registrada como despegue comunitario
-  // (mismo id, mismo nombre normalizado o muy cerca geográficamente), sólo mostramos la tarjeta comunitaria.
-  // v176: comparamos ids como STRING. Antes los pasabamos por Number(), y como
-  // los ids modernos son tipo "aemet_3196" o "holfuy_101", Number(...) daba NaN.
-  // En un Set, NaN === NaN, asi que con un solo takeoff comunitario vinculado a
-  // AEMET el Set ya contenia NaN y filtraba TODAS las estaciones AEMET (y
-  // Holfuy) al activar el chip "Comunidad".
-  const communityStationIds = new Set(
-    community.map(c => c.stationId).filter(id => id != null).map(String)
-  );
-  const normalizeName = (n) => String(n || "")
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/\b(despegue|cerro|alto|loma|sierra|de|del|la|el|los|las)\b/g, " ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-  const communityNames = new Set(community.map(c => normalizeName(c.name)).filter(Boolean));
-  const PROX_KM = 2.0; // un despegue y su estación de viento suelen estar dentro de 2 km
-  if (community.length) {
-    const before = items.length;
-    items = items.filter(s => {
-      if (s.community) return true;
-      if (communityStationIds.has(String(s.id))) return false;
-      const nm = normalizeName(s.name);
-      if (nm && communityNames.has(nm)) return false;
-      for (const c of community) {
-        if (haversineKm(s.lat, s.lon, c.lat, c.lon) <= PROX_KM) return false;
-      }
-      return true;
-    });
-    if (window.PCAuth?.isAdmin) {
-      console.debug("[ts] dedup", { before, after: items.length, communityStationIds: [...communityStationIds], communityNames: [...communityNames] });
-    }
-  }
-
-  if (query) {
-    items = items.filter(s => s.name.toLowerCase().includes(query));
-  }
-  items.sort((a, b) => a.dist - b.dist);
-
-  // Identifica favoritos + home
+  // Identifica favoritos + home (solo comunitarios; el resto ya no se usa).
   const favs = window.PCAuth?.favorites || [];
   const homeId = window.PCAuth?.prefs?.homeFavId || null;
   const favKey = (s) => {
@@ -6138,47 +6067,38 @@ async function tsRunSearch() {
     favByKey[key] = f;
   });
 
-  // Construye lista de favoritos (siempre mostrar, no depende del radio)
-  // v111: filtra favoritos comunitarios huerfanos (despegue eliminado por admin).
+  // Favoritos: siempre arriba, sin filtro de radio. Solo se muestran los
+  // comunitarios (las estaciones sueltas ya no aparecen en el buscador).
+  // v111: limpia favoritos huerfanos (despegue eliminado por admin).
   const approvedCommunityIds = new Set((window.PCAuth?.approvedTakeoffs || []).map(t => t.id));
   const approvedCommunityById = (id) => (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === id) || null;
   const staleCommunityFavs = favs.filter(f => f.source === "community" && !approvedCommunityIds.has(f.refId));
-  // Auto-limpia los favoritos huerfanos del usuario actual (los suyos los puede borrar).
   if (staleCommunityFavs.length && window.PCAuth?.removeFavorite) {
     staleCommunityFavs.forEach(f => {
       window.PCAuth.removeFavorite(f.id).catch(e => console.warn("[fav] cleanup stale", e));
     });
   }
-  const favItems = !tsShowFavs ? [] : favs.filter(f => f.source !== "community" || approvedCommunityIds.has(f.refId))
-    // v177: respeta los chips de proveedores (Comunidad / Pioupiou / AEMET / Holfuy).
-    // Antes los favoritos se mostraban siempre, asi que al desmarcar "Comunidad"
-    // los favoritos comunitarios seguian apareciendo.
-    .filter(f => {
-      const prov = f.source === "ffvl" ? "pioupiou" : f.source; // FFVL viaja con Pioupiou
-      return provOn(prov);
-    })
+  const favItems = favs
+    .filter(f => f.source === "community" && approvedCommunityIds.has(f.refId))
     .map(f => {
-    const fakeItem = {
-      id: f.source === "pioupiou" ? Number(f.refId) : (f.source === "community" ? "to_" + f.refId : "ffvl_" + f.refId),
-      provider: f.source,
-      name: f.name,
-      lat: f.lat, lon: f.lon,
-      community: f.source === "community",
-      stationId: f.stationId,
-      alt: f.source === "community" && Number.isFinite(+approvedCommunityById(f.refId)?.alt) ? +approvedCommunityById(f.refId).alt : null,
-      raw: f.source === "community" ? { id: f.refId, criteria: f.criteria, stationId: f.stationId, alt: approvedCommunityById(f.refId)?.alt ?? null } : null,
-      rawId: f.source === "ffvl" ? f.refId : undefined,
-      dist: haversineKm(center.lat, center.lon, f.lat, f.lon),
-      _fav: f,
-      _isHome: f.id === homeId,
-    };
-    // v117: favoritos comunitarios necesitan _linkedStation para quedar habilitados
-    // (el click resuelve la estacion de viento por proximidad, igual que en la lista normal).
-    if (f.source === "community") {
+      const doc = approvedCommunityById(f.refId);
+      const fakeItem = {
+        id: "to_" + f.refId,
+        provider: "community",
+        name: f.name,
+        lat: f.lat, lon: f.lon,
+        community: true,
+        stationId: f.stationId,
+        alt: Number.isFinite(+doc?.alt) ? +doc.alt : null,
+        raw: { id: f.refId, criteria: f.criteria, stationId: f.stationId, alt: doc?.alt ?? null },
+        dist: haversineKm(center.lat, center.lon, f.lat, f.lon),
+        _fav: f,
+        _isHome: f.id === homeId,
+      };
       fakeItem._linkedStation = findLinkedStation(f.lat, f.lon);
-    }
-    return fakeItem;
-  }).filter(f => !query || f.name.toLowerCase().includes(query));
+      return fakeItem;
+    })
+    .filter(f => !query || f.name.toLowerCase().includes(query));
   // Home siempre primero; resto alfabético.
   favItems.sort((a, b) => {
     if (a._isHome && !b._isHome) return -1;
@@ -6186,9 +6106,9 @@ async function tsRunSearch() {
     return a.name.localeCompare(b.name);
   });
 
-  // Filtra de items los que ya están en favoritos para no duplicar.
+  // Quita de la lista comunitaria los que ya estan en favoritos para no duplicar.
   const favKeys = new Set(favItems.map(f => favKey(f)));
-  const others = items.filter(s => !favKeys.has(favKey(s))).slice(0, 50);
+  const others = community.filter(s => !favKeys.has(favKey(s))).slice(0, 50);
 
   if (!favItems.length && !others.length) {
     const emptyKey = tsNoRadius ? "ts.empty_global" : "ts.empty";
@@ -6490,35 +6410,6 @@ function initTakeoffSelector() {
       tsRunSearch();    });
   }
 
-  // v178: switch Favoritos (muestra/oculta la seccion superior del listado).
-  const showFavsEl = document.getElementById("tsShowFavs");
-  if (showFavsEl) {
-    showFavsEl.checked = tsShowFavs;
-    showFavsEl.addEventListener("change", () => {
-      tsShowFavs = showFavsEl.checked;
-      localStorage.setItem("tsShowFavs", tsShowFavs ? "1" : "0");
-      window.PCAuth?.savePref?.("tsShowFavs", tsShowFavs);
-      tsRunSearch();
-    });
-  }
-
-  // Filtro de proveedores (servicios meteorol\u00f3gicos)
-  const provBox = document.getElementById("tsProviders");
-  if (provBox) {
-    provBox.querySelectorAll("input[type=checkbox][data-prov]").forEach(cb => {
-      const p = cb.dataset.prov;
-      cb.checked = tsProviders.has(p);
-      cb.addEventListener("change", () => {
-        if (cb.checked) tsProviders.add(p); else tsProviders.delete(p);
-        // Evita dejar todos desmarcados: si lo intenta, vuelve a activar
-        if (tsProviders.size === 0) { tsProviders.add(p); cb.checked = true; }
-        localStorage.setItem("tsProviders", JSON.stringify([...tsProviders]));
-        window.PCAuth?.savePref?.("tsProviders", [...tsProviders]);
-        tsRunSearch();
-      });
-    });
-  }
-
   let searchTimer = null;
   // v119: helper para cerrar el panel y limpiar el input. Usado al seleccionar
   // un resultado y por los listeners de Esc / click fuera / boton atras (popstate).
@@ -6630,7 +6521,7 @@ window.addEventListener("pcuserchange", (e) => {
   const fbConsoleBtn = document.getElementById("firebaseConsoleBtn");
   if (fbConsoleBtn) fbConsoleBtn.hidden = !isAdmin;
   // v147: "Anadir despegue" solo para usuarios autenticados (no anonimos).
-  const addTakeoffBtn = document.getElementById("addTakeoffBtn");
+  const addTakeoffBtn = document.getElementById("tsAddTakeoffBtn");
   if (addTakeoffBtn) addTakeoffBtn.hidden = !user || user.isAnonymous;
   updateAdminPendingBadge();
   if (!prefs) return;
