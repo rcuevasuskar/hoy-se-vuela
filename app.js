@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.149";
+const APP_VERSION = "v0.150";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -1989,6 +1989,12 @@ async function getLive() {
       || (Number.isFinite(currentTakeoff?.lat) && Number.isFinite(currentTakeoff?.lon)
             ? { lat: currentTakeoff.lat, lon: currentTakeoff.lon } : null);
     if (c) {
+      // 2a) Windy Point Forecast (si hay API key configurada en window.WINDY_API_KEY)
+      try {
+        const r = await fetchWindyPointAsLive(c.lat, c.lon, currentTakeoff.windyUrl, currentTakeoff.name);
+        if (r && r.measurements && r.measurements.wind_speed_avg != null) return r;
+      } catch (e) { console.warn("windy point-forecast live:", e); }
+      // 2b) Fallback Open-Meteo en las mismas coordenadas
       try {
         const r = await fetchOpenMeteoCurrent(c.lat, c.lon);
         if (r && r.measurements && r.measurements.wind_speed_avg != null) {
@@ -2082,6 +2088,30 @@ async function fetchOpenMeteoCurrent(lat, lon) {
     },
     status: { date: iso },
     source: { name: "Open-Meteo", url: null },
+  };
+}
+// v150: adapta el Point Forecast de Windy (timeline) al shape `{measurements, status, source}`
+// usado por renderLive(). Escoge el punto temporal mas cercano al "ahora".
+async function fetchWindyPointAsLive(lat, lon, srcUrl, takeoffName) {
+  const pf = await fetchWindyPointForecast(lat, lon);
+  if (!pf || !pf.points || !pf.points.length) return null;
+  const now = Date.now();
+  let best = pf.points[0], bestDt = Math.abs(best.date.getTime() - now);
+  for (const p of pf.points) {
+    const dt = Math.abs(p.date.getTime() - now);
+    if (dt < bestDt) { bestDt = dt; best = p; }
+  }
+  const iso = best.date.toISOString();
+  return {
+    measurements: {
+      wind_heading:   best.wind_dir ?? null,
+      wind_speed_min: null,
+      wind_speed_avg: best.wind_speed ?? null,
+      wind_speed_max: best.wind_gust ?? best.wind_speed ?? null,
+      date: iso,
+    },
+    status: { date: iso },
+    source: { name: "Windy" + (takeoffName ? " · " + takeoffName : ""), url: srcUrl || null },
   };
 }
 function stationSourceInfo() {
