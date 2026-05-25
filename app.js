@@ -1,6 +1,14 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.164";
+const APP_VERSION = "v0.165";
+// v165: feature flag para el override personal de criterios (🛠). Desactivado
+// por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
+// esta constante a true en el futuro. Mientras esta a false: el boton del
+// menu de acciones no se muestra, getCurrentOverride() siempre devuelve null
+// y applyCurrentOverride() es no-op, asi que los criterios visibles son
+// siempre los del doc comunitario (sin shadowing). Los overrides ya
+// guardados en localStorage no se borran.
+const FEATURE_PERSONAL_OVERRIDE = false;
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -5648,8 +5656,8 @@ function renderCurrentTakeoffActions() {
     },
   });
 
-  // 🛠 mis criterios (override personal).
-  if (_overrideKeyForCurrent()) {
+  // 🛠 mis criterios (override personal). v165: oculto tras feature flag.
+  if (FEATURE_PERSONAL_OVERRIDE && _overrideKeyForCurrent()) {
     const hasOv = !!getCurrentOverride();
     actions.push({
       icon: "🛠",
@@ -5835,6 +5843,7 @@ function _overrideKeysForCurrent() {
   return keys;
 }
 function getCurrentOverride() {
+  if (!FEATURE_PERSONAL_OVERRIDE) return null; // v165: feature desactivada.
   for (const k of _overrideKeysForCurrent()) {
     if (userTakeoffOverrides[k]) return userTakeoffOverrides[k];
   }
