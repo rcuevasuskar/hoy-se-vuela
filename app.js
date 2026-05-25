@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.173";
+const APP_VERSION = "v0.174";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5480,16 +5480,25 @@ function renderTakeoffDebug(tag) {
   if (!host) return;
   if (!window.PCAuth?.isAdmin) { host.hidden = true; host.textContent = ""; return; }
   const id = currentTakeoffOriginId || currentTakeoff?.id || null;
-  const doc = id ? (window.PCAuth?.approvedTakeoffs || []).find(t => t.id === id) : null;
+  const list = window.PCAuth?.approvedTakeoffs || [];
+  const doc = id ? list.find(t => t.id === id) : null;
   const fmt = (c) => c
     ? `wMin=${c.windMin ?? "·"} wMax=${c.windMax ?? "·"} gMax=${c.gustMax ?? "·"} q=[${(c.qualityByIndex || []).map(q => q ? q[0] : "·").join("")}]`
     : "null";
+  // v173b: detectar duplicados aprobados con el mismo nombre (case-insensitive,
+  // trim). Si hay mas de uno, el buscador puede cargar el "otro".
+  const curName = (currentTakeoff?.name || doc?.name || "").trim().toLowerCase();
+  const dupes = curName ? list.filter(t => (t.name || "").trim().toLowerCase() === curName) : [];
+  const dupLine = dupes.length > 1
+    ? `⚠ DUPLICADOS aprobados con name="${curName}": ${dupes.map(d => d.id + (d.id === id ? "*" : "")).join(", ")}`
+    : `dup: 1 doc con este nombre (ok)`;
   const lines = [
     `[debug${tag ? " " + tag : ""}] v=${APP_VERSION}`,
     `id=${id || "—"}  name=${currentTakeoff?.name || "—"}`,
     `currentCriteria: ${fmt(currentTakeoffCriteria)}`,
     `remoteDoc.criteria: ${fmt(doc?.criteria)}`,
-    `approvedCount=${(window.PCAuth?.approvedTakeoffs || []).length}  override=${getCurrentOverride() ? "ON" : "off"}`,
+    `approvedCount=${list.length}  override=${getCurrentOverride() ? "ON" : "off"}`,
+    dupLine,
   ];
   host.textContent = lines.join("\n");
   host.hidden = false;
