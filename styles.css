@@ -1050,7 +1050,7 @@ main {
   margin-top: 8px;
   font-size: 0.72rem;
   color: var(--muted);
-  text-align: center;
+  text-align: right;
 }
 
 /* Readings */
@@ -1362,7 +1362,7 @@ main {
 .verdict-text strong { font-size: 1rem; }
 .verdict-text span   { color: var(--muted); font-size: 0.85rem; }
 .panel-for { color: var(--muted); font-size: 0.72rem; font-style: italic; margin-top: 4px; }
-.panel-for-block { display: block; text-align: center; padding: 6px 8px 0; }
+.panel-for-block { display: block; text-align: right; padding: 6px 8px 0; }
 
 /* Chart */
 .chart-wrap {
@@ -1462,7 +1462,7 @@ main {
 .legend-note {
   color: var(--muted);
   font-size: 0.8rem;
-  text-align: center;
+  text-align: right;
   margin: 8px 0 0;
 }
 

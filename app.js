@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.143";
+const APP_VERSION = "v0.144";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
