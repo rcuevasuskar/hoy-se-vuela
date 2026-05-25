@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.151";
+const APP_VERSION = "v0.152";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -1974,6 +1974,11 @@ async function fetchJsonLatin1(url) {
 }
 
 async function getLive() {
+  // v151: traza para depurar la cadena de fuentes (Volandoo / Windy / estacion).
+  console.info("[live] takeoff=", currentTakeoff?.name, "id=", currentTakeoff?.id,
+    "volandooUrl=", currentTakeoff?.volandooUrl || "(vacio)",
+    "windyUrl=", currentTakeoff?.windyUrl || "(vacio)",
+    "station=", currentStation?.provider, currentStationId);
   // v149: prioridad de fuentes de datos en tiempo real:
   //   1) URL de la estacion en Volandoo asociada al despegue.
   //   2) URL de Windy asociada (coords -> Open-Meteo, mostrando Windy como fuente).
@@ -2137,6 +2142,11 @@ function stationSourceInfo() {
 }
 
 async function getArchive(startDate, stopDate) {
+  // v151: solo Pioupiou expone el endpoint /archive; estaciones AEMET/Holfuy
+  // tienen id no numerico y el call falla con 400 + ruido en consola.
+  if (currentStation?.provider && currentStation.provider !== "pioupiou") {
+    return normalizeArchive(null);
+  }
   const fmt = (d) => d.toISOString().replace(/\.\d{3}Z$/, "Z");
   const url = `${API_BASE}/archive/${currentStationId}?start=${fmt(startDate)}&stop=${fmt(stopDate)}`;
   const data = await fetchJson(url);
