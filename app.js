@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.188";
+const APP_VERSION = "v0.189";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5114,8 +5114,28 @@ function renderWindHistory(arch) {
 }
 
 // Eventos
-document.getElementById("refreshBtn").addEventListener("click", () => {
-  refreshObservations(); refreshForecast(); renderCompare(); renderNearby();
+// v0.189: delegacion para garantizar que el boton de refresh siempre
+// responda, incluso si el listener directo no se enlaza por cualquier
+// motivo (errores anteriores en el script, reordenacion del DOM, etc.).
+// Tambien damos feedback visual girando el icono mientras refresca.
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("#refreshBtn");
+  if (!btn) return;
+  if (btn.classList.contains("is-spinning")) return;
+  btn.classList.add("is-spinning");
+  const done = () => setTimeout(() => btn.classList.remove("is-spinning"), 500);
+  try {
+    const tasks = [
+      Promise.resolve().then(() => refreshObservations()),
+      Promise.resolve().then(() => refreshForecast()),
+      Promise.resolve().then(() => renderCompare()),
+      Promise.resolve().then(() => renderNearby()),
+    ];
+    Promise.allSettled(tasks).finally(done);
+  } catch (err) {
+    console.error("refresh failed", err);
+    done();
+  }
 });
 
 document.querySelectorAll("#forecastButtons button").forEach(btn => {
@@ -6535,12 +6555,20 @@ function initTakeoffSelector() {
 // Cada section.card.collapsible recibe un boton-flecha en su h2 que pliega
 // el contenido (todo lo que no sea el h2). El estado se persiste en
 // localStorage para que sobreviva recargas.
+// v0.189: la clave se namespacea por uid del usuario para que cada cuenta
+// (incluido "anon") tenga su propia configuracion de paneles plegados.
+function _cardCollapseScope() {
+  try {
+    const u = window.PCAuth?.user;
+    return (u && !u.isAnonymous && u.uid) ? u.uid : "anon";
+  } catch { return "anon"; }
+}
+const _collapsibleReloaders = [];
 function initCollapsibleCards() {
   const cards = document.querySelectorAll("section.card.collapsible");
   cards.forEach((card, idx) => {
     const h = card.querySelector("h2");
     if (!h || h.querySelector(".card-toggle")) return;
-    const key = "cardCollapsed:" + (card.id || `idx${idx}:${h.textContent.trim().slice(0, 24)}`);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "card-toggle";
@@ -6552,16 +6580,24 @@ function initCollapsibleCards() {
       card.classList.toggle("collapsed", collapsed);
       btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
     };
-    try {
-      apply(localStorage.getItem(key) === "1");
-    } catch { apply(false); }
+    const keyFor = () => "cardCollapsed:" + _cardCollapseScope() + ":"
+      + (card.id || `idx${idx}:${h.textContent.trim().slice(0, 24)}`);
+    const reload = () => {
+      try { apply(localStorage.getItem(keyFor()) === "1"); }
+      catch { apply(false); }
+    };
+    reload();
+    _collapsibleReloaders.push(reload);
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const collapsed = !card.classList.contains("collapsed");
       apply(collapsed);
-      try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch {}
+      try { localStorage.setItem(keyFor(), collapsed ? "1" : "0"); } catch {}
     });
   });
+}
+function reapplyCardCollapseStates() {
+  _collapsibleReloaders.forEach(fn => { try { fn(); } catch {} });
 }
 
 // Inicialización
@@ -6601,6 +6637,8 @@ window.addEventListener("pcuserchange", (e) => {
       : t("menu.add_takeoff_tip");
   }
   updateAdminPendingBadge();
+  // v0.189: re-evalua estado plegado/desplegado de paneles segun el nuevo uid.
+  if (typeof reapplyCardCollapseStates === "function") reapplyCardCollapseStates();
   if (!prefs) return;
   let changed = false;
   if (prefs.lang && prefs.lang !== currentLang) {
