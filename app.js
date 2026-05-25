@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.154";
+const APP_VERSION = "v0.155";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -217,6 +217,24 @@ const I18N = {
     "to.gust_max": "Racha máx. segura (km/h)",
     "to.suggest": "Sugerir cambios",
     "co.btn": "Mis criterios",
+    "snd.title": "Sondeo atmosférico",
+    "snd.btn": "Sondeo",
+    "snd.btn_tip": "Ver perfil vertical (viento, temperatura y nubes por altitud)",
+    "snd.btn_short": "📈",
+    "snd.loading": "Cargando sondeo…",
+    "snd.error": "No se pudo cargar el sondeo en esta ubicación.",
+    "snd.open_windy": "Abrir en Windy",
+    "snd.model": "Modelo",
+    "snd.hour": "Hora",
+    "snd.wind_chart": "Viento por altitud",
+    "snd.temp_chart": "Temperatura y rocío por altitud",
+    "snd.col_alt": "Altitud (m)",
+    "snd.col_lvl": "Nivel",
+    "snd.col_t": "T (°C)",
+    "snd.col_td": "Td (°C)",
+    "snd.col_ws": "Viento (km/h)",
+    "snd.col_wd": "Dir",
+    "snd.col_cld": "Nubes (%)",
     "to.propose_tip": "Esta estación no tiene datos de despegue registrados aún. Pulsa para proponer su alta (nombre, orientaciones y criterios). Lo revisará un administrador.",
     "to.suggest_tip": "Este despegue ya está en la comunidad. Pulsa para sugerir cambios (nombre, coords, orientaciones o criterios).",
     "co.title": "Mis criterios para este despegue",
@@ -527,6 +545,24 @@ const I18N = {
     "to.gust_max": "Max safe gust (km/h)",
     "to.suggest": "Suggest changes",
     "co.btn": "My criteria",
+    "snd.title": "Atmospheric sounding",
+    "snd.btn": "Sounding",
+    "snd.btn_tip": "View vertical profile (wind, temperature and clouds by altitude)",
+    "snd.btn_short": "📈",
+    "snd.loading": "Loading sounding…",
+    "snd.error": "Could not load sounding at this location.",
+    "snd.open_windy": "Open in Windy",
+    "snd.model": "Model",
+    "snd.hour": "Hour",
+    "snd.wind_chart": "Wind by altitude",
+    "snd.temp_chart": "Temperature and dew point by altitude",
+    "snd.col_alt": "Altitude (m)",
+    "snd.col_lvl": "Level",
+    "snd.col_t": "T (°C)",
+    "snd.col_td": "Td (°C)",
+    "snd.col_ws": "Wind (km/h)",
+    "snd.col_wd": "Dir",
+    "snd.col_cld": "Clouds (%)",
     "to.propose_tip": "This station has no takeoff data yet. Click to propose adding it (name, orientations and criteria). An admin will review it.",
     "to.suggest_tip": "This takeoff is already in the community. Click to suggest changes (name, coords, orientations or criteria).",
     "co.title": "My criteria for this takeoff",
@@ -822,6 +858,24 @@ const I18N = {
     "to.gust_max": "Max. sichere Böe (km/h)",
     "to.suggest": "Änderungen vorschlagen",
     "co.btn": "Meine Kriterien",
+    "snd.title": "Atmosphärisches Sondieren",
+    "snd.btn": "Sondierung",
+    "snd.btn_tip": "Vertikales Profil ansehen (Wind, Temperatur und Wolken nach Höhe)",
+    "snd.btn_short": "📈",
+    "snd.loading": "Sondierung wird geladen…",
+    "snd.error": "Sondierung an diesem Ort konnte nicht geladen werden.",
+    "snd.open_windy": "In Windy öffnen",
+    "snd.model": "Modell",
+    "snd.hour": "Stunde",
+    "snd.wind_chart": "Wind nach Höhe",
+    "snd.temp_chart": "Temperatur und Taupunkt nach Höhe",
+    "snd.col_alt": "Höhe (m)",
+    "snd.col_lvl": "Niveau",
+    "snd.col_t": "T (°C)",
+    "snd.col_td": "Td (°C)",
+    "snd.col_ws": "Wind (km/h)",
+    "snd.col_wd": "Richt.",
+    "snd.col_cld": "Wolken (%)",
     "to.propose_tip": "Diese Station hat noch keine Startplatzdaten. Klicke, um sie vorzuschlagen (Name, Ausrichtungen, Kriterien). Ein Admin prüft.",
     "to.suggest_tip": "Dieser Startplatz ist bereits in der Community. Klicke, um Änderungen vorzuschlagen.",
     "co.title": "Meine Kriterien für diesen Startplatz",
@@ -1117,6 +1171,24 @@ const I18N = {
     "to.gust_max": "Rafale max sûre (km/h)",
     "to.suggest": "Suggérer des modifications",
     "co.btn": "Mes critères",
+    "snd.title": "Sondage atmosphérique",
+    "snd.btn": "Sondage",
+    "snd.btn_tip": "Voir le profil vertical (vent, température et nuages par altitude)",
+    "snd.btn_short": "📈",
+    "snd.loading": "Chargement du sondage…",
+    "snd.error": "Impossible de charger le sondage à cet endroit.",
+    "snd.open_windy": "Ouvrir dans Windy",
+    "snd.model": "Modèle",
+    "snd.hour": "Heure",
+    "snd.wind_chart": "Vent par altitude",
+    "snd.temp_chart": "Température et point de rosée par altitude",
+    "snd.col_alt": "Altitude (m)",
+    "snd.col_lvl": "Niveau",
+    "snd.col_t": "T (°C)",
+    "snd.col_td": "Td (°C)",
+    "snd.col_ws": "Vent (km/h)",
+    "snd.col_wd": "Dir",
+    "snd.col_cld": "Nuages (%)",
     "to.propose_tip": "Cette station n'a pas encore de données de déco. Cliquez pour proposer son ajout. Un admin l'examinera.",
     "to.suggest_tip": "Ce déco est déjà dans la communauté. Cliquez pour suggérer des modifications.",
     "co.title": "Mes critères pour ce déco",
@@ -1412,6 +1484,24 @@ const I18N = {
     "to.gust_max": "Bolada max. segurua (km/h)",
     "to.suggest": "Aldaketak proposatu",
     "co.btn": "Nire irizpideak",
+    "snd.title": "Atmosfera-sondaketa",
+    "snd.btn": "Sondaketa",
+    "snd.btn_tip": "Profil bertikala ikusi (haizea, tenperatura eta hodeiak altueraka)",
+    "snd.btn_short": "📈",
+    "snd.loading": "Sondaketa kargatzen…",
+    "snd.error": "Ezin izan da kokapen honetako sondaketa kargatu.",
+    "snd.open_windy": "Windy-n ireki",
+    "snd.model": "Eredua",
+    "snd.hour": "Ordua",
+    "snd.wind_chart": "Haizea altueraka",
+    "snd.temp_chart": "Tenperatura eta ihintza altueraka",
+    "snd.col_alt": "Altuera (m)",
+    "snd.col_lvl": "Maila",
+    "snd.col_t": "T (°C)",
+    "snd.col_td": "Td (°C)",
+    "snd.col_ws": "Haizea (km/h)",
+    "snd.col_wd": "Norabidea",
+    "snd.col_cld": "Hodeiak (%)",
     "to.propose_tip": "Estazio honek ez du oraindik irteguia daturik. Sakatu proposatzeko (izena, orientazioak, irizpideak). Administratzaileak berrikusiko du.",
     "to.suggest_tip": "Irteguia hau jada komunitatean dago. Sakatu aldaketak proposatzeko.",
     "co.title": "Nire irizpideak irteguia honetarako",
@@ -1661,6 +1751,24 @@ const I18N = {
     "to.gust_max": "Ratxa màx. segura (km/h)",
     "to.suggest": "Suggereix canvis",
     "co.btn": "Els meus criteris",
+    "snd.title": "Sondatge atmosfèric",
+    "snd.btn": "Sondatge",
+    "snd.btn_tip": "Veure el perfil vertical (vent, temperatura i núvols per altitud)",
+    "snd.btn_short": "📈",
+    "snd.loading": "Carregant sondatge…",
+    "snd.error": "No s'ha pogut carregar el sondatge en aquesta ubicació.",
+    "snd.open_windy": "Obrir a Windy",
+    "snd.model": "Model",
+    "snd.hour": "Hora",
+    "snd.wind_chart": "Vent per altitud",
+    "snd.temp_chart": "Temperatura i punt de rosada per altitud",
+    "snd.col_alt": "Altitud (m)",
+    "snd.col_lvl": "Nivell",
+    "snd.col_t": "T (°C)",
+    "snd.col_td": "Td (°C)",
+    "snd.col_ws": "Vent (km/h)",
+    "snd.col_wd": "Dir",
+    "snd.col_cld": "Núvols (%)",
     "to.propose_tip": "Aquesta estació encara no té dades d'enlairament. Prem per proposar-ne l'alta. Un administrador ho revisarà.",
     "to.suggest_tip": "Aquest enlairament ja està a la comunitat. Prem per suggerir canvis.",
     "co.title": "Els meus criteris per a aquest enlairament",
@@ -2245,6 +2353,318 @@ async function getAllStations() {
   const data = await fetchJson(`${API_BASE}/live-with-meta/all`);
   return data?.data || [];
 }
+
+// === Sondeo atmosférico (v155, Open-Meteo) ===
+// Devuelve un perfil vertical para un único punto (lat,lon) con varios
+// modelos en orden de preferencia. AROME (1.3 km, Francia y norte de la
+// península) > ICON-D2 (2.2 km, Europa Central/Alpes) > ICON-EU (7 km,
+// Europa) > GFS (22 km, mundial). El primero que devuelva datos no nulos
+// para temperature_2m se considera válido.
+const SOUNDING_PRESSURE_LEVELS = [950, 925, 900, 850, 800, 700, 600, 500, 400, 300];
+const SOUNDING_AGL_HEIGHTS = [10, 80, 120, 180];
+const SOUNDING_MODELS = [
+  { id: "meteofrance_arome_france_hd", label: "AROME-HD (1.3 km)" },
+  { id: "meteofrance_arome_france",    label: "AROME (2.5 km)" },
+  { id: "icon_d2",                     label: "ICON-D2 (2.2 km)" },
+  { id: "icon_eu",                     label: "ICON-EU (7 km)" },
+  { id: "gfs_seamless",                label: "GFS (22 km)" },
+];
+
+function _buildSoundingHourlyParams() {
+  const parts = ["temperature_2m", "dew_point_2m", "surface_pressure"];
+  for (const h of SOUNDING_AGL_HEIGHTS) {
+    parts.push(`wind_speed_${h}m`, `wind_direction_${h}m`);
+  }
+  for (const p of SOUNDING_PRESSURE_LEVELS) {
+    parts.push(
+      `temperature_${p}hPa`,
+      `dew_point_${p}hPa`,
+      `wind_speed_${p}hPa`,
+      `wind_direction_${p}hPa`,
+      `geopotential_height_${p}hPa`,
+      `cloud_cover_${p}hPa`,
+    );
+  }
+  return parts.join(",");
+}
+
+async function fetchSoundingOpenMeteo(lat, lon) {
+  const hourly = _buildSoundingHourlyParams();
+  const lastErrors = [];
+  for (const m of SOUNDING_MODELS) {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+                  `&hourly=${hourly}&models=${m.id}` +
+                  `&wind_speed_unit=kmh&timezone=auto&forecast_days=3`;
+      const data = await fetchJson(url);
+      const arr = data?.hourly?.temperature_2m;
+      if (Array.isArray(arr) && arr.some(v => v != null)) {
+        return { data, model: m };
+      }
+      lastErrors.push(`${m.id}: sin datos`);
+    } catch (e) {
+      lastErrors.push(`${m.id}: ${e?.message || e}`);
+    }
+  }
+  console.warn("[sounding] ningun modelo devolvió datos", lastErrors);
+  return null;
+}
+
+function _soundingPickHourIndex(times, targetTs) {
+  if (!Array.isArray(times) || !times.length) return -1;
+  let bestI = 0, bestDiff = Infinity;
+  for (let i = 0; i < times.length; i++) {
+    const ts = new Date(times[i]).getTime();
+    if (!Number.isFinite(ts)) continue;
+    const d = Math.abs(ts - targetTs);
+    if (d < bestDiff) { bestDiff = d; bestI = i; }
+  }
+  return bestI;
+}
+
+function _soundingBuildProfile(data, i, takeoffAlt) {
+  const h = data.hourly;
+  // Punto superficie a partir de los 2 m / 10 m y altitud del despegue.
+  const baseAlt = (Number.isFinite(takeoffAlt) ? takeoffAlt : (data.elevation || 0));
+  const profile = [];
+  // Punto de superficie con T/Td reales.
+  profile.push({
+    label: "Sup",
+    alt: baseAlt,
+    t: h.temperature_2m?.[i] ?? null,
+    td: h.dew_point_2m?.[i] ?? null,
+    ws: h[`wind_speed_${SOUNDING_AGL_HEIGHTS[0]}m`]?.[i] ?? null,
+    wd: h[`wind_direction_${SOUNDING_AGL_HEIGHTS[0]}m`]?.[i] ?? null,
+    cld: null,
+  });
+  // Niveles AGL adicionales (80/120/180 m sobre el suelo).
+  for (let k = 1; k < SOUNDING_AGL_HEIGHTS.length; k++) {
+    const m = SOUNDING_AGL_HEIGHTS[k];
+    profile.push({
+      label: `${m} m`,
+      alt: baseAlt + m,
+      t: null, td: null,
+      ws: h[`wind_speed_${m}m`]?.[i] ?? null,
+      wd: h[`wind_direction_${m}m`]?.[i] ?? null,
+      cld: null,
+    });
+  }
+  // Niveles de presión: ordenados de bajo a alto en altitud.
+  for (const p of SOUNDING_PRESSURE_LEVELS) {
+    const gh = h[`geopotential_height_${p}hPa`]?.[i];
+    if (gh == null) continue;
+    profile.push({
+      label: `${p} hPa`,
+      alt: gh,
+      t: h[`temperature_${p}hPa`]?.[i] ?? null,
+      td: h[`dew_point_${p}hPa`]?.[i] ?? null,
+      ws: h[`wind_speed_${p}hPa`]?.[i] ?? null,
+      wd: h[`wind_direction_${p}hPa`]?.[i] ?? null,
+      cld: h[`cloud_cover_${p}hPa`]?.[i] ?? null,
+    });
+  }
+  // Ordenar por altitud ascendente (sup primero).
+  profile.sort((a, b) => (a.alt ?? 0) - (b.alt ?? 0));
+  return profile;
+}
+
+let _sndWindChart = null, _sndTempChart = null;
+let _sndState = { lat: null, lon: null, takeoff: null, data: null, model: null, targetTs: null };
+
+function openSounding(targetTs) {
+  const lat = Number(currentTakeoff?.lat);
+  const lon = Number(currentTakeoff?.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+  const modal = document.getElementById("soundingModal");
+  if (!modal) return;
+  const ts = Number.isFinite(targetTs) ? Number(targetTs) : Date.now();
+  _sndState = { lat, lon, takeoff: { ...currentTakeoff }, data: null, model: null, targetTs: ts };
+  // Subtítulo y enlace a Windy.
+  const sub = document.getElementById("sndSubtitle");
+  if (sub) {
+    const name = currentTakeoff.name || currentStation?.name || "";
+    const when = new Date(ts).toLocaleString(t("locale"), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    sub.textContent = `${name} · ${when}`;
+  }
+  const windyLink = document.getElementById("sndOpenWindy");
+  if (windyLink) {
+    windyLink.href = `https://www.windy.com/sounding/${lat.toFixed(3)}/${lon.toFixed(3)}?iconEu,900h,${lat.toFixed(3)},${lon.toFixed(3)},11,p:wind`;
+  }
+  // Reset UI.
+  document.getElementById("sndStatus").hidden = false;
+  document.getElementById("sndStatus").textContent = t("snd.loading");
+  modal.querySelector(".sounding-charts").hidden = true;
+  document.getElementById("sndTable").hidden = true;
+  document.getElementById("sndMeta").innerHTML = "";
+  modal.hidden = false;
+  // Cargar y renderizar.
+  fetchSoundingOpenMeteo(lat, lon).then(res => {
+    if (!res) {
+      document.getElementById("sndStatus").textContent = t("snd.error");
+      return;
+    }
+    _sndState.data = res.data;
+    _sndState.model = res.model;
+    _renderSoundingMeta();
+    _renderSoundingFor(ts);
+  });
+}
+
+function closeSounding() {
+  const m = document.getElementById("soundingModal");
+  if (m) m.hidden = true;
+  if (_sndWindChart) { try { _sndWindChart.destroy(); } catch {} _sndWindChart = null; }
+  if (_sndTempChart) { try { _sndTempChart.destroy(); } catch {} _sndTempChart = null; }
+}
+
+function _renderSoundingMeta() {
+  const meta = document.getElementById("sndMeta");
+  if (!meta || !_sndState.data) return;
+  const times = _sndState.data.hourly.time || [];
+  const idx = _soundingPickHourIndex(times, _sndState.targetTs);
+  const opts = times.map((tt, i) => {
+    const d = new Date(tt);
+    const lbl = d.toLocaleString(t("locale"), { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    return `<option value="${i}" ${i === idx ? "selected" : ""}>${lbl}</option>`;
+  }).join("");
+  meta.innerHTML = `
+    <span><strong>${t("snd.model")}:</strong> ${_sndState.model.label}</span>
+    <label><span>${t("snd.hour")}:</span> <select id="sndHourSel">${opts}</select></label>
+  `;
+  document.getElementById("sndHourSel")?.addEventListener("change", (e) => {
+    const i = Number(e.target.value);
+    const ts = new Date(_sndState.data.hourly.time[i]).getTime();
+    _sndState.targetTs = ts;
+    _renderSoundingFor(ts);
+  });
+}
+
+function _renderSoundingFor(ts) {
+  const data = _sndState.data;
+  if (!data) return;
+  const i = _soundingPickHourIndex(data.hourly.time, ts);
+  if (i < 0) return;
+  const profile = _soundingBuildProfile(data, i, _sndState.takeoff?.alt);
+  if (!profile.length) {
+    document.getElementById("sndStatus").textContent = t("snd.error");
+    return;
+  }
+  document.getElementById("sndStatus").hidden = true;
+  const modal = document.getElementById("soundingModal");
+  modal.querySelector(".sounding-charts").hidden = false;
+  document.getElementById("sndTable").hidden = false;
+
+  const alts = profile.map(p => p.alt);
+  // --- Gráfico de viento (velocidad vs altitud, con flechas según dirección). ---
+  const windPts = profile.filter(p => p.ws != null && p.wd != null).map(p => ({ x: p.ws, y: p.alt, dir: p.wd }));
+  const arrowImgs = windPts.map(p => makeArrowPoint(p.dir, dirColor(p.dir), 14));
+  const windCtx = document.getElementById("sndWindChart").getContext("2d");
+  if (_sndWindChart) { try { _sndWindChart.destroy(); } catch {} }
+  _sndWindChart = new Chart(windCtx, {
+    type: "scatter",
+    data: {
+      datasets: [
+        {
+          label: t("snd.wind_chart"),
+          data: windPts,
+          showLine: true,
+          borderColor: "rgba(78,161,255,0.9)",
+          backgroundColor: "rgba(78,161,255,0.2)",
+          pointStyle: arrowImgs,
+          pointRadius: 7,
+          tension: 0.2,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: t("snd.wind_chart"), color: "#e8eef7" },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const p = ctx.raw;
+              const info = classifyDirection(p.dir);
+              return `${Math.round(p.y)} m · ${fmtNum(p.x)} km/h · ${info.name} (${Math.round(p.dir)}°)`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: "km/h", color: "#8aa0bb" },
+             ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" }, beginAtZero: true },
+        y: { title: { display: true, text: "m", color: "#8aa0bb" },
+             ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
+      },
+    },
+  });
+
+  // --- Gráfico de temperatura y rocío vs altitud. ---
+  const tPts  = profile.filter(p => p.t  != null).map(p => ({ x: p.t,  y: p.alt }));
+  const tdPts = profile.filter(p => p.td != null).map(p => ({ x: p.td, y: p.alt }));
+  const tempCtx = document.getElementById("sndTempChart").getContext("2d");
+  if (_sndTempChart) { try { _sndTempChart.destroy(); } catch {} }
+  _sndTempChart = new Chart(tempCtx, {
+    type: "scatter",
+    data: {
+      datasets: [
+        { label: "T", data: tPts, showLine: true, borderColor: "rgba(231,76,60,0.9)", backgroundColor: "rgba(231,76,60,0.2)", pointRadius: 3, tension: 0.2 },
+        { label: "Td", data: tdPts, showLine: true, borderColor: "rgba(46,204,113,0.9)", backgroundColor: "rgba(46,204,113,0.2)", pointRadius: 3, tension: 0.2 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: "#e8eef7" } },
+        title: { display: true, text: t("snd.temp_chart"), color: "#e8eef7" },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmtNum(ctx.parsed.x)} °C @ ${Math.round(ctx.parsed.y)} m` } },
+      },
+      scales: {
+        x: { title: { display: true, text: "°C", color: "#8aa0bb" },
+             ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
+        y: { title: { display: true, text: "m", color: "#8aa0bb" },
+             ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
+      },
+    },
+  });
+
+  // --- Tabla de niveles. ---
+  const tbl = document.getElementById("sndTable");
+  const rows = profile.slice().reverse().map(p => {
+    const info = (p.wd != null) ? classifyDirection(p.wd) : null;
+    const dirCell = info ? `${info.name} (${Math.round(p.wd)}°)` : "—";
+    return `<tr>
+      <td>${p.label}</td>
+      <td>${p.alt != null ? Math.round(p.alt) : "—"}</td>
+      <td>${p.t  != null ? fmtNum(p.t)  : "—"}</td>
+      <td>${p.td != null ? fmtNum(p.td) : "—"}</td>
+      <td>${p.ws != null ? fmtNum(p.ws) : "—"}</td>
+      <td>${dirCell}</td>
+      <td>${p.cld != null ? Math.round(p.cld) : "—"}</td>
+    </tr>`;
+  }).join("");
+  tbl.innerHTML = `<table>
+    <thead><tr>
+      <th>${t("snd.col_lvl")}</th><th>${t("snd.col_alt")}</th><th>${t("snd.col_t")}</th><th>${t("snd.col_td")}</th>
+      <th>${t("snd.col_ws")}</th><th>${t("snd.col_wd")}</th><th>${t("snd.col_cld")}</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+document.getElementById("sndClose")?.addEventListener("click", closeSounding);
+document.getElementById("soundingModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "soundingModal") closeSounding();
+});
+
+// v155: delegación para los botones "Sondeo" de cada slot de pronóstico.
+document.getElementById("forecastSummary")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".snd-btn");
+  if (!btn) return;
+  const ts = Number(btn.getAttribute("data-ts"));
+  if (Number.isFinite(ts)) openSounding(ts);
+});
 
 // === Holfuy ===
 // API live por estacion (necesita "API password" emitida por info@holfuy.hu).
@@ -3433,6 +3853,7 @@ function renderForecast(fc) {
       <div class="dir">${dirInfo.name} (${Math.round(d)}°)</div>
       <div class="wx">${wxLine}</div>
       <div class="badge">${verdictText(verdict).title.split(" ")[0]}</div>
+      <button type="button" class="snd-btn" data-ts="${times[i].getTime()}" title="${t("snd.btn_tip")}">📈 ${t("snd.btn")}</button>
     `;
     summary.appendChild(div);
     added++;
@@ -4984,6 +5405,15 @@ function renderCurrentTakeoffActions() {
     a.title = "Windy";
     a.textContent = "🌬️";
     host.appendChild(a);
+  }
+  // v155: botón de sondeo atmosférico (Open-Meteo, hora actual).
+  if (Number.isFinite(lat) && Number.isFinite(lon)) {
+    const sb = document.createElement("button");
+    sb.type = "button"; sb.className = "ts-icon-btn";
+    sb.title = t("snd.btn") + " — " + t("snd.btn_tip");
+    sb.textContent = "📈";
+    sb.addEventListener("click", () => openSounding(Date.now()));
+    host.appendChild(sb);
   }
   if (doc2?.volandooUrl && /^https?:/i.test(doc2.volandooUrl)) {
     const a = document.createElement("a");

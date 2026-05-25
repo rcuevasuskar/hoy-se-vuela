@@ -510,6 +510,27 @@
     </div>
   </div>
 
+  <!-- Modal: Sondeo atmosférico (v155) -->
+  <div id="soundingModal" class="auth-modal" hidden>
+    <div class="auth-dialog auth-dialog-wide sounding-dialog" role="dialog" aria-modal="true" aria-labelledby="sndTitle">
+      <button id="sndClose" class="auth-close" title="Cerrar">✕</button>
+      <h2 id="sndTitle" data-i18n="snd.title">Sondeo atmosférico</h2>
+      <div id="sndSubtitle" class="sounding-subtitle"></div>
+      <div id="sndMeta" class="sounding-meta"></div>
+      <div id="sndBody" class="sounding-body">
+        <div id="sndStatus" class="sounding-status" data-i18n="snd.loading">Cargando…</div>
+        <div class="sounding-charts" hidden>
+          <div class="sounding-chart-wrap"><canvas id="sndWindChart"></canvas></div>
+          <div class="sounding-chart-wrap"><canvas id="sndTempChart"></canvas></div>
+        </div>
+        <div id="sndTable" class="sounding-table" hidden></div>
+      </div>
+      <div class="sounding-footer">
+        <a id="sndOpenWindy" class="auth-btn" target="_blank" rel="noopener" data-i18n="snd.open_windy">Abrir en Windy</a>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Ayuda -->
   <div id="helpModal" class="auth-modal" hidden>
     <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle">

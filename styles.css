@@ -1605,6 +1605,37 @@ main {
 .forecast-slot .wx .storm-med  { color: var(--warn); }
 .forecast-slot .wx .storm-high { color: var(--bad); }
 .forecast-slot .wx .rain  { color: var(--accent); font-weight: 700; }
+.forecast-slot .snd-btn {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+.forecast-slot .snd-btn:hover { background: rgba(78,161,255,0.12); }
+
+/* Sondeo atmosférico (v155) */
+.sounding-dialog { max-width: 920px; }
+.sounding-subtitle { color: var(--muted); font-size: 0.9rem; margin: -6px 0 8px; }
+.sounding-meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; }
+.sounding-meta select, .sounding-meta input[type="datetime-local"] {
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 6px; font-size: 0.85rem;
+}
+.sounding-status { padding: 24px; text-align: center; color: var(--muted); }
+.sounding-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sounding-chart-wrap { height: 360px; position: relative; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px; }
+@media (max-width: 700px) { .sounding-charts { grid-template-columns: 1fr; } .sounding-chart-wrap { height: 320px; } }
+.sounding-table { margin-top: 12px; overflow-x: auto; }
+.sounding-table table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.sounding-table th, .sounding-table td { padding: 3px 6px; text-align: right; border-bottom: 1px solid var(--border); }
+.sounding-table th { color: var(--muted); font-weight: 600; text-align: right; }
+.sounding-table td:first-child, .sounding-table th:first-child { text-align: left; }
+.sounding-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 
 /* Weather strip (current conditions) */
 .weather-strip {
