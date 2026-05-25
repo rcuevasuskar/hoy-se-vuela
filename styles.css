@@ -510,27 +510,11 @@ header.topbar .ts-current {
   opacity: 0.55;
   user-select: none;
 }
-.ts-action-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: transparent;
-  border: 0;
-  padding: 0;
-  color: var(--accent, #4ea1ff);
-  font-size: 0.72rem;
-  line-height: 1.1;
-  text-decoration: none;
-  cursor: pointer;
-  font-family: inherit;
-}
-.ts-action-chip:hover {
-  text-decoration: underline;
-  color: var(--accent, #4ea1ff);
-}
-.ts-action-chip.is-active { color: #f1c40f; }
-.ts-action-chip-icon { font-size: 0.85rem; line-height: 1; }
-.ts-action-chip-label { white-space: nowrap; }
+/* v0.192: .ts-action-chip ahora hereda el estilo de .pc-action-btn (clase
+   anadida en JS junto a .ts-action-chip). Mantenemos solo el modificador
+   activo y borrado de reglas previas para no pisar al boton uniforme. */
+.ts-action-chip.is-active { color: #f1c40f; border-color: #f1c40f; }
+.ts-action-chip-icon, .ts-action-chip-label { display: none; }
 .ts-action-menu-list[hidden] { display: none; }
 .ts-action-menu-list {
   position: absolute;
@@ -2571,13 +2555,134 @@ section.card.collapsed > h2 { margin-bottom: 0; }
 }
 
 /* v0.191: "Ultima lectura" como footer del panel de estado. */
-.status-footer { text-align: left; margin-top: 8px; }
+.status-footer {
+  text-align: left !important;
+  margin: 8px 0 0;
+  padding: 0;
+}
 
-/* Toggle de br\u00fajula en la barra de acciones. */
+/* Toggle de brujula en la barra de acciones. */
 .ts-actions-inline .ts-compass-toggle {
   margin-right: 4px;
 }
 .ts-actions-inline .ts-compass-toggle .ts-compass-ico {
   font-size: 0.95rem;
   margin-right: 2px;
+}
+
+/* === v0.192: boton de accion uniforme (Sugerir, Sondeo, Windy, etc.) === */
+.pc-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+.pc-action-btn:hover {
+  background: rgba(78,161,255,0.12);
+  text-decoration: none;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.pc-action-btn.is-active { color: #f1c40f; border-color: #f1c40f; }
+.pc-action-btn-icon { font-size: 0.9rem; line-height: 1; }
+.pc-action-btn-label { white-space: nowrap; }
+
+/* Compatibilidad: la barra inline daba 0.72rem; el nuevo boton es algo
+   mayor, ajustamos el gap entre items para que respiren. */
+.ts-actions-inline { gap: 6px; }
+.ts-actions-inline-sep { display: none; }
+
+/* Estaciones cercanas: el enlace 🌬️ Windy comparte el estilo. */
+.nearby-ext .pc-action-btn { font-size: 0.78rem; }
+
+/* === v0.192: detalles "Datos en bruto" con chevron (>>) como los paneles. */
+.sounding-details summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.sounding-details summary::-webkit-details-marker { display: none; }
+.sounding-details summary::after {
+  content: "\00BB";
+  margin-left: auto;
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--muted);
+  transform: rotate(90deg);
+  transition: transform .2s ease;
+}
+.sounding-details[open] summary::after { transform: rotate(-90deg); }
+.sounding-details summary:hover { color: var(--text); }
+
+/* === v0.192: anemometros con fondo claro en tema claro (como la brujula). */
+:root[data-theme="light"] .compass-wrap .wind-bar-vertical,
+:root[data-theme="auto"] .compass-wrap .wind-bar-vertical {
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, #eef3fa 55%, #dbe5f3 100%);
+  border: 1px solid var(--border);
+  box-shadow:
+    inset 0 1px 2px rgba(255,255,255,0.9),
+    inset 0 -8px 18px rgba(60,90,140,0.10),
+    0 4px 14px rgba(40,70,120,0.12);
+}
+:root[data-theme="light"] .wind-bar-vertical .wbv-value,
+:root[data-theme="auto"] .wind-bar-vertical .wbv-value {
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+  color: var(--text);
+}
+
+/* Selector de orientaciones (anadir/editar despegue) en tema claro. */
+:root[data-theme="light"] .to-dir-rose.compass-rose-picker,
+:root[data-theme="auto"] .to-dir-rose.compass-rose-picker {
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, #eef3fa 55%, #dbe5f3 100%);
+  border-color: var(--border);
+  box-shadow:
+    inset 0 1px 2px rgba(255,255,255,0.9),
+    inset 0 -8px 18px rgba(60,90,140,0.10),
+    0 4px 14px rgba(40,70,120,0.12);
+}
+:root[data-theme="light"] .to-dir-rose.compass-rose-picker::before,
+:root[data-theme="light"] .to-dir-rose.compass-rose-picker::after,
+:root[data-theme="auto"] .to-dir-rose.compass-rose-picker::before,
+:root[data-theme="auto"] .to-dir-rose.compass-rose-picker::after { background: rgba(20,40,80,0.10); }
+:root[data-theme="light"] .to-dir-rose.compass-rose-picker .rose-sector,
+:root[data-theme="auto"] .to-dir-rose.compass-rose-picker .rose-sector {
+  fill: rgba(20,40,80,0.05);
+  stroke: rgba(20,40,80,0.18);
+}
+:root[data-theme="light"] .to-dir-rose.compass-rose-picker .rose-sector:hover,
+:root[data-theme="auto"] .to-dir-rose.compass-rose-picker .rose-sector:hover { fill: rgba(20,40,80,0.14); }
+:root[data-theme="light"] .to-dir-rose.compass-rose-picker .rose-label,
+:root[data-theme="auto"] .to-dir-rose.compass-rose-picker .rose-label {
+  fill: var(--text);
+  stroke: rgba(255,255,255,0.6);
+}
+
+/* Boton "Anadir despegue" en tema claro: borde visible. */
+:root[data-theme="light"] .ts-locate,
+:root[data-theme="auto"] .ts-locate {
+  background: rgba(255,255,255,0.6);
+  border-color: var(--border);
+  color: var(--text);
+}
+:root[data-theme="light"] .ts-locate:hover,
+:root[data-theme="auto"] .ts-locate:hover {
+  background: rgba(0,0,0,0.05);
+  color: var(--text);
 }

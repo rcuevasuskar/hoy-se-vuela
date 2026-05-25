@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.191";
+const APP_VERSION = "v0.192";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -2692,7 +2692,10 @@ function openSounding(targetTs) {
   }
   const windyLink = document.getElementById("sndOpenWindy");
   if (windyLink) {
-    windyLink.href = `https://www.windy.com/sounding/${lat.toFixed(3)}/${lon.toFixed(3)}?iconEu,900h,${lat.toFixed(3)},${lon.toFixed(3)},11,p:wind`;
+    const url = `https://www.windy.com/sounding/${lat.toFixed(3)}/${lon.toFixed(3)}?iconEu,900h,${lat.toFixed(3)},${lon.toFixed(3)},11,p:wind`;
+    // v0.192: ahora es un <button>; guardamos la URL en dataset y abrimos con
+    // window.open en el click handler (registrado una unica vez mas abajo).
+    windyLink.dataset.url = url;
   }
   // Reset UI.
   document.getElementById("sndStatus").hidden = false;
@@ -2783,6 +2786,29 @@ function _renderSoundingFor(ts) {
   // Plugin: isotermas guia muy sutiles cuando el skew esta activado.
   // Se dibujan como diagonales (T constante => x = T + skewSlope*(alt-altMin))
   // cada 10 °C, desde altMin hasta altMax.
+  // v0.192: colores adaptados al tema (claro/oscuro) para que la rejilla,
+  // isotermas y texto del titulo del grafico se aprecien tambien en claro.
+  function _sndChartColors() {
+    const root = document.documentElement;
+    const theme = root.dataset.theme;
+    const isLight = theme === "light"
+      || (theme === "auto" && window.matchMedia?.("(prefers-color-scheme: light)")?.matches);
+    return isLight ? {
+      text:     "#1a2940",
+      muted:    "#3a4a66",
+      grid:     "rgba(20,40,80,0.18)",
+      iso:      "rgba(20,40,80,0.28)",
+      isoLabel: "rgba(20,40,80,0.65)",
+      xTitle:   "#a3372f",
+    } : {
+      text:     "#e8eef7",
+      muted:    "#8aa0bb",
+      grid:     "rgba(255,255,255,0.05)",
+      iso:      "rgba(255,255,255,0.06)",
+      isoLabel: "rgba(255,255,255,0.18)",
+      xTitle:   "#e57777",
+    };
+  }
   const isothermsPlugin = {
     id: "sndIsotherms",
     beforeDatasetsDraw(chart) {
@@ -2796,10 +2822,11 @@ function _renderSoundingFor(ts) {
       ctx.beginPath();
       ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
       ctx.clip();
-      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      const _c = _sndChartColors();
+      ctx.strokeStyle = _c.iso;
       ctx.lineWidth = 1;
       ctx.font = "10px system-ui, sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.fillStyle = _c.isoLabel;
       ctx.textBaseline = "bottom";
       ctx.textAlign = "left";
       for (let t = tMin; t <= tMax; t += 10) {
@@ -2864,6 +2891,7 @@ function _renderSoundingFor(ts) {
 
   const tempCtx = document.getElementById("sndTempChart").getContext("2d");
   if (_sndTempChart) { try { _sndTempChart.destroy(); } catch {} }
+  const _C = _sndChartColors();
   _sndTempChart = new Chart(tempCtx, {
     type: "scatter",
     data: {
@@ -2877,8 +2905,8 @@ function _renderSoundingFor(ts) {
       layout: { padding: { right: 56 } },
       interaction: { mode: "nearest", axis: "y", intersect: false },
       plugins: {
-        legend: { labels: { color: "#e8eef7" } },
-        title: { display: true, text: t("snd.temp_chart") + " · → " + t("snd.wind_axis"), color: "#e8eef7" },
+        legend: { labels: { color: _C.text } },
+        title: { display: true, text: t("snd.temp_chart") + " · → " + t("snd.wind_axis"), color: _C.text },
         tooltip: {
           displayColors: false,
           callbacks: {
@@ -2922,12 +2950,12 @@ function _renderSoundingFor(ts) {
       },
       scales: {
         x: { type: "linear", position: "bottom",
-             title: { display: true, text: skewOn ? "°C (skew-T)" : "°C", color: "#e57777" },
-             ticks: { color: "#8aa0bb", display: !skewOn },
-             grid: { color: "rgba(255,255,255,0.05)", display: !skewOn } },
+             title: { display: true, text: skewOn ? "°C (skew-T)" : "°C", color: _C.xTitle },
+             ticks: { color: _C.muted, display: !skewOn },
+             grid: { color: _C.grid, display: !skewOn } },
         y: { title: { display: false },
-             ticks: { color: "#8aa0bb", callback: (v) => Math.round(v) },
-             grid: { color: "rgba(255,255,255,0.05)" } },
+             ticks: { color: _C.muted, callback: (v) => Math.round(v) },
+             grid: { color: _C.grid } },
       },
     },
     plugins: [isothermsPlugin, windRightPlugin],
@@ -2961,6 +2989,11 @@ function _renderSoundingFor(ts) {
 }
 
 document.getElementById("sndClose")?.addEventListener("click", closeSounding);
+// v0.192: el enlace Abrir-en-Windy paso a ser un <button>; abrimos manualmente.
+document.getElementById("sndOpenWindy")?.addEventListener("click", () => {
+  const u = document.getElementById("sndOpenWindy")?.dataset.url;
+  if (u) window.open(u, "_blank", "noopener");
+});
 document.getElementById("soundingModal")?.addEventListener("click", (e) => {
   if (e.target.id === "soundingModal") closeSounding();
 });
@@ -4524,7 +4557,7 @@ async function renderNearby() {
         <div class="nearby-meta">
           <div class="nearby-dir">—</div>
           <div class="nearby-avg"><b>—</b> <span>${t("near.avg_unit", { h: NEARBY_AVG_HOURS })}</span></div>
-          <div class="nearby-ext"><a href="https://www.windy.com/-?${n.lat},${n.lon},11" target="_blank" rel="noopener">🌬️ Windy</a></div>
+          <div class="nearby-ext"><a class="pc-action-btn" href="https://www.windy.com/-?${n.lat},${n.lon},11" target="_blank" rel="noopener"><span class="pc-action-btn-icon">🌬️</span><span class="pc-action-btn-label">Windy</span></a></div>
         </div>
       `;
       grid.appendChild(card);
@@ -5775,24 +5808,13 @@ function renderCurrentTakeoffActions() {
     });
 
     if (actions.length) {
-      // Separador visual entre el toggle y los chips.
-      const sep0 = document.createElement("span");
-      sep0.className = "ts-actions-inline-sep";
-      sep0.textContent = "|";
-      inlineHost.appendChild(sep0);
-      actions.forEach((a, i) => {
-        if (i > 0) {
-          const sep = document.createElement("span");
-          sep.className = "ts-actions-inline-sep";
-          sep.textContent = "|";
-          inlineHost.appendChild(sep);
-        }
+      actions.forEach((a) => {
         const it = (a.href) ? document.createElement("a") : document.createElement("button");
-        it.className = "ts-action-chip" + (a.isActive ? " is-active" : "");
+        it.className = "ts-action-chip pc-action-btn" + (a.isActive ? " is-active" : "");
         if (a.href) { it.href = a.href; it.target = "_blank"; it.rel = "noopener"; }
         else { it.type = "button"; }
         it.title = a.label;
-        it.innerHTML = `<span class="ts-action-chip-icon">${a.icon}</span><span class="ts-action-chip-label">${escapeHtml(a.label)}</span>`;
+        it.innerHTML = `<span class="pc-action-btn-icon">${a.icon}</span><span class="pc-action-btn-label">${escapeHtml(a.label)}</span>`;
         if (a.run) it.addEventListener("click", a.run);
         inlineHost.appendChild(it);
       });
