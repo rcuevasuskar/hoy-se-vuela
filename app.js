@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.134";
+const APP_VERSION = "v0.135";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -2244,6 +2244,7 @@ function renderLive(live) {
     previousAvg = null;
     setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—");
     setText("lastUpdate", "—");
+    renderWindBarVertical(null);
     const trendEl = document.getElementById("windAvgTrend");
     if (trendEl) trendEl.hidden = true;
     setText("dirLabel", t("dirLabel.dash"));
@@ -2274,6 +2275,7 @@ function renderLive(live) {
   setText("windMax", fmtNum(max));
   setText("windMin", fmtNum(min));
   setText("lastUpdate", fmtTime(date));
+  renderWindBarVertical(avg);
 
   // Indicador de tendencia comparando con la lectura anterior
   const trendEl = document.getElementById("windAvgTrend");
@@ -2788,6 +2790,103 @@ const forecastIdealBandPlugin = {
 };
 if (typeof Chart !== "undefined") Chart.register(forecastIdealBandPlugin);
 
+// v135: pinta la mini-brujula (esquina sup-izda del grafico) con los 16
+// sectores de calidad de direccion del despegue actual. Sin flecha de viento
+// (solo el "anillo" de aptitud), tamano pequeno.
+function renderForecastMiniCompass() {
+  const host = document.getElementById("forecastMiniCompass");
+  if (!host) return;
+  const crit = currentTakeoffCriteria || getCurrentTakeoffDoc()?.criteria || null;
+  const q16 = (crit && Array.isArray(crit.qualityByIndex) && crit.qualityByIndex.some(Boolean))
+    ? crit.qualityByIndex.map(q => q || "bad")
+    : NEUTRAL_QUALITY_BY_INDEX.slice();
+  const COLORS = { ideal: "#2ecc71", ok: "#f1c40f", bad: "#e74c3c" };
+  const cx = 36, cy = 36;
+  const rOut = 30, rIn = 18;
+  const polar = (deg, r) => {
+    const a = (deg - 90) * Math.PI / 180;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  };
+  const sectorPath = (startDeg, endDeg) => {
+    const [x1, y1] = polar(startDeg, rOut);
+    const [x2, y2] = polar(endDeg,   rOut);
+    const [x3, y3] = polar(endDeg,   rIn);
+    const [x4, y4] = polar(startDeg, rIn);
+    const large = (endDeg - startDeg) > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${rOut} ${rOut} 0 ${large} 1 ${x2} ${y2} L ${x3} ${y3} A ${rIn} ${rIn} 0 ${large} 0 ${x4} ${y4} Z`;
+  };
+  const sectors = q16.map((q, i) => {
+    const start = i * 22.5 - 11.25;
+    const end = start + 22.5;
+    const color = COLORS[q] || COLORS.bad;
+    const opacity = q === "bad" ? 0.5 : 0.75;
+    return `<path d="${sectorPath(start, end)}" fill="${color}" opacity="${opacity}" />`;
+  }).join("");
+  host.innerHTML = `
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${cx}" cy="${cy}" r="${rOut + 0.5}" fill="rgba(15,22,33,0.55)" stroke="rgba(255,255,255,0.10)" stroke-width="0.5"/>
+      ${sectors}
+      <circle cx="${cx}" cy="${cy}" r="${rIn - 0.5}" fill="rgba(15,22,33,0.75)"/>
+      <text x="${cx}" y="9"  text-anchor="middle" class="cardinal">N</text>
+      <text x="${cx}" y="67" text-anchor="middle" class="cardinal">S</text>
+      <text x="66" y="${cy + 3}" text-anchor="middle" class="cardinal">E</text>
+      <text x="6"  y="${cy + 3}" text-anchor="middle" class="cardinal">O</text>
+    </svg>`;
+}
+
+// v135: actualiza la barra vertical de viento junto a la brujula principal.
+// Zonas de fondo: amarillo [0,wmin], verde [wmin,wmax], amarillo [wmax,gmax*0.66],
+// rojo [gmax*0.66, gmax]. Relleno: hasta valor actual con color segun zona.
+function renderWindBarVertical(avgKmh) {
+  const bar = document.getElementById("windBarVertical");
+  if (!bar) return;
+  const zones = document.getElementById("wbvZones");
+  const fill  = document.getElementById("wbvFill");
+  const ticks = document.getElementById("wbvTicks");
+  if (!zones || !fill || !ticks) return;
+  const c = currentTakeoffCriteria || {};
+  const wmin = Number.isFinite(c.windMin) ? c.windMin : 5;
+  const wmax = Number.isFinite(c.windMax) ? c.windMax : 15;
+  const gmax = Number.isFinite(c.gustMax) ? c.gustMax : 30;
+  const warnAt = gmax * 0.66;
+  const top = gmax;
+  const pct = (v) => Math.max(0, Math.min(100, (v / top) * 100));
+  // Fondos por zona (de abajo a arriba): amarillo, verde, amarillo, rojo.
+  const cYellow = "rgba(241,196,15,0.18)";
+  const cGreen  = "rgba(46,204,113,0.22)";
+  const cRed    = "rgba(231,76,60,0.22)";
+  const p1 = pct(wmin);
+  const p2 = pct(wmax);
+  const p3 = pct(warnAt);
+  // background usa porcentajes desde abajo (linear-gradient to top).
+  zones.style.background = `linear-gradient(to top,
+    ${cYellow} 0%, ${cYellow} ${p1}%,
+    ${cGreen}  ${p1}%, ${cGreen}  ${p2}%,
+    ${cYellow} ${p2}%, ${cYellow} ${p3}%,
+    ${cRed}    ${p3}%, ${cRed}    100%)`;
+  // Tics
+  ticks.innerHTML = "";
+  [p1, p2, p3].forEach(p => {
+    const t = document.createElement("div");
+    t.className = "wbv-tick";
+    t.style.bottom = `${p}%`;
+    ticks.appendChild(t);
+  });
+  // Relleno
+  if (avgKmh == null || !Number.isFinite(avgKmh)) {
+    fill.style.height = "0%";
+    fill.className = "wbv-fill";
+    return;
+  }
+  const h = pct(avgKmh);
+  fill.style.height = `${h}%`;
+  let cls = "wbv-fill ";
+  if (avgKmh >= warnAt) cls += "warn";
+  else if (avgKmh >= wmin && avgKmh <= wmax) cls += "ideal";
+  else cls += "ok";
+  fill.className = cls;
+}
+
 function renderForecast(fc) {
   if (!fc?.hourly) return;
   latestForecast = fc;
@@ -2913,6 +3012,7 @@ function renderForecast(fc) {
   }
   forecastChart.update();
   renderForecastLegend();
+  renderForecastMiniCompass();
 
   // Resumen: próximas horas en franja diurna del día de referencia.
   const summary = document.getElementById("forecastSummary");
@@ -3237,7 +3337,38 @@ async function renderNearby() {
       if (stCount + apCount >= NEARBY_MIN) break;
     }
     _nearbyResolvedRadius = nearbyRadius;
-    const within = candidates.filter(x => x.dist <= nearbyRadius).slice(0, NEARBY_MAX);
+    // v135: cribado AEMET — priorizamos no-AEMET (Pioupiou, Holfuy) por
+    // cercanía y completamos con AEMET dispersas geograficamente (greedy
+    // farthest-first respecto a las ya elegidas) para evitar clusters AEMET.
+    const inRadius = candidates.filter(x => x.dist <= nearbyRadius);
+    const nonAemet = inRadius.filter(x => x.provider !== "aemet");
+    const aemet    = inRadius.filter(x => x.provider === "aemet");
+    const picked = nonAemet.slice(0, NEARBY_MAX);
+    const remaining = NEARBY_MAX - picked.length;
+    if (remaining > 0 && aemet.length) {
+      const pool = aemet.slice();
+      // Distancia minima de cada candidata al conjunto ya escogido.
+      const minDistTo = (cand, set) => {
+        if (!set.length) return cand.dist; // si no hay seed, usa distancia al despegue
+        let best = Infinity;
+        for (const s of set) {
+          const d = haversineKm(cand.lat, cand.lon, s.lat, s.lon);
+          if (d < best) best = d;
+        }
+        return best;
+      };
+      for (let k = 0; k < remaining && pool.length; k++) {
+        // Elige la que MAXIMIZA su distancia al conjunto ya escogido (dispersion).
+        let bestIdx = 0, bestScore = -Infinity;
+        for (let i = 0; i < pool.length; i++) {
+          const s = minDistTo(pool[i], picked);
+          if (s > bestScore) { bestScore = s; bestIdx = i; }
+        }
+        picked.push(pool.splice(bestIdx, 1)[0]);
+      }
+    }
+    // Ordena el resultado final por distancia al despegue para presentarlas.
+    const within = picked.sort((a, b) => a.dist - b.dist);
     _nearbyPioupiouCount = within.length;
 
     grid.innerHTML = "";
@@ -4070,6 +4201,7 @@ function refreshAllForCurrentTakeoff() {
   previousAvg = null;
   latestLive = null;
   setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—"); setText("lastUpdate", "—");
+  renderWindBarVertical(null);
   refreshObservations();
   refreshForecast();
   renderCompare();
@@ -4213,6 +4345,9 @@ function renderTakeoffPanel() {
       notesBlock.hidden = true;
     }
   }
+  // v135: recalcula barra vertical y mini-brujula del grafico con los criterios actuales
+  renderWindBarVertical(latestLive?.measurements?.wind_speed_avg ?? null);
+  renderForecastMiniCompass();
 }
 
 function renderCurrentTakeoffActions() {

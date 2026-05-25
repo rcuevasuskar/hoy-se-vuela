@@ -132,6 +132,11 @@
             </div>
             <div class="compass-center"><span id="compassAvg">—</span></div>
           </div>
+          <div class="wind-bar-vertical" id="windBarVertical" aria-hidden="true">
+            <div class="wbv-zones" id="wbvZones"></div>
+            <div class="wbv-fill" id="wbvFill"></div>
+            <div class="wbv-ticks" id="wbvTicks"></div>
+          </div>
         </div>
         <div class="readings">
           <div class="reading">
@@ -273,6 +278,7 @@
       </div>
       <div class="chart-wrap">
         <canvas id="forecastChart"></canvas>
+        <div id="forecastMiniCompass" class="fc-mini-compass" aria-hidden="true"></div>
       </div>
       <div id="forecastLegend" class="fc-legend"></div>
       <div id="forecastSummary" class="forecast-summary"></div>

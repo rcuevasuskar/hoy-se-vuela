@@ -1321,6 +1321,70 @@ main {
   position: relative;
   height: 300px;
 }
+/* v135: mini-brujula con sectores de direccion validos, esquina superior izquierda del grafico */
+.fc-mini-compass {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 72px;
+  height: 72px;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.95;
+}
+.fc-mini-compass svg { width: 100%; height: 100%; display: block; }
+.fc-mini-compass .cardinal {
+  fill: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  font-family: sans-serif;
+}
+
+/* v135: barra vertical de viento junto a la brujula principal */
+.compass-wrap .wind-bar-vertical {
+  position: absolute;
+  right: 6px;
+  top: 22px;
+  bottom: 22px;
+  width: 22px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.wind-bar-vertical .wbv-zones {
+  position: absolute;
+  inset: 0;
+  /* fondos por zona, opacidad baja */
+}
+.wind-bar-vertical .wbv-fill {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 0;
+  height: 0;
+  background: linear-gradient(to top, #4ea1ff 0%, #6cb6ff 100%);
+  border-radius: 3px;
+  transition: height 0.4s ease, background 0.3s ease;
+  box-shadow: 0 0 6px rgba(78,161,255,0.5);
+}
+.wind-bar-vertical .wbv-fill.ideal { background: linear-gradient(to top, #2ecc71, #6bf093); box-shadow: 0 0 6px rgba(46,204,113,0.6); }
+.wind-bar-vertical .wbv-fill.ok    { background: linear-gradient(to top, #f1c40f, #ffdd55); box-shadow: 0 0 6px rgba(241,196,15,0.6); }
+.wind-bar-vertical .wbv-fill.warn  { background: linear-gradient(to top, #e74c3c, #ff7361); box-shadow: 0 0 6px rgba(231,76,60,0.7); }
+.wind-bar-vertical .wbv-ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.wind-bar-vertical .wbv-tick {
+  position: absolute;
+  left: 0; right: 0;
+  height: 0;
+  border-top: 1px dashed rgba(255,255,255,0.25);
+}
+@media (max-width: 540px) {
+  .compass-wrap .wind-bar-vertical { width: 16px; right: 4px; }
+}
 .legend-note {
   color: var(--muted);
   font-size: 0.8rem;
