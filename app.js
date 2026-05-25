@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.171";
+const APP_VERSION = "v0.172";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -6954,13 +6954,42 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
     // pendiente de revision. Antes mostraba siempre "ok" y el usuario pensaba
     // que se habia guardado.
     if (_suggestTargetId) {
-      msg.textContent = submitResult?.autoApplied
-        ? (t("to.suggest_ok") + " • aplicado directamente (admin) • doc " + (submitResult.id || _suggestTargetId))
-        : (t("to.suggest_ok") + " • pendiente de revision (no aplicado)");
+      if (submitResult?.autoApplied) {
+        const sd = submitResult.serverDoc;
+        // v171: leemos el doc desde Firestore tras escribir para confirmar.
+        // Comparamos campos clave; si difieren mostramos un aviso.
+        let verify = "";
+        if (sd) {
+          const expectedName = String(submittedPayload.name || "").trim();
+          const expectedWindMin = submittedPayload.criteria?.windMin ?? null;
+          const expectedWindMax = submittedPayload.criteria?.windMax ?? null;
+          const expectedGustMax = submittedPayload.criteria?.gustMax ?? null;
+          const serverName = sd.name || "";
+          const serverWindMin = sd.criteria?.windMin ?? null;
+          const serverWindMax = sd.criteria?.windMax ?? null;
+          const serverGustMax = sd.criteria?.gustMax ?? null;
+          const matches = serverName === expectedName
+            && Number(serverWindMin) === Number(expectedWindMin)
+            && Number(serverWindMax) === Number(expectedWindMax)
+            && Number(serverGustMax) === Number(expectedGustMax);
+          verify = matches
+            ? " · servidor OK"
+            : ` · servidor DIFIERE [nombre:${serverName} v${serverWindMin}-${serverWindMax} r${serverGustMax}]`;
+          if (!matches) msg.style.color = "#e67e22";
+        } else {
+          verify = " · sin lectura post-write";
+        }
+        msg.textContent = "Aplicado (admin) · doc " + (submitResult.id || _suggestTargetId) + verify;
+      } else {
+        msg.textContent = "Pendiente de revision · NO aplicado todavia";
+      }
     } else {
       msg.textContent = t("to.submit_ok");
     }
-    setTimeout(closeTakeoffSubmit, submitResult?.autoApplied || !_suggestTargetId ? 1400 : 3000);
+    // v171: si hubo verificacion correcta, cerrar en 1.4s; si difiere o fue
+    // pendiente, dejar el mensaje 8s para que el usuario lo lea.
+    const autoCloseMs = (submitResult?.autoApplied && submitResult.serverDoc) ? 1400 : 8000;
+    setTimeout(closeTakeoffSubmit, autoCloseMs);
   } catch (e) {
     console.error("[to] submit", e);
     msg.textContent = t("to.submit_err") + " [" + (e?.code || e?.message || "?") + "]";

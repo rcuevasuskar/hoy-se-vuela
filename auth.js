@@ -216,7 +216,15 @@ if (!isConfigured()) {
         reviewedBy: u.uid,
         reviewedAt: serverTimestamp(),
       });
-      return { id: data.targetId, autoApplied: true };
+      // v171: releer el doc desde Firestore para confirmar que el write se
+      // aplico realmente. Si los valores no coinciden con lo enviado, algo lo
+      // sobrescribio o las reglas lo rechazaron silenciosamente.
+      let serverDoc = null;
+      try {
+        const snap = await getDoc(doc(db, "takeoffs", data.targetId));
+        if (snap.exists()) serverDoc = { id: snap.id, ...snap.data() };
+      } catch (e) { console.warn("[auth] post-write readback failed:", e); }
+      return { id: data.targetId, autoApplied: true, serverDoc };
     }
     const payload = {
       name: String(data.name || "").trim(),
