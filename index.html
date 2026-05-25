@@ -117,26 +117,41 @@
       </div>
       <div class="status-grid">
         <div class="compass-wrap">
-          <div class="compass">
-            <div class="compass-rose" id="compassRose">
-              <span class="cardinal n" data-i18n="card.n">N</span>
-              <span class="cardinal e" data-i18n="card.e">E</span>
-              <span class="cardinal s" data-i18n="card.s">S</span>
-              <span class="cardinal w" data-i18n="card.w">O</span>
-              <div class="sectors-host" id="sectorsHost"></div>
-              <div class="wedge-wrap" id="windWedge">
-                <svg class="wedge" viewBox="0 0 32 40" aria-hidden="true">
-                  <polygon points="16,40 1,5 31,5" />
-                </svg>
-              </div>
+          <div class="cw-col">
+            <div class="wind-bar-vertical" id="windBarVertical" role="img" aria-label="Velocidad media">
+              <div class="wbv-zones" id="wbvZones"></div>
+              <div class="wbv-fill" id="wbvFill"></div>
+              <div class="wbv-ticks" id="wbvTicks"></div>
+              <span class="wbv-value" id="wbvValue">—</span>
             </div>
-            <div class="compass-center"><span id="compassAvg">—</span></div>
+            <span class="cw-label" data-i18n="cw.speed">Velocidad</span>
           </div>
-          <div class="wind-bar-vertical" id="windBarVertical" role="img" aria-label="Velocidad media">
-            <div class="wbv-zones" id="wbvZones"></div>
-            <div class="wbv-fill" id="wbvFill"></div>
-            <div class="wbv-ticks" id="wbvTicks"></div>
-            <span class="wbv-value" id="wbvValue">—</span>
+          <div class="cw-col">
+            <div class="compass">
+              <div class="compass-rose" id="compassRose">
+                <span class="cardinal n" data-i18n="card.n">N</span>
+                <span class="cardinal e" data-i18n="card.e">E</span>
+                <span class="cardinal s" data-i18n="card.s">S</span>
+                <span class="cardinal w" data-i18n="card.w">O</span>
+                <div class="sectors-host" id="sectorsHost"></div>
+                <div class="wedge-wrap" id="windWedge">
+                  <svg class="wedge" viewBox="0 0 32 40" aria-hidden="true">
+                    <polygon points="16,40 1,5 31,5" />
+                  </svg>
+                </div>
+              </div>
+              <div class="compass-center"><span id="compassAvg">—</span></div>
+            </div>
+            <span class="cw-label" data-i18n="cw.direction">Dirección</span>
+          </div>
+          <div class="cw-col">
+            <div class="wind-bar-vertical" id="windBarVerticalGust" role="img" aria-label="Racha máxima">
+              <div class="wbv-zones" id="wbvZonesGust"></div>
+              <div class="wbv-fill" id="wbvFillGust"></div>
+              <div class="wbv-ticks" id="wbvTicksGust"></div>
+              <span class="wbv-value" id="wbvValueGust">—</span>
+            </div>
+            <span class="cw-label" data-i18n="cw.gust">Racha</span>
           </div>
         </div>
         <div class="readings">

@@ -859,9 +859,22 @@ main {
   padding: 22px 18px;
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: 20px;
+}
+/* v141: cada columna agrupa widget (anemometro o brujula) + etiqueta debajo */
+.compass-wrap .cw-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.compass-wrap .cw-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
 }
 .compass {
   position: relative;
@@ -1363,8 +1376,8 @@ main {
   font-family: sans-serif;
 }
 
-/* v138: anemometro vertical inspirado visualmente en la brujula principal
-   (mismo ancho que el arco de sectores ~32px, mismo fondo radial,
+/* v138/v141: anemometro vertical inspirado visualmente en la brujula
+   principal (mismo ancho que el arco de sectores ~32px, mismo fondo radial,
    borde y sombra). Muestra el valor numerico en la base. */
 .compass-wrap .wind-bar-vertical {
   position: relative;

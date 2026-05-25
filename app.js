@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.140";
+const APP_VERSION = "v0.141";
 const DEFAULT_STATION = {
   id: 1638,
   provider: "pioupiou",
@@ -100,6 +100,9 @@ const I18N = {
     "status.title": "Estado actual",
     "card.n": "N", "card.e": "E", "card.s": "S", "card.w": "O",
     "read.avg": "Velocidad media",
+    "cw.speed": "Velocidad",
+    "cw.direction": "Dirección",
+    "cw.gust": "Racha",
     "read.max": "Racha máx.",
     "read.min": "Mínima",
     "read.last": "Última lectura",
@@ -393,6 +396,9 @@ const I18N = {
     "status.title": "Current status",
     "card.n": "N", "card.e": "E", "card.s": "S", "card.w": "W",
     "read.avg": "Average speed",
+    "cw.speed": "Speed",
+    "cw.direction": "Direction",
+    "cw.gust": "Gust",
     "read.max": "Max gust",
     "read.min": "Min",
     "read.last": "Last reading",
@@ -671,6 +677,9 @@ const I18N = {
     "status.title": "Aktueller Zustand",
     "card.n": "N", "card.e": "O", "card.s": "S", "card.w": "W",
     "read.avg": "Durchschnittsgeschwindigkeit",
+    "cw.speed": "Geschwindigkeit",
+    "cw.direction": "Richtung",
+    "cw.gust": "Böe",
     "read.max": "Max. Böe",
     "read.min": "Minimum",
     "read.last": "Letzte Messung",
@@ -949,6 +958,9 @@ const I18N = {
     "status.title": "État actuel",
     "card.n": "N", "card.e": "E", "card.s": "S", "card.w": "O",
     "read.avg": "Vitesse moyenne",
+    "cw.speed": "Vitesse",
+    "cw.direction": "Direction",
+    "cw.gust": "Rafale",
     "read.max": "Rafale max.",
     "read.min": "Minimum",
     "read.last": "Dernière mesure",
@@ -1227,6 +1239,9 @@ const I18N = {
     "status.title": "Egungo egoera",
     "card.n": "I", "card.e": "E", "card.s": "H", "card.w": "M",
     "read.avg": "Batez besteko abiadura",
+    "cw.speed": "Abiadura",
+    "cw.direction": "Norabidea",
+    "cw.gust": "Bolada",
     "read.max": "Bolada max.",
     "read.min": "Minimoa",
     "read.last": "Azken neurketa",
@@ -1459,6 +1474,9 @@ const I18N = {
     "status.title": "Estat actual",
     "card.n": "N", "card.e": "E", "card.s": "S", "card.w": "O",
     "read.avg": "Velocitat mitjana",
+    "cw.speed": "Velocitat",
+    "cw.direction": "Direcció",
+    "cw.gust": "Ratxa",
     "read.max": "Ratxa màx.",
     "read.min": "Mínima",
     "read.last": "Última lectura",
@@ -2250,7 +2268,7 @@ function renderLive(live) {
     previousAvg = null;
     setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—");
     setText("lastUpdate", "—");
-    renderWindBarVertical(null);
+    renderWindBarVertical(null, null);
     const trendEl = document.getElementById("windAvgTrend");
     if (trendEl) trendEl.hidden = true;
     setText("dirLabel", t("dirLabel.dash"));
@@ -2281,7 +2299,7 @@ function renderLive(live) {
   setText("windMax", fmtNum(max));
   setText("windMin", fmtNum(min));
   setText("lastUpdate", fmtTime(date));
-  renderWindBarVertical(avg);
+  renderWindBarVertical(avg, max);
 
   // Indicador de tendencia comparando con la lectura anterior
   const trendEl = document.getElementById("windAvgTrend");
@@ -2839,60 +2857,93 @@ function renderForecastMiniCompass() {
     </svg>`;
 }
 
-// v135: actualiza la barra vertical de viento junto a la brujula principal.
-// Zonas de fondo: amarillo [0,wmin], verde [wmin,wmax], amarillo [wmax,gmax*0.66],
-// rojo [gmax*0.66, gmax]. Relleno: hasta valor actual con color segun zona.
-function renderWindBarVertical(avgKmh) {
-  const bar = document.getElementById("windBarVertical");
-  if (!bar) return;
-  const zones = document.getElementById("wbvZones");
-  const fill  = document.getElementById("wbvFill");
-  const ticks = document.getElementById("wbvTicks");
-  if (!zones || !fill || !ticks) return;
+// v135/v141: actualiza los dos anemometros verticales junto a la brujula.
+//  - Izquierda (avg): zonas amarillo[0,wmin] verde[wmin,wmax] amarillo[wmax,
+//    gmax*0.66] rojo[gmax*0.66, gmax]. Top = gmax.
+//  - Derecha (gust): zonas verde[0,gmax*0.66] amarillo[gmax*0.66, gmax]
+//    rojo[gmax, top]. Top = gmax * 1.3 (margen para visualizar el rojo).
+function renderWindBarVertical(avgKmh, gustKmh) {
   const c = currentTakeoffCriteria || {};
   const wmin = Number.isFinite(c.windMin) ? c.windMin : 5;
   const wmax = Number.isFinite(c.windMax) ? c.windMax : 15;
   const gmax = Number.isFinite(c.gustMax) ? c.gustMax : 30;
-  const warnAt = gmax * 0.66;
-  const top = gmax;
-  const pct = (v) => Math.max(0, Math.min(100, (v / top) * 100));
-  // Fondos por zona (de abajo a arriba): amarillo, verde, amarillo, rojo.
   const cYellow = "rgba(241,196,15,0.18)";
   const cGreen  = "rgba(46,204,113,0.22)";
   const cRed    = "rgba(231,76,60,0.22)";
-  const p1 = pct(wmin);
-  const p2 = pct(wmax);
-  const p3 = pct(warnAt);
-  // background usa porcentajes desde abajo (linear-gradient to top).
-  zones.style.background = `linear-gradient(to top,
-    ${cYellow} 0%, ${cYellow} ${p1}%,
-    ${cGreen}  ${p1}%, ${cGreen}  ${p2}%,
-    ${cYellow} ${p2}%, ${cYellow} ${p3}%,
-    ${cRed}    ${p3}%, ${cRed}    100%)`;
-  // Tics
-  ticks.innerHTML = "";
-  [p1, p2, p3].forEach(p => {
-    const t = document.createElement("div");
-    t.className = "wbv-tick";
-    t.style.bottom = `${p}%`;
-    ticks.appendChild(t);
-  });
-  // Relleno
-  const valEl = document.getElementById("wbvValue");
-  if (avgKmh == null || !Number.isFinite(avgKmh)) {
-    fill.style.height = "0%";
-    fill.className = "wbv-fill";
-    if (valEl) valEl.textContent = "—";
-    return;
+
+  function paint(ids, value, opts) {
+    const zones = document.getElementById(ids.zones);
+    const fill  = document.getElementById(ids.fill);
+    const ticks = document.getElementById(ids.ticks);
+    const valEl = document.getElementById(ids.value);
+    if (!zones || !fill || !ticks) return;
+    const top = opts.top;
+    const pct = (v) => Math.max(0, Math.min(100, (v / top) * 100));
+    zones.style.background = opts.gradient(pct);
+    ticks.innerHTML = "";
+    opts.tickAt.forEach(v => {
+      const p = pct(v);
+      const t = document.createElement("div");
+      t.className = "wbv-tick";
+      t.style.bottom = `${p}%`;
+      ticks.appendChild(t);
+    });
+    if (value == null || !Number.isFinite(value)) {
+      fill.style.height = "0%";
+      fill.className = "wbv-fill";
+      if (valEl) valEl.textContent = "—";
+      return;
+    }
+    fill.style.height = `${pct(value)}%`;
+    fill.className = "wbv-fill " + opts.classify(value);
+    if (valEl) valEl.textContent = String(Math.round(value));
   }
-  const h = pct(avgKmh);
-  fill.style.height = `${h}%`;
-  let cls = "wbv-fill ";
-  if (avgKmh >= warnAt) cls += "warn";
-  else if (avgKmh >= wmin && avgKmh <= wmax) cls += "ideal";
-  else cls += "ok";
-  fill.className = cls;
-  if (valEl) valEl.textContent = String(Math.round(avgKmh));
+
+  // --- Avg (izquierda) ---
+  paint(
+    { zones: "wbvZones", fill: "wbvFill", ticks: "wbvTicks", value: "wbvValue" },
+    avgKmh,
+    {
+      top: gmax,
+      tickAt: [wmin, wmax, gmax * 0.66],
+      gradient: (pct) => {
+        const p1 = pct(wmin), p2 = pct(wmax), p3 = pct(gmax * 0.66);
+        return `linear-gradient(to top,
+          ${cYellow} 0%, ${cYellow} ${p1}%,
+          ${cGreen}  ${p1}%, ${cGreen}  ${p2}%,
+          ${cYellow} ${p2}%, ${cYellow} ${p3}%,
+          ${cRed}    ${p3}%, ${cRed}    100%)`;
+      },
+      classify: (v) => {
+        if (v >= gmax * 0.66) return "warn";
+        if (v >= wmin && v <= wmax) return "ideal";
+        return "ok";
+      },
+    }
+  );
+
+  // --- Gust (derecha) ---
+  const gTop = gmax * 1.3;
+  paint(
+    { zones: "wbvZonesGust", fill: "wbvFillGust", ticks: "wbvTicksGust", value: "wbvValueGust" },
+    gustKmh,
+    {
+      top: gTop,
+      tickAt: [gmax * 0.66, gmax],
+      gradient: (pct) => {
+        const p1 = pct(gmax * 0.66), p2 = pct(gmax);
+        return `linear-gradient(to top,
+          ${cGreen}  0%, ${cGreen}  ${p1}%,
+          ${cYellow} ${p1}%, ${cYellow} ${p2}%,
+          ${cRed}    ${p2}%, ${cRed}    100%)`;
+      },
+      classify: (v) => {
+        if (v >= gmax) return "warn";
+        if (v >= gmax * 0.66) return "ok";
+        return "ideal";
+      },
+    }
+  );
 }
 
 function renderForecast(fc) {
@@ -4209,7 +4260,7 @@ function refreshAllForCurrentTakeoff() {
   previousAvg = null;
   latestLive = null;
   setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—"); setText("lastUpdate", "—");
-  renderWindBarVertical(null);
+  renderWindBarVertical(null, null);
   refreshObservations();
   refreshForecast();
   renderCompare();
@@ -4354,7 +4405,7 @@ function renderTakeoffPanel() {
     }
   }
   // v135: recalcula barra vertical y mini-brujula del grafico con los criterios actuales
-  renderWindBarVertical(latestLive?.measurements?.wind_speed_avg ?? null);
+  renderWindBarVertical(latestLive?.measurements?.wind_speed_avg ?? null, latestLive?.measurements?.wind_speed_max ?? null);
   renderForecastMiniCompass();
 }
 
