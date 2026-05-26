@@ -1585,15 +1585,22 @@ main {
 }
 .wind-bar-vertical .wbv-tick-label {
   position: absolute;
-  right: 2px;
-  top: -7px;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%);
   font-size: 0.62rem;
+  font-weight: 700;
   line-height: 1;
-  color: rgba(255,255,255,0.55);
-  background: rgba(0,0,0,0.25);
-  padding: 1px 3px;
-  border-radius: 2px;
+  color: rgba(255,255,255,0.92);
+  background: rgba(0,0,0,0.55);
+  padding: 1px 4px;
+  border-radius: 3px;
   pointer-events: none;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.55);
+  /* v0.194: evita que el subpixel rendering al estar sobre el fill se vea borroso */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  white-space: nowrap;
 }
 @media (max-width: 540px) {
   .compass-wrap {
