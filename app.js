@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.200";
+const APP_VERSION = "v0.201";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -148,6 +148,8 @@ const I18N = {
     "hist.legend": "Línea azul: velocidad media · Línea roja: racha máx · Flechas: dirección (color = aptitud)",
     "chart.avg": "Velocidad media (km/h)",
     "chart.ideal_band": "Velocidad ideal",
+    "chart.gust_band": "Racha aceptable",
+    "chart.gust_warn": "Racha supera el máximo recomendado",
     "forecast.mini_compass_label": "Direcciones de viento adecuadas para {name}",
     "chart.gust": "Racha máx (km/h)",
     "chart.dir": "Dirección",
@@ -492,6 +494,8 @@ const I18N = {
     "hist.legend": "Blue line: average speed · Red line: max gust · Dots: direction (color = suitability)",
     "chart.avg": "Average speed (km/h)",
     "chart.ideal_band": "Ideal speed",
+    "chart.gust_band": "Acceptable gust",
+    "chart.gust_warn": "Gust exceeds the recommended max",
     "forecast.mini_compass_label": "Suitable wind directions for {name}",
     "chart.gust": "Max gust (km/h)",
     "chart.dir": "Direction",
@@ -820,6 +824,8 @@ const I18N = {
     "hist.legend": "Blaue Linie: Mittelgeschwindigkeit · Rote Linie: max. Böe · Punkte: Richtung (Farbe = Eignung)",
     "chart.avg": "Mittelgeschwindigkeit (km/h)",
     "chart.ideal_band": "Ideale Geschwindigkeit",
+    "chart.gust_band": "Vertretbare Böe",
+    "chart.gust_warn": "Böe überschreitet empfohlenes Maximum",
     "forecast.mini_compass_label": "Geeignete Windrichtungen für {name}",
     "chart.gust": "Max. Böe (km/h)",
     "chart.dir": "Richtung",
@@ -1144,6 +1150,8 @@ const I18N = {
     "hist.legend": "Ligne bleue : vitesse moyenne · Ligne rouge : rafale max · Points : direction (couleur = aptitude)",
     "chart.avg": "Vitesse moyenne (km/h)",
     "chart.ideal_band": "Vitesse idéale",
+    "chart.gust_band": "Rafale acceptable",
+    "chart.gust_warn": "La rafale dépasse le maximum recommandé",
     "forecast.mini_compass_label": "Directions de vent adaptées pour {name}",
     "chart.gust": "Rafale max (km/h)",
     "chart.dir": "Direction",
@@ -1468,6 +1476,8 @@ const I18N = {
     "hist.legend": "Lerro urdina: batez besteko abiadura · Lerro gorria: bolada max · Geziak: norabidea (kolorea = aproposa)",
     "chart.avg": "Batez besteko abiadura (km/h)",
     "chart.ideal_band": "Abiadura ezin hobea",
+    "chart.gust_band": "Bolada onargarria",
+    "chart.gust_warn": "Boladak gomendatutako gehienezkoa gainditzen du",
     "forecast.mini_compass_label": "{name}rako haize norabide egokiak",
     "chart.gust": "Bolada max (km/h)",
     "chart.dir": "Norabidea",
@@ -1746,6 +1756,8 @@ const I18N = {
     "hist.legend": "Línia blava: velocitat mitjana · Línia vermella: ratxa màx · Fletxes: direcció (color = aptitud)",
     "chart.avg": "Velocitat mitjana (km/h)",
     "chart.ideal_band": "Velocitat ideal",
+    "chart.gust_band": "Ratxa acceptable",
+    "chart.gust_warn": "La ratxa supera el màxim recomanat",
     "forecast.mini_compass_label": "Direccions de vent adequades per a {name}",
     "chart.gust": "Ratxa màx (km/h)",
     "chart.dir": "Direcció",
@@ -3883,32 +3895,84 @@ const forecastIdealBandPlugin = {
     const yScale = chart.scales?.y;
     if (!yScale) return;
     const { ctx, chartArea } = chart;
-    const yTop    = yScale.getPixelForValue(band.max);
-    const yBottom = yScale.getPixelForValue(band.min);
-    const top    = Math.max(chartArea.top, Math.min(chartArea.bottom, yTop));
-    const bottom = Math.max(chartArea.top, Math.min(chartArea.bottom, yBottom));
-    if (bottom <= top) return;
-    ctx.save();
-    ctx.fillStyle = "rgba(46,204,113,0.14)";
-    ctx.fillRect(chartArea.left, top, chartArea.right - chartArea.left, bottom - top);
-    ctx.strokeStyle = "rgba(46,204,113,0.55)";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(chartArea.left, top); ctx.lineTo(chartArea.right, top);
-    ctx.moveTo(chartArea.left, bottom); ctx.lineTo(chartArea.right, bottom);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    // Etiqueta discreta dentro de la franja.
-    ctx.font = "bold 10px sans-serif";
-    ctx.fillStyle = "rgba(46,204,113,0.95)";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    const label = `${t("chart.ideal_band")}: ${band.min}–${band.max} km/h`;
-    ctx.fillText(label, chartArea.left + 6, top + 3);
-    ctx.restore();
+    const clip = (px) => Math.max(chartArea.top, Math.min(chartArea.bottom, px));
+    const yTop    = clip(yScale.getPixelForValue(band.max));
+    const yBottom = clip(yScale.getPixelForValue(band.min));
+    // Franja verde (velocidad media ideal).
+    if (yBottom > yTop) {
+      ctx.save();
+      ctx.fillStyle = "rgba(46,204,113,0.14)";
+      ctx.fillRect(chartArea.left, yTop, chartArea.right - chartArea.left, yBottom - yTop);
+      ctx.strokeStyle = "rgba(46,204,113,0.55)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(chartArea.left, yTop);    ctx.lineTo(chartArea.right, yTop);
+      ctx.moveTo(chartArea.left, yBottom); ctx.lineTo(chartArea.right, yBottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = "bold 10px sans-serif";
+      ctx.fillStyle = "rgba(46,204,113,0.95)";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(`${t("chart.ideal_band")}: ${band.min}–${band.max} km/h`, chartArea.left + 6, yTop + 3);
+      ctx.restore();
+    }
+    // v0.201: franja amarilla (racha aceptable) desde windMax hasta gustMax.
+    if (Number.isFinite(band.gustMax) && band.gustMax > band.max) {
+      const yGust = clip(yScale.getPixelForValue(band.gustMax));
+      if (yTop > yGust) {
+        ctx.save();
+        ctx.fillStyle = "rgba(241,196,15,0.14)";
+        ctx.fillRect(chartArea.left, yGust, chartArea.right - chartArea.left, yTop - yGust);
+        ctx.strokeStyle = "rgba(241,196,15,0.55)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(chartArea.left, yGust); ctx.lineTo(chartArea.right, yGust);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillStyle = "rgba(200,150,10,0.95)";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText(`${t("chart.gust_band")}: ${band.max}–${band.gustMax} km/h`, chartArea.left + 6, yGust + 3);
+        ctx.restore();
+      }
+    }
   },
 };
+
+// v0.201: icono de aviso (triangulo amarillo con !) para marcar horas en las
+// que la racha maxima supera el limite recomendado del despegue.
+function makeWarnIcon(size = 16) {
+  const dpr = window.devicePixelRatio || 1;
+  const cv = document.createElement("canvas");
+  const px = Math.max(10, size);
+  cv.width = px * dpr; cv.height = px * dpr;
+  cv.style.width = px + "px"; cv.style.height = px + "px";
+  const ctx = cv.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const pad = 1;
+  // Triangulo
+  ctx.beginPath();
+  ctx.moveTo(px / 2, pad);
+  ctx.lineTo(px - pad, px - pad);
+  ctx.lineTo(pad, px - pad);
+  ctx.closePath();
+  ctx.fillStyle = "#f1c40f";
+  ctx.fill();
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = "#7a5d00";
+  ctx.stroke();
+  // Signo de exclamacion
+  ctx.fillStyle = "#3a2c00";
+  ctx.font = `bold ${Math.round(px * 0.62)}px sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("!", px / 2, px * 0.62);
+  return cv;
+}
 if (typeof Chart !== "undefined") Chart.register(forecastIdealBandPlugin);
 
 // v135: pinta la mini-brujula (esquina sup-izda del grafico) con los 16
@@ -4111,6 +4175,13 @@ function renderForecast(fc) {
   const dirColors = dirData.map(p => dirColor(p.dir));
   const dirArrows = dirData.map(p => makeArrowPoint(p.dir, dirColor(p.dir), forecastArrowSize()));
 
+  // v0.201: marcadores de aviso en horas con racha > gustMax del despegue.
+  const _crit201 = currentTakeoffCriteria || {};
+  const _gmax201 = Number.isFinite(_crit201.gustMax) ? _crit201.gustMax : 30;
+  const warnSize = Math.max(12, Math.round(forecastArrowSize() * 0.9));
+  const warnIcon = makeWarnIcon(warnSize);
+  const gustWarnData = dayKept.map(p => (Number.isFinite(p.gust) && p.gust > _gmax201) ? p.gust : null);
+
   // Frontera de día: índices donde cambia el día respecto al anterior.
   const dayLocale = t("locale");
   const daySeparators = [];
@@ -4134,6 +4205,10 @@ function renderForecast(fc) {
         borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true },
       { label: t("chart.dir"), data: spdData, type: "line", showLine: false,
         pointStyle: dirArrows, pointRadius: forecastArrowSize() / 2 },
+      // v0.201: aviso sobre la linea de racha cuando supera gustMax.
+      { label: t("chart.gust_warn"), data: gustWarnData, type: "line", showLine: false,
+        pointStyle: warnIcon, pointRadius: warnSize / 2,
+        spanGaps: false },
     ],
   };
   const options = chartCommonOptions();
@@ -4160,6 +4235,10 @@ function renderForecast(fc) {
           const info = classifyDirection(d);
           return t("chart.dir_tooltip", { name: info.name, deg: Math.round(d) });
         }
+        if (ctx.dataset.label === t("chart.gust_warn")) {
+          if (ctx.parsed.y == null) return null;
+          return `⚠️ ${t("chart.gust_warn")}: ${fmtNum(ctx.parsed.y)} km/h (> ${_gmax201})`;
+        }
         return `${ctx.dataset.label}: ${fmtNum(ctx.parsed.y)} km/h`;
       },
     },
@@ -4173,7 +4252,8 @@ function renderForecast(fc) {
     const c = currentTakeoffCriteria || {};
     const wmin = Number.isFinite(c.windMin) ? c.windMin : 5;
     const wmax = Number.isFinite(c.windMax) ? c.windMax : 15;
-    forecastChart.$idealBand = { min: wmin, max: wmax };
+    const gmax = Number.isFinite(c.gustMax) ? c.gustMax : 30;
+    forecastChart.$idealBand = { min: wmin, max: wmax, gustMax: gmax };
   }
   forecastChart.update();
   renderForecastLegend();
