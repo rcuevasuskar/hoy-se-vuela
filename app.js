@@ -6986,9 +6986,9 @@ function closeTakeoffSubmit() {
 
 document.getElementById("toSubmitClose")?.addEventListener("click", closeTakeoffSubmit);
 document.getElementById("toCancelBtn")?.addEventListener("click", closeTakeoffSubmit);
-document.getElementById("takeoffSubmitModal")?.addEventListener("click", (e) => {
-  if (e.target.id === "takeoffSubmitModal") closeTakeoffSubmit();
-});
+// El modal de alta/edición de despegue solo se cierra mediante el botón ✕ o
+// el botón Cancelar. No se cierra al hacer click fuera, ni con Escape, ni
+// con el botón atrás del móvil, para evitar perder cambios accidentalmente.
 document.getElementById("toPickOnMapBtn")?.addEventListener("click", () => {
   const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
   document.getElementById("toLat").value = c.lat.toFixed(5);
