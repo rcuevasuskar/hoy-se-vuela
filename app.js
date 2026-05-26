@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.198";
+const APP_VERSION = "v0.199";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -56,15 +56,14 @@ const CORS_PROXIES = [
   (u) => "https://corsproxy.io/?" + encodeURIComponent(u),
 ];
 
-// === Tema (claro / oscuro / auto) ===
-const THEME_VALUES = ["auto", "dark", "light"];
-const THEME_ICON = { auto: "💻", dark: "🌙", light: "☀️" };
+// === Tema (claro / oscuro) ===
+const THEME_VALUES = ["dark", "light"];
+const THEME_ICON = { dark: "🌙", light: "☀️" };
 let currentTheme = (function() {
   const saved = localStorage.getItem("theme");
-  // v108: default = "dark" siempre. Migra "auto" -> "dark" (antes era el default
-  // implicito y dejaba ver tema claro si el SO estaba en claro).
-  if (saved === "auto" || !THEME_VALUES.includes(saved)) return "dark";
-  return saved;
+  // v0.199: eliminado tema "auto" / sistema. Solo dark|light. Default = "dark".
+  if (saved === "light") return "light";
+  return "dark";
 })();
 function applyTheme(theme) {
   if (!THEME_VALUES.includes(theme)) theme = "dark";
@@ -6700,9 +6699,9 @@ window.addEventListener("pcuserchange", (e) => {
   if (prefs.whHours && prefs.whHours !== WH_HOURS) {
     setWindHistoryHours(prefs.whHours);
   }
-  if (prefs.theme && THEME_VALUES.includes(prefs.theme) && prefs.theme !== currentTheme) {
-    // v108: migra "auto" remoto -> "dark" para forzar oscuro por defecto.
-    const themeToApply = prefs.theme === "auto" ? "dark" : prefs.theme;
+  if (prefs.theme && prefs.theme !== currentTheme) {
+    // v0.199: solo dark/light. Migra "auto" remoto -> "dark".
+    const themeToApply = (prefs.theme === "light") ? "light" : "dark";
     if (themeToApply !== currentTheme) applyTheme(themeToApply);
   }
   if (prefs.tsRadius && prefs.tsRadius !== tsRadius) {
