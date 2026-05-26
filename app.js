@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.194";
+const APP_VERSION = "v0.195";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -4000,7 +4000,9 @@ function renderWindBarVertical(avgKmh, gustKmh) {
     avgKmh,
     {
       top: gmax,
-      tickAt: [wmin, wmax, gmax * 0.66],
+      // v0.195: solo etiquetamos los valores extremos (minimo aceptable y
+      // umbral rojo superior) para evitar solapamientos.
+      tickAt: [wmin, gmax * 0.66],
       gradient: (pct) => {
         const p1 = pct(wmin), p2 = pct(wmax), p3 = pct(gmax * 0.66);
         return `linear-gradient(to top,

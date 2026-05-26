@@ -2224,6 +2224,9 @@ footer p { margin: 0 auto; }
 .user-menu-btn .um-caret { font-size: 0.7rem; opacity: 0.7; }
 .user-menu-btn[aria-expanded="true"] { border-color: var(--accent); }
 .user-menu-btn { position: relative; }
+/* v0.195: el atributo hidden no surte efecto si una regla CSS posterior pone
+   display:inline-flex; forzamos display:none para usuarios no-admin. */
+.user-menu-btn .um-dot[hidden] { display: none !important; }
 .user-menu-btn .um-dot {
   position: absolute; top: -4px; right: -4px;
   min-width: 16px; height: 16px; padding: 0 4px;

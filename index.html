@@ -201,12 +201,7 @@
         </div>
       </div>
 
-      <!-- v0.186: mejor ventana justo debajo del veredicto. -->
-      <div id="bestWindow" class="best-window" hidden>
-        <span class="bw-icon">⏱️</span>
-        <span class="bw-label" data-i18n="best.label">Mejor ventana hoy:</span>
-        <strong id="bestWindowText">—</strong>
-      </div>
+      <!-- v0.186: mejor ventana (movida al final del panel en v0.195). -->
 
       <div id="weatherStrip" class="weather-strip" hidden>
         <div class="ws-item"><span class="ws-icon" id="wsIcon">☀️</span><span id="wsDesc">—</span></div>
@@ -241,6 +236,12 @@
       <p class="legend-note status-footer">
         <span data-i18n="read.last">Última lectura</span>: <span id="lastUpdate">—</span><span id="lastUpdateSource" class="last-source"></span>
       </p>
+
+      <div id="bestWindow" class="best-window" hidden>
+        <span class="bw-icon">⏱️</span>
+        <span class="bw-label" data-i18n="best.label">Mejor ventana hoy:</span>
+        <strong id="bestWindowText">—</strong>
+      </div>
     </section>
 
     <!-- Guía (movida encima de Análisis de nubes en v0.188) -->
