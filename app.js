@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.192";
+const APP_VERSION = "v0.193";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -3760,12 +3760,24 @@ function makeArrowPoint(deg, color, size = 12) {
   return cv;
 }
 
+// v0.193: colores de Chart.js sensibles al tema (claro/oscuro/auto).
+// En el tema claro la rejilla y los ticks deben ser visibles sobre fondo claro.
+function _chartThemeColors() {
+  const root = document.documentElement;
+  const theme = root.dataset.theme;
+  const isLight = theme === "light"
+    || (theme === "auto" && window.matchMedia?.("(prefers-color-scheme: light)")?.matches);
+  return isLight
+    ? { text: "#1a2940", tick: "#3a4a66", grid: "rgba(20,40,80,0.18)" }
+    : { text: "#e8eef7", tick: "#8aa0bb", grid: "rgba(255,255,255,0.05)" };
+}
 function chartCommonOptions() {
+  const _C = _chartThemeColors();
   return {
     responsive: true, maintainAspectRatio: false,
     interaction: { mode: "nearest", intersect: false },
     plugins: {
-      legend: { labels: { color: "#e8eef7" } },
+      legend: { labels: { color: _C.text } },
       tooltip: {
         callbacks: {
           label: (ctx) => {
@@ -3782,10 +3794,10 @@ function chartCommonOptions() {
     },
     scales: {
       x: { type: "time", time: { tooltipFormat: "dd MMM HH:mm" },
-           ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
+           ticks: { color: _C.tick }, grid: { color: _C.grid } },
       y: { beginAtZero: true,
            title: { display: false },
-           ticks: { color: "#8aa0bb" }, grid: { color: "rgba(255,255,255,0.05)" } },
+           ticks: { color: _C.tick }, grid: { color: _C.grid } },
     },
   };
 }
@@ -3926,11 +3938,11 @@ function renderForecastMiniCompass() {
   }).join("");
   // v138: mini-brujula inline en la cabecera del pronostico, sin etiqueta
   // ni puntos cardinales (la cabecera ya muestra el nombre del despegue).
+  // v0.193: sin fondos solidos - solo los arcos de calidad; el centro
+  // hereda el color del panel (transparente).
   host.innerHTML = `
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="${cx}" cy="${cy}" r="${rOut + 0.5}" fill="rgba(15,22,33,0.65)" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
       ${sectors}
-      <circle cx="${cx}" cy="${cy}" r="${rIn - 0.5}" fill="rgba(15,22,33,0.82)"/>
     </svg>`;
 }
 
@@ -4117,10 +4129,11 @@ function renderForecast(fc) {
   const options = chartCommonOptions();
   // Para el pronóstico usamos eje categórico (sin huecos por horas nocturnas).
   options.scales = options.scales || {};
+  const _Cfc = _chartThemeColors();
   options.scales.x = {
     type: "category",
-    ticks: { color: "#8aa0bb", maxRotation: 0, autoSkipPadding: 12 },
-    grid: { color: "rgba(255,255,255,0.05)" },
+    ticks: { color: _Cfc.tick, maxRotation: 0, autoSkipPadding: 12 },
+    grid: { color: _Cfc.grid },
   };
   options.plugins = options.plugins || {};
   options.plugins.legend = { display: false };
@@ -7279,10 +7292,18 @@ function updateAdminPendingBadge() {
   const badge = document.getElementById("adminReviewBadge");
   // v116: el indicador del boton de menu ahora muestra el numero de pendientes
   // (no solo un punto) para que se vea desde la pagina principal.
+  // v0.193: defensivo - el badge solo debe existir para administradores; para
+  // usuarios registrados o invitados forzamos hidden y vaciamos texto/aria.
   if (dot) {
-    dot.hidden = !(isAdmin && count > 0);
-    dot.textContent = count > 99 ? "99+" : String(count);
-    dot.setAttribute("aria-label", `${count} pendientes de revisar`);
+    if (!isAdmin) {
+      dot.hidden = true;
+      dot.textContent = "";
+      dot.removeAttribute("aria-label");
+    } else {
+      dot.hidden = count === 0;
+      dot.textContent = count > 99 ? "99+" : String(count);
+      dot.setAttribute("aria-label", `${count} pendientes de revisar`);
+    }
   }
   if (badge) {
     badge.hidden = !(isAdmin && count > 0);

@@ -2686,3 +2686,121 @@ section.card.collapsed > h2 { margin-bottom: 0; }
   background: rgba(0,0,0,0.05);
   color: var(--text);
 }
+
+
+/* === v0.193: ajustes de tema claro y rediseno de brujulas de estaciones cercanas === */
+
+/* Cloud panel: en tema claro las barras casi no se ven sobre el panel claro.
+   Subimos contraste del fondo de la barra y oscurecemos los rellenos. */
+:root[data-theme="light"] .cp-bar,
+:root[data-theme="auto"] .cp-bar {
+  background: rgba(20, 40, 80, 0.10);
+  border: 1px solid rgba(20, 40, 80, 0.08);
+}
+:root[data-theme="light"] .cp-layer[data-layer="high"] .cp-bar-fill,
+:root[data-theme="auto"] .cp-layer[data-layer="high"] .cp-bar-fill {
+  background: linear-gradient(90deg, #8aa0bb, #b9c7d9);
+}
+:root[data-theme="light"] .cp-layer[data-layer="mid"] .cp-bar-fill,
+:root[data-theme="auto"] .cp-layer[data-layer="mid"] .cp-bar-fill {
+  background: linear-gradient(90deg, #4c80b8, #7aa6d6);
+}
+:root[data-theme="light"] .cp-layer[data-layer="low"] .cp-bar-fill,
+:root[data-theme="auto"] .cp-layer[data-layer="low"] .cp-bar-fill {
+  background: linear-gradient(90deg, #2c4a7a, #4c80b8);
+}
+:root[data-theme="light"] .cp-summary,
+:root[data-theme="auto"] .cp-summary {
+  background: rgba(78, 161, 255, 0.14);
+  color: var(--text);
+}
+:root[data-theme="light"] .cloud-panel[data-severity="good"] .cp-summary,
+:root[data-theme="auto"] .cloud-panel[data-severity="good"] .cp-summary {
+  background: rgba(46, 204, 113, 0.18);
+}
+:root[data-theme="light"] .cloud-panel[data-severity="warn"] .cp-summary,
+:root[data-theme="auto"] .cloud-panel[data-severity="warn"] .cp-summary {
+  background: rgba(230, 126, 34, 0.20);
+}
+:root[data-theme="light"] .cloud-panel[data-severity="bad"] .cp-summary,
+:root[data-theme="auto"] .cloud-panel[data-severity="bad"] .cp-summary {
+  background: rgba(231, 76, 60, 0.22);
+}
+:root[data-theme="light"] .cp-meta,
+:root[data-theme="auto"] .cp-meta {
+  border-top-color: rgba(20, 40, 80, 0.18);
+}
+
+/* Estaciones cercanas: alineacion vertical uniforme y brujulas mas modernas.
+   - h3 con min-height para que titulos de 1 o 2 lineas no desplacen el contenido.
+   - Tarjeta como columna con justify-content: flex-start y compass en posicion fija. */
+.nearby-card { justify-content: flex-start; }
+.nearby-card h3 {
+  min-height: 2.6em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.nearby-card .mini-compass { margin-top: auto; margin-bottom: auto; }
+
+/* Brujulas modernas: anillo con gradiente, sombra suave y borde sutil.
+   Sobrescribimos los fills inline del SVG via CSS. */
+.mini-compass svg {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.18));
+}
+.mini-compass svg > circle {
+  fill: url(#mc-bg-dark) !important;
+  stroke: rgba(255, 255, 255, 0.12) !important;
+  stroke-width: 0.6 !important;
+}
+/* Como el SVG inline no tiene <defs>, usamos colores planos pero modernos
+   con un gradiente radial CSS detras (envolviendo el SVG). */
+.mini-compass {
+  position: relative;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #2a3a52 0%, #1b2638 60%, #131c2a 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.08),
+    inset 0 -8px 18px rgba(0, 0, 0, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.mini-compass svg > circle {
+  fill: transparent !important;
+  stroke: rgba(255, 255, 255, 0.18) !important;
+}
+.mini-compass .mc-card {
+  fill: rgba(232, 238, 247, 0.85);
+  font-weight: 700;
+}
+.mini-compass .mc-arrow {
+  filter: drop-shadow(0 0 4px rgba(78, 161, 255, 0.75));
+}
+
+/* Tema claro: gradiente claro coherente con la brujula principal. */
+:root[data-theme="light"] .mini-compass,
+:root[data-theme="auto"] .mini-compass {
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, #eef3fa 55%, #dbe5f3 100%);
+  border: 1px solid var(--border);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -8px 18px rgba(60, 90, 140, 0.10),
+    0 4px 10px rgba(40, 70, 120, 0.14);
+}
+:root[data-theme="light"] .mini-compass svg > circle,
+:root[data-theme="auto"] .mini-compass svg > circle {
+  stroke: rgba(20, 40, 80, 0.22) !important;
+}
+:root[data-theme="light"] .mini-compass .mc-card,
+:root[data-theme="auto"] .mini-compass .mc-card {
+  fill: rgba(20, 40, 80, 0.65);
+}
+:root[data-theme="light"] .mini-compass .mc-arrow,
+:root[data-theme="auto"] .mini-compass .mc-arrow {
+  filter: drop-shadow(0 0 3px rgba(78, 161, 255, 0.55));
+}
+:root[data-theme="light"] .mini-compass svg,
+:root[data-theme="auto"] .mini-compass svg {
+  filter: none;
+}
