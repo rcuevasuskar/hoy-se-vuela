@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.196";
+const APP_VERSION = "v0.197";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -287,6 +287,11 @@ const I18N = {
     "fav.section": "Tus despegues",
     "fav.others": "Resultados cercanos",
     "fav.notify_title": "🦂 Condiciones ideales en {name}",
+    // v0.197: alerta al amanecer (resumen del dia).
+    "sunrise.notif_title": "🌅 Hoy hay vuelo en {name}",
+    "sunrise.notif_body": "Mejor ventana hoy: {win}",
+    "sunrise.banner_text": "Hoy hay vuelo en {name} · ventana ideal {win}",
+    "sunrise.banner_close": "Cerrar aviso",
     "cmp.title": "Comparativa últimos días",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(amanecer +3 h → ocaso −1 h)",
@@ -626,6 +631,10 @@ const I18N = {
     "fav.section": "Your takeoffs",
     "fav.others": "Nearby results",
     "fav.notify_title": "🦂 Ideal conditions at {name}",
+    "sunrise.notif_title": "🌅 Flyable today at {name}",
+    "sunrise.notif_body": "Best window today: {win}",
+    "sunrise.banner_text": "Flyable today at {name} · ideal window {win}",
+    "sunrise.banner_close": "Dismiss alert",
     "cmp.title": "Last days comparison",
     "cmp.window": "({h1}:00–{h2}:00 local)",
     "cmp.window_solar": "(sunrise +3 h → sunset −1 h)",
@@ -4813,19 +4822,10 @@ function notificationsEnabled() {
          "Notification" in window && Notification.permission === "granted";
 }
 
-function maybeNotify(verdict, dirInfo, avg, max) {
-  if (!notificationsEnabled()) return;
-  if (verdict !== "ideal") return;
-  const now = Date.now();
-  if (now - lastNotifyTs < NOTIFY_COOLDOWN_MS) return;
-  lastNotifyTs = now;
-  try {
-    new Notification(t("notify.title"), {
-      body: `${dirInfo.name} · ${fmtNum(avg)} km/h (${t("chart.gust").toLowerCase()} ${fmtNum(max)} km/h)`,
-      icon: "icon.svg",
-      tag: "hoy-se-vuela-ideal",
-    });
-  } catch (e) { console.warn(e); }
+function maybeNotify(_verdict, _dirInfo, _avg, _max) {
+  // v0.197: las alertas en vivo se han retirado a favor del aviso al amanecer
+  // (ver checkSunriseAlerts). Mantenemos la funcion como no-op para no romper
+  // la llamada desde refreshObservations.
 }
 
 async function toggleNotifications() {
@@ -7560,56 +7560,129 @@ async function resolveDefaultTakeoff() {
   }
 }
 
-// === Alertas por despegue favorito (polling) ===
-let _favPollTimer = null;
-const _favLastIdeal = {}; // favId → ts del último ideal notificado (anti-spam 1h)
+// === Alertas al amanecer por despegue favorito (v0.197) ===
+// Sustituye el polling cada 5 min: una unica comprobacion al cargar la app
+// (y al cambiar la lista de favoritos). Para cada favorito con alertsEnabled:
+//   1) Pide pronostico horario + sunrise/sunset (Open-Meteo) para su lat/lon.
+//   2) Si ya paso el sunrise de HOY, no se notifico hoy y hay al menos una
+//      hora 'ideal' en horario diurno con sus criterios, dispara:
+//        - Notification API local (si el usuario tiene permiso y avisos ON).
+//        - Banner persistente in-app encima del header.
+const SUNRISE_FETCH_CONCURRENCY = 2;
 
-async function pollFavoriteAlerts() {
-  if (!("Notification" in window) || Notification.permission !== "granted") return;
-  const favs = (window.PCAuth?.favorites || []).filter(f => f.alertsEnabled && f.stationId != null);
-  for (const f of favs) {
+function _sunriseAlertKey(favId, date) {
+  const uid = (window.PCAuth && window.PCAuth.user && window.PCAuth.user.uid) || "anon";
+  const ymd = date.toISOString().slice(0, 10);
+  return `sunriseAlertSent:${uid}:${favId}:${ymd}`;
+}
+
+async function _fetchForecastFor(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+              `&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,precipitation_probability,weather_code,cape` +
+              `&daily=sunrise,sunset` +
+              `&wind_speed_unit=kmh&timezone=auto&forecast_days=1`;
+  return fetchJson(url);
+}
+
+function _findIdealRunsToday(fc, criteria, sunriseTs, sunsetTs) {
+  const h = fc && fc.hourly;
+  if (!h || !h.time) return [];
+  const runs = [];
+  let cur = null;
+  for (let i = 0; i < h.time.length; i++) {
+    const ts = new Date(h.time[i]).getTime();
+    if (ts < sunriseTs) continue;
+    if (ts > sunsetTs) break;
+    const dirQ = classifyDirectionWith(criteria, h.wind_direction_10m[i]);
+    const spdQ = classifySpeedWith(criteria, h.wind_speed_10m[i], h.wind_gusts_10m[i]);
+    let v = combineVerdict(dirQ, spdQ);
+    const slot = {
+      code: h.weather_code && h.weather_code[i],
+      cloud: h.cloud_cover && h.cloud_cover[i],
+      precip: h.precipitation_probability && h.precipitation_probability[i],
+      cape: h.cape && h.cape[i],
+    };
+    const risk = weatherRisk(slot);
+    if (risk === "storm") v = "bad";
+    else if (risk === "rain" && v !== "bad") v = "warn";
+    if (v === "ideal") {
+      if (!cur) cur = { start: ts, end: ts + 3600 * 1000 };
+      else cur.end = ts + 3600 * 1000;
+    } else if (cur) { runs.push(cur); cur = null; }
+  }
+  if (cur) runs.push(cur);
+  return runs;
+}
+
+async function _evalSunriseAlertFor(fav) {
+  if (!fav || !fav.alertsEnabled) return;
+  if (fav.lat == null || fav.lon == null) return;
+  const key = _sunriseAlertKey(fav.id, new Date());
+  try { if (localStorage.getItem(key)) return; } catch {}
+  let fc;
+  try { fc = await _fetchForecastFor(fav.lat, fav.lon); } catch { return; }
+  const dailySunrise = fc && fc.daily && fc.daily.sunrise && fc.daily.sunrise[0];
+  const dailySunset  = fc && fc.daily && fc.daily.sunset  && fc.daily.sunset[0];
+  if (!dailySunrise || !dailySunset) return;
+  const sunriseTs = new Date(dailySunrise).getTime();
+  const sunsetTs  = new Date(dailySunset).getTime();
+  if (Date.now() < sunriseTs) return; // aun no amanece en ese despegue
+  const runs = _findIdealRunsToday(fc, fav.criteria, sunriseTs, sunsetTs);
+  if (!runs.length) return;
+  const best = runs.slice().sort((a, b) => (b.end - b.start) - (a.end - a.start))[0];
+  const fmtHM = (ms) => new Date(ms).toLocaleTimeString(t("locale"), { hour: "2-digit", minute: "2-digit" });
+  const win = `${fmtHM(best.start)}–${fmtHM(best.end)}`;
+  const titleTpl = t("sunrise.notif_title") || t("fav.notify_title");
+  const title = titleTpl.replace("{name}", fav.name);
+  const bodyTpl = t("sunrise.notif_body") || "{win}";
+  const body = bodyTpl.replace("{win}", win);
+  // Notification local (solo si el usuario activo avisos desde el menu).
+  if (notificationsEnabled()) {
     try {
-      const url = `${API_BASE}/live/${f.stationId}`;
-      const j = await fetchJson(url);
-      const m = j?.data?.measurements;
-      if (!m) continue;
-      const avg = m.wind_speed_avg ?? m.wind_avg ?? null;
-      const max = m.wind_speed_max ?? m.wind_max ?? null;
-      const dir = m.wind_heading ?? null;
-      if (avg == null || dir == null) continue;
-      // Aplica criterios del favorito (si los tiene) — sin tocar el estado global.
-      const c = f.criteria;
-      const arr = (c?.qualityByIndex && c.qualityByIndex.some(Boolean))
-        ? c.qualityByIndex.map(q => q || "ok")
-        : NEUTRAL_QUALITY_BY_INDEX;
-      const idx = Math.round((((dir % 360) + 360) % 360) / 22.5) % 16;
-      const dirQ = arr[idx] || "unknown";
-      const wmin = (c && Number.isFinite(c.windMin)) ? c.windMin : 5;
-      const wmax = (c && Number.isFinite(c.windMax)) ? c.windMax : 15;
-      const gmax = (c && Number.isFinite(c.gustMax)) ? c.gustMax : 30;
-      const tooStrong = avg >= gmax * 0.66 || (max != null && max >= gmax);
-      const ideal = !tooStrong && (avg >= wmin && avg <= wmax) && (max == null || max <= gmax * 0.83) && dirQ === "ideal";
-      if (!ideal) continue;
-      const last = _favLastIdeal[f.id] || 0;
-      if (Date.now() - last < 3600 * 1000) continue;
-      _favLastIdeal[f.id] = Date.now();
-      try {
-        new Notification(t("fav.notify_title").replace("{name}", f.name), {
-          body: `${avg.toFixed(0)} km/h · ${dirName(dir)}`,
-          icon: "icon.svg",
-          tag: "fav-" + f.id,
-        });
-      } catch {}
-    } catch (e) { /* silencioso */ }
+      new Notification(title, { body, icon: "icon.svg", tag: "sunrise-" + fav.id });
+    } catch {}
+  }
+  // Banner in-app (siempre que la pestana este abierta).
+  showSunriseBanner({ name: fav.name, win });
+  try { localStorage.setItem(key, String(Date.now())); } catch {}
+}
+
+function showSunriseBanner({ name, win }) {
+  const host = document.getElementById("sunriseAlertHost");
+  if (!host) return;
+  const tpl = t("sunrise.banner_text") || "{name} · {win}";
+  const text = tpl.replace("{name}", name).replace("{win}", win);
+  const card = document.createElement("div");
+  card.className = "sunrise-alert";
+  const closeLabel = t("sunrise.banner_close") || "close";
+  card.innerHTML = `<span class="sa-icon" aria-hidden="true">🌅</span>` +
+                   `<span class="sa-text">${escapeHtml(text)}</span>` +
+                   `<button type="button" class="sa-close" aria-label="${escapeHtml(closeLabel)}">×</button>`;
+  card.querySelector(".sa-close").addEventListener("click", () => card.remove());
+  host.appendChild(card);
+}
+
+let _sunriseCheckInFlight = false;
+async function checkSunriseAlerts() {
+  if (_sunriseCheckInFlight) return;
+  _sunriseCheckInFlight = true;
+  try {
+    const favs = ((window.PCAuth && window.PCAuth.favorites) || []).filter(f => f.alertsEnabled);
+    if (!favs.length) return;
+    for (let i = 0; i < favs.length; i += SUNRISE_FETCH_CONCURRENCY) {
+      await Promise.all(
+        favs.slice(i, i + SUNRISE_FETCH_CONCURRENCY).map(_evalSunriseAlertFor)
+      );
+    }
+  } finally {
+    _sunriseCheckInFlight = false;
   }
 }
 
+// Compat: el resto del codigo (onFavoritesChange) llama a esta funcion.
 function startFavoriteAlertsPolling() {
-  if (_favPollTimer) clearInterval(_favPollTimer);
-  // Cada 5 minutos
-  _favPollTimer = setInterval(pollFavoriteAlerts, 5 * 60 * 1000);
-  // Primera comprobación tras 30s
-  setTimeout(pollFavoriteAlerts, 30 * 1000);
+  // v0.197: ya no hay polling cada 5 min. Hacemos una unica comprobacion ahora.
+  checkSunriseAlerts();
 }
 
 // v118: pinta la version actual en el footer al cargar la app.
