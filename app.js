@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.216";
+const APP_VERSION = "v0.217";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -296,6 +296,7 @@ const I18N = {
     "to.suggestion_badge": "sugerencia",
     "act.orient_toggle": "Orientación en tiempo real (brújula del dispositivo)",
     "act.orient_label": "Modo brújula",
+    "act.meteoparapente": "Meteo-Parapente",
     "auth.reason_takeoff_actions": "Regístrate o haz login para poder añadir o sugerir cambios en despegues.",
     "fav.add": "Marcar como favorito",
     "fav.remove": "Quitar de favoritos",
@@ -660,6 +661,7 @@ const I18N = {
     "to.suggestion_badge": "suggestion",
     "act.orient_toggle": "Live orientation (device compass)",
     "act.orient_label": "Compass mode",
+    "act.meteoparapente": "Meteo-Parapente",
     "auth.reason_takeoff_actions": "Sign up or sign in to add takeoffs or suggest changes.",
     "fav.add": "Add to favorites",
     "fav.remove": "Remove from favorites",
@@ -1008,6 +1010,7 @@ const I18N = {
     "to.suggestion_badge": "Vorschlag",
     "act.orient_toggle": "Live-Ausrichtung (Gerätekompass)",
     "act.orient_label": "Kompass-Modus",
+    "act.meteoparapente": "Meteo-Parapente",
     "auth.reason_takeoff_actions": "Registriere dich oder melde dich an, um Startplätze hinzuzufügen oder Änderungen vorzuschlagen.",
     "fav.add": "Zu Favoriten hinzufügen",
     "fav.remove": "Aus Favoriten entfernen",
@@ -1352,6 +1355,7 @@ const I18N = {
     "to.suggestion_badge": "suggestion",
     "act.orient_toggle": "Orientation en temps réel (boussole de l’appareil)",
     "act.orient_label": "Mode boussole",
+    "act.meteoparapente": "Meteo-Parapente",
     "auth.reason_takeoff_actions": "Inscris-toi ou connecte-toi pour ajouter ou suggérer des modifications de décollages.",
     "fav.add": "Ajouter aux favoris",
     "fav.remove": "Retirer des favoris",
@@ -1696,6 +1700,7 @@ const I18N = {
     "to.suggestion_badge": "iradokizuna",
     "act.orient_toggle": "Norabidea denbora errealean (gailuaren iparrorratza)",
     "act.orient_label": "Iparrorratz modua",
+    "act.meteoparapente": "Meteo-Parapente",
     "auth.reason_takeoff_actions": "Eman izena edo hasi saioa aireratzeak gehitzeko edo aldaketak iradokitzeko.",
     "fav.add": "Gogokoetara gehitu",
     "fav.remove": "Gogokoetatik kendu",
@@ -1994,6 +1999,7 @@ const I18N = {
     "to.suggestion_badge": "suggeriment",
     "act.orient_toggle": "Orientació en temps real (brúixola del dispositiu)",
     "act.orient_label": "Mode brúixola",
+    "act.meteoparapente": "Meteo-Parapente",
     "auth.reason_takeoff_actions": "Registra't o inicia sessió per afegir enlairaments o suggerir canvis.",
     "fav.add": "Afegeix als preferits",
     "fav.remove": "Treu dels preferits",
@@ -6019,6 +6025,19 @@ function renderCurrentTakeoffActions() {
   }
   if (windyHref) {
     actions.push({ icon: "🌬️", label: "Abrir Windy", href: windyHref });
+  }
+  // v0.217: Meteo-Parapente — enlace externo a la web oficial centrado en
+  // las coordenadas del despegue. Util para ver techo (PBLH), viento por
+  // altura, base de nubes y sondeo. Datos del modelo WRF de Meteo-Parapente
+  // (Nicolas Baldeck). Mientras no haya autorizacion para usar su API
+  // (data0.meteo-parapente.com) lo enlazamos de forma externa.
+  {
+    const lat = Number(currentTakeoff?.lat);
+    const lon = Number(currentTakeoff?.lon);
+    const mpUrl = (Number.isFinite(lat) && Number.isFinite(lon))
+      ? `https://meteo-parapente.com/#/${lat.toFixed(4)},${lon.toFixed(4)},13`
+      : "https://meteo-parapente.com/";
+    actions.push({ icon: "⛅", label: t("act.meteoparapente") || "Meteo-Parapente", href: mpUrl });
   }
   if (doc2?.volandooUrl && /^https?:/i.test(doc2.volandooUrl)) {
     actions.push({ icon: "🪶", label: "Volandoo", href: doc2.volandooUrl });
