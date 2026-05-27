@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.212";
+const APP_VERSION = "v0.213";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5974,12 +5974,15 @@ function renderCurrentTakeoffActions() {
   if (doc2?.volandooUrl && /^https?:/i.test(doc2.volandooUrl)) {
     actions.push({ icon: "🪶", label: "Volandoo", href: doc2.volandooUrl });
   }
-  // v0.212: enlace externo al mapa en vivo de XContest (sin iframe; XContest
-  // no admite centrar el mapa por URL desde un embed cross-origin).
+  // v0.212/v0.213: enlace externo al mapa en vivo. Ahora es un menu
+  // desplegable con tres fuentes (XContest / Flymaster / Volandoo). Ninguno
+  // de los tres soporta de forma documentada centrar el mapa por URL desde
+  // un embed externo, pero pasamos coords "best-effort" en los parametros
+  // para que sean utiles si en algun momento las respetan.
   actions.push({
     icon: "🪂",
-    label: "Live XC",
-    href: "https://live.xcontest.org/",
+    label: "Live tracking",
+    run: (ev) => openLiveTrackingMenu(ev?.currentTarget),
   });
   // v0.188: la brujula ya no es un chip; se renderiza como toggle (interruptor)
   // a la izquierda del todo de la barra de acciones, dentro del footer.
@@ -6030,6 +6033,85 @@ function renderCurrentTakeoffActions() {
       inlineHost.hidden = false;
     }
   }
+}
+
+// v0.213: menu desplegable "Live tracking" con enlaces externos a las tres
+// fuentes habituales (XContest, Flymaster, Volandoo). Se ancla bajo el chip
+// que lo dispara y se cierra al pulsar fuera o ESC. No se carga ningun iframe.
+function openLiveTrackingMenu(anchorEl) {
+  // Cierra cualquier menu previo (toggle si se vuelve a pulsar el mismo chip).
+  const existing = document.querySelector(".pc-live-menu");
+  const sameAnchor = existing && existing.dataset.anchorId && anchorEl
+    && existing.dataset.anchorId === anchorEl.dataset.pcLiveId;
+  if (existing) existing.remove();
+  if (sameAnchor) return;
+
+  const lat = Number(currentTakeoff?.lat);
+  const lon = Number(currentTakeoff?.lon);
+  const hasCoords = Number.isFinite(lat) && Number.isFinite(lon);
+  // Mejor esfuerzo: pasamos lat/lon como parametros aunque las tres webs hoy
+  // los ignoran. Si en algun momento las admiten, el enlace ya queda centrado.
+  const xcUrl = hasCoords
+    ? `https://live.xcontest.org/#lat=${lat.toFixed(4)}@lon=${lon.toFixed(4)}@zoom=11`
+    : "https://live.xcontest.org/";
+  const fmUrl = hasCoords
+    ? `https://lt.flymaster.net/bs.php?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&zoom=11`
+    : "https://lt.flymaster.net/bs.php";
+  const voUrl = hasCoords
+    ? `https://volandoo.com/tracking/all?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&zoom=11`
+    : "https://volandoo.com/tracking/all";
+  const items = [
+    { label: "XContest Live", href: xcUrl },
+    { label: "Flymaster Live", href: fmUrl },
+    { label: "Volandoo Live", href: voUrl },
+  ];
+
+  const menu = document.createElement("div");
+  menu.className = "pc-live-menu";
+  menu.setAttribute("role", "menu");
+  if (anchorEl) {
+    if (!anchorEl.dataset.pcLiveId) anchorEl.dataset.pcLiveId = "lt-" + Math.random().toString(36).slice(2, 8);
+    menu.dataset.anchorId = anchorEl.dataset.pcLiveId;
+  }
+  items.forEach(it => {
+    const a = document.createElement("a");
+    a.className = "pc-live-menu-item";
+    a.href = it.href;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = it.label;
+    a.addEventListener("click", () => { try { menu.remove(); } catch {} });
+    menu.appendChild(a);
+  });
+
+  document.body.appendChild(menu);
+
+  // Posicionado fijo bajo el ancla; se ajusta si se sale por la derecha.
+  const r = anchorEl ? anchorEl.getBoundingClientRect() : { bottom: 60, left: 16 };
+  menu.style.position = "fixed";
+  menu.style.top = (r.bottom + 4) + "px";
+  const menuW = menu.offsetWidth || 180;
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - menuW - 8));
+  menu.style.left = left + "px";
+  menu.style.zIndex = 1000;
+
+  const close = () => {
+    try { menu.remove(); } catch {}
+    document.removeEventListener("mousedown", onDocDown, true);
+    document.removeEventListener("keydown", onKey, true);
+    window.removeEventListener("scroll", close, true);
+    window.removeEventListener("resize", close, true);
+  };
+  const onDocDown = (e) => {
+    if (!menu.contains(e.target) && e.target !== anchorEl && !anchorEl?.contains(e.target)) close();
+  };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  setTimeout(() => {
+    document.addEventListener("mousedown", onDocDown, true);
+    document.addEventListener("keydown", onKey, true);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close, true);
+  }, 0);
 }
 
 function openTakeoffSuggest(originId) {
