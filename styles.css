@@ -564,10 +564,15 @@ header.topbar .ts-current {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 4px 8px;
   font-size: 0.72rem;
   color: var(--muted);
   flex: 0 1 auto;
+  width: 100%;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 .ts-actions-inline-label {
   color: var(--muted);
