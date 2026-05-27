@@ -453,6 +453,10 @@ header.topbar .ts-current {
   padding: 0 6px; font-size: .8rem; color: var(--muted);
 }
 .to-coords-cta { align-self: stretch; }
+/* v205: campo altitud con boton de calculo automatico */
+.to-alt-row { display: flex; gap: 6px; align-items: stretch; }
+.to-alt-row > input { flex: 1; min-width: 0; }
+.to-alt-row > button { flex: 0 0 auto; }
 /* v180: select nativo para la estacion de referencia. */
 .to-field-block > select.to-station-select {
   width: 100%; box-sizing: border-box;

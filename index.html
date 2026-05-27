@@ -439,14 +439,12 @@
         </div>
       </fieldset>
 
-      <label class="to-field-block"><span data-i18n="to.alt_label">Altitud (m)</span>
-        <input id="toAlt" type="number" step="1" placeholder="Altitud (m)" data-i18n-placeholder="to.alt_ph" />
-      </label>
-
       <!-- v204: coordenadas — el buscador y la elección visual se han movido al
            sub-modal del mapa (botón 🗺️). Aquí dejamos los campos lat/lon
            editables a mano para usuarios avanzados, pero el flujo recomendado
-           es el botón. -->
+           es el botón.
+           v205: la altitud se mueve aquí dentro porque se rellena
+           automáticamente con la elevación del punto elegido en el mapa. -->
       <fieldset class="to-coords-block">
         <legend data-i18n="to.coords_legend">Coordenadas del despegue</legend>
         <button id="toOpenMapBtn" class="auth-primary to-coords-cta" type="button" data-i18n="to.coords_open_map">🗺️ Elegir en el mapa</button>
@@ -458,6 +456,13 @@
             <input id="toLon" type="number" step="0.00001" placeholder="Longitud" data-i18n-placeholder="to.lon_ph" />
           </label>
         </div>
+        <label class="to-field-block"><span data-i18n="to.alt_label">Altitud (m)</span>
+          <div class="to-alt-row">
+            <input id="toAlt" type="number" step="1" placeholder="Altitud (m)" data-i18n-placeholder="to.alt_ph" />
+            <button id="toAltFetchBtn" class="auth-secondary" type="button" title="Calcular desde el mapa" data-i18n-title="to.alt_fetch_title" aria-label="Calcular altitud desde el mapa">📏</button>
+          </div>
+          <p class="to-hint" data-i18n="to.alt_auto_hint">Se calcula automáticamente desde el mapa (Open‑Meteo). Puedes ajustarla a mano.</p>
+        </label>
         <p class="to-hint" data-i18n="to.coords_manual_hint">Si lo prefieres, puedes editar las coordenadas a mano.</p>
       </fieldset>
       <input id="toOrient" type="hidden" />
@@ -520,6 +525,8 @@
         <span data-i18n="to.lat_label">Latitud</span>: <strong id="toPickLatLbl">—</strong>
         &nbsp;·&nbsp;
         <span data-i18n="to.lon_label">Longitud</span>: <strong id="toPickLonLbl">—</strong>
+        &nbsp;·&nbsp;
+        <span data-i18n="to.alt_label">Altitud (m)</span>: <strong id="toPickAltLbl">—</strong>
       </p>
       <div class="to-actions">
         <button id="toMapPickerCancel" class="auth-secondary" type="button" data-i18n="to.cancel">Cancelar</button>

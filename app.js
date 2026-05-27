@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.204";
+const APP_VERSION = "v0.205";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -200,6 +200,8 @@ const I18N = {
     "to.notes_ph": "Notas (acceso, peligros…)",
     "to.name_label": "Nombre del despegue",
     "to.alt_label": "Altitud (m)",
+    "to.alt_fetch_title": "Calcular altitud desde el mapa",
+    "to.alt_auto_hint": "Se calcula automáticamente desde el mapa (Open‑Meteo). Puedes ajustarla a mano.",
     "to.lat_label": "Latitud",
     "to.lon_label": "Longitud",
     "to.notes_label": "Notas (acceso, peligros…)",
@@ -559,6 +561,8 @@ const I18N = {
     "to.notes_ph": "Notes (access, hazards…)",
     "to.name_label": "Takeoff name",
     "to.alt_label": "Altitude (m)",
+    "to.alt_fetch_title": "Compute altitude from the map",
+    "to.alt_auto_hint": "Automatically computed from the map (Open‑Meteo). You can adjust it manually.",
     "to.lat_label": "Latitude",
     "to.lon_label": "Longitude",
     "to.notes_label": "Notes (access, hazards…)",
@@ -902,6 +906,8 @@ const I18N = {
     "to.notes_ph": "Notizen (Zugang, Gefahren…)",
     "to.name_label": "Name des Startplatzes",
     "to.alt_label": "Höhe (m)",
+    "to.alt_fetch_title": "Höhe aus der Karte berechnen",
+    "to.alt_auto_hint": "Wird automatisch aus der Karte berechnet (Open‑Meteo). Du kannst sie manuell anpassen.",
     "to.lat_label": "Breitengrad",
     "to.lon_label": "Längengrad",
     "to.notes_label": "Notizen (Zugang, Gefahren…)",
@@ -1241,6 +1247,8 @@ const I18N = {
     "to.notes_ph": "Notes (accès, dangers…)",
     "to.name_label": "Nom du décollage",
     "to.alt_label": "Altitude (m)",
+    "to.alt_fetch_title": "Calculer l'altitude depuis la carte",
+    "to.alt_auto_hint": "Calculée automatiquement depuis la carte (Open‑Meteo). Tu peux l'ajuster à la main.",
     "to.lat_label": "Latitude",
     "to.lon_label": "Longitude",
     "to.notes_label": "Notes (accès, dangers…)",
@@ -1580,6 +1588,8 @@ const I18N = {
     "to.notes_ph": "Oharrak (sarbidea, arriskuak…)",
     "to.name_label": "Aireratze-lekuaren izena",
     "to.alt_label": "Altitudea (m)",
+    "to.alt_fetch_title": "Kalkulatu altitudea mapatik",
+    "to.alt_auto_hint": "Mapatik automatikoki kalkulatzen da (Open‑Meteo). Eskuz egokitu dezakezu.",
     "to.lat_label": "Latitudea",
     "to.lon_label": "Longitudea",
     "to.notes_label": "Oharrak (sarbidea, arriskuak…)",
@@ -1873,6 +1883,8 @@ const I18N = {
     "to.notes_ph": "Notes (accés, perills…)",
     "to.name_label": "Nom de l'enlairament",
     "to.alt_label": "Altitud (m)",
+    "to.alt_fetch_title": "Calcula l'altitud des del mapa",
+    "to.alt_auto_hint": "Es calcula automàticament des del mapa (Open‑Meteo). Pots ajustar-la a mà.",
     "to.lat_label": "Latitud",
     "to.lon_label": "Longitud",
     "to.notes_label": "Notes (accés, perills…)",
@@ -7082,6 +7094,43 @@ let _toPickMap = null;
 let _toPickMarker = null;
 let _toPickLayers = null; // { sat, topo, street }
 let _toPickCurrentLayerKey = "topo";
+let _toPickLastAlt = null;       // ultima elevacion conocida del marcador
+let _toPickElevSeq = 0;          // anti-race de fetch de elevacion
+const _toElevCache = new Map();  // "lat5,lon5" -> metros
+
+async function _toFetchElevation(lat, lon) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const key = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+  if (_toElevCache.has(key)) return _toElevCache.get(key);
+  try {
+    const url = `https://api.open-meteo.com/v1/elevation?latitude=${lat.toFixed(5)}&longitude=${lon.toFixed(5)}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const m = Array.isArray(data?.elevation) ? data.elevation[0] : null;
+    if (m == null) return null;
+    const rounded = Math.round(m);
+    _toElevCache.set(key, rounded);
+    return rounded;
+  } catch (e) {
+    console.warn("[elevation]", e);
+    return null;
+  }
+}
+
+// Pide la elevacion del punto actual del marcador y actualiza la etiqueta del
+// sub-modal. Usa un contador (_toPickElevSeq) para descartar respuestas
+// obsoletas si el marcador se ha movido mientras la peticion estaba en vuelo.
+async function _toPickRefreshElevation(lat, lon) {
+  const seq = ++_toPickElevSeq;
+  _toPickLastAlt = null;
+  const lbl = document.getElementById("toPickAltLbl");
+  if (lbl) lbl.textContent = "…";
+  const m = await _toFetchElevation(lat, lon);
+  if (seq !== _toPickElevSeq) return; // movido entre tanto
+  _toPickLastAlt = m;
+  if (lbl) lbl.textContent = (m == null ? "—" : String(m));
+}
 
 function _toPickBuildLayers() {
   // Capa satelite: Esri World Imagery (sin token, uso permitido con atribucion).
@@ -7139,12 +7188,18 @@ function openTakeoffMapPicker() {
     _toPickSetLayer(_toPickCurrentLayerKey);
     _toPickMarker = L.marker([lat0, lon0], { draggable: true }).addTo(_toPickMap);
     _toPickUpdateLabels(_toPickMarker.getLatLng());
+    _toPickRefreshElevation(lat0, lon0);
     _toPickMap.on("click", (e) => {
       _toPickMarker.setLatLng(e.latlng);
       _toPickUpdateLabels(e.latlng);
+      _toPickRefreshElevation(e.latlng.lat, e.latlng.lng);
     });
     _toPickMarker.on("drag", () => _toPickUpdateLabels(_toPickMarker.getLatLng()));
-    _toPickMarker.on("dragend", () => _toPickUpdateLabels(_toPickMarker.getLatLng()));
+    _toPickMarker.on("dragend", () => {
+      const ll = _toPickMarker.getLatLng();
+      _toPickUpdateLabels(ll);
+      _toPickRefreshElevation(ll.lat, ll.lng);
+    });
     document.querySelectorAll('input[name="toMapLayer"]').forEach(r => {
       r.addEventListener("change", () => { if (r.checked) _toPickSetLayer(r.value); });
     });
@@ -7152,6 +7207,7 @@ function openTakeoffMapPicker() {
     _toPickMap.setView([lat0, lon0], zoom0);
     if (_toPickMarker) _toPickMarker.setLatLng([lat0, lon0]);
     _toPickUpdateLabels({ lat: lat0, lng: lon0 });
+    _toPickRefreshElevation(lat0, lon0);
   }
   document.querySelectorAll('input[name="toMapLayer"]').forEach(r => {
     r.checked = (r.value === _toPickCurrentLayerKey);
@@ -7179,6 +7235,10 @@ document.getElementById("toMapPickerConfirm")?.addEventListener("click", () => {
   const lonEl = document.getElementById("toLon");
   if (latEl) latEl.value = ll.lat.toFixed(5);
   if (lonEl) lonEl.value = ll.lng.toFixed(5);
+  // v205: si tenemos elevacion calculada, la escribimos en el campo altitud
+  // (sobreescribiendo el valor anterior — el usuario eligio un punto nuevo).
+  const altEl = document.getElementById("toAlt");
+  if (altEl && _toPickLastAlt != null) altEl.value = String(_toPickLastAlt);
   try { _toClearStationRef?.(); } catch (_) {}
   try { _toLoadStationsForCoords?.(); } catch (_) {}
   closeTakeoffMapPicker();
@@ -7210,6 +7270,7 @@ async function _toPickRunGeocode() {
         _toPickMarker.setLatLng([lat, lon]);
         _toPickMap.setView([lat, lon], Math.max(_toPickMap.getZoom(), 14));
         _toPickUpdateLabels({ lat, lng: lon });
+        _toPickRefreshElevation(lat, lon);
       }
       // Sugerimos el nombre del despegue si aun esta vacio.
       const nameEl = document.getElementById("toName");
@@ -7224,6 +7285,19 @@ async function _toPickRunGeocode() {
 document.getElementById("toPickGeocodeBtn")?.addEventListener("click", _toPickRunGeocode);
 document.getElementById("toPickGeocodeInput")?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); _toPickRunGeocode(); }
+});
+
+// v205: boton "📏" en el campo Altitud — pide la elevacion a Open-Meteo para
+// las lat/lon actuales del formulario y la escribe en toAlt.
+document.getElementById("toAltFetchBtn")?.addEventListener("click", async () => {
+  const lat = parseFloat(document.getElementById("toLat")?.value);
+  const lon = parseFloat(document.getElementById("toLon")?.value);
+  const altEl = document.getElementById("toAlt");
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || !altEl) return;
+  const prev = altEl.value;
+  altEl.value = "…";
+  const m = await _toFetchElevation(lat, lon);
+  altEl.value = (m == null ? prev : String(m));
 });
 document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
   const msg = document.getElementById("toSubmitMsg");
