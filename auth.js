@@ -83,7 +83,13 @@ if (!isConfigured()) {
   }
 
   function openModal()  { $("authModal")?.removeAttribute("hidden"); }
-  function closeModal() { $("authModal")?.setAttribute("hidden", ""); $("authError").textContent = ""; }
+  function closeModal() {
+    $("authModal")?.setAttribute("hidden", "");
+    $("authError").textContent = "";
+    // v0.216: limpia el motivo contextual al cerrar para que no aparezca
+    // en aperturas posteriores no relacionadas.
+    const r = $("authReason"); if (r) { r.textContent = ""; r.hidden = true; }
+  }
   function setError(msg) { $("authError").textContent = msg || ""; }
   function showSection(name) {
     document.querySelectorAll(".auth-section").forEach(s => {

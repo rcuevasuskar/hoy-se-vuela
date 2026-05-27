@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.215";
+const APP_VERSION = "v0.216";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -295,6 +295,8 @@ const I18N = {
     "to.suggest_notfound": "No se ha encontrado el despegue de origen.",
     "to.suggestion_badge": "sugerencia",
     "act.orient_toggle": "Orientación en tiempo real (brújula del dispositivo)",
+    "act.orient_label": "Modo brújula",
+    "auth.reason_takeoff_actions": "Regístrate o haz login para poder añadir o sugerir cambios en despegues.",
     "fav.add": "Marcar como favorito",
     "fav.remove": "Quitar de favoritos",
     "fav.home_set": "Marcar como despegue habitual",
@@ -657,6 +659,8 @@ const I18N = {
     "to.suggest_notfound": "Origin takeoff not found.",
     "to.suggestion_badge": "suggestion",
     "act.orient_toggle": "Live orientation (device compass)",
+    "act.orient_label": "Compass mode",
+    "auth.reason_takeoff_actions": "Sign up or sign in to add takeoffs or suggest changes.",
     "fav.add": "Add to favorites",
     "fav.remove": "Remove from favorites",
     "fav.home_set": "Mark as default takeoff",
@@ -1003,6 +1007,8 @@ const I18N = {
     "to.suggest_notfound": "Ursprungs-Startplatz nicht gefunden.",
     "to.suggestion_badge": "Vorschlag",
     "act.orient_toggle": "Live-Ausrichtung (Gerätekompass)",
+    "act.orient_label": "Kompass-Modus",
+    "auth.reason_takeoff_actions": "Registriere dich oder melde dich an, um Startplätze hinzuzufügen oder Änderungen vorzuschlagen.",
     "fav.add": "Zu Favoriten hinzufügen",
     "fav.remove": "Aus Favoriten entfernen",
     "fav.home_set": "Als Stamm-Startplatz festlegen",
@@ -1345,6 +1351,8 @@ const I18N = {
     "to.suggest_notfound": "Déco d’origine introuvable.",
     "to.suggestion_badge": "suggestion",
     "act.orient_toggle": "Orientation en temps réel (boussole de l’appareil)",
+    "act.orient_label": "Mode boussole",
+    "auth.reason_takeoff_actions": "Inscris-toi ou connecte-toi pour ajouter ou suggérer des modifications de décollages.",
     "fav.add": "Ajouter aux favoris",
     "fav.remove": "Retirer des favoris",
     "fav.home_set": "Définir comme déco habituel",
@@ -1687,6 +1695,8 @@ const I18N = {
     "to.suggest_notfound": "Ez da jatorrizko irteguia aurkitu.",
     "to.suggestion_badge": "iradokizuna",
     "act.orient_toggle": "Norabidea denbora errealean (gailuaren iparrorratza)",
+    "act.orient_label": "Iparrorratz modua",
+    "auth.reason_takeoff_actions": "Eman izena edo hasi saioa aireratzeak gehitzeko edo aldaketak iradokitzeko.",
     "fav.add": "Gogokoetara gehitu",
     "fav.remove": "Gogokoetatik kendu",
     "fav.home_set": "Markatu ohiko irteguitzat",
@@ -1983,6 +1993,8 @@ const I18N = {
     "to.suggest_notfound": "No s'ha trobat l'enlairament d'origen.",
     "to.suggestion_badge": "suggeriment",
     "act.orient_toggle": "Orientació en temps real (brúixola del dispositiu)",
+    "act.orient_label": "Mode brúixola",
+    "auth.reason_takeoff_actions": "Registra't o inicia sessió per afegir enlairaments o suggerir canvis.",
     "fav.add": "Afegeix als preferits",
     "fav.remove": "Treu dels preferits",
     "fav.home_set": "Marca com a enlairament habitual",
@@ -5437,9 +5449,14 @@ document.getElementById("helpModal")?.addEventListener("click", (e) => {
 // despegue actual). Requiere usuario autenticado no anonimo.
 // v179: el boton vive ahora en la topbar (junto al input del buscador) con id
 // tsAddTakeoffBtn. Antes estaba dentro del menu de usuario como addTakeoffBtn.
+// v0.216: el boton ya no esta deshabilitado para invitados; si se pulsa sin
+// sesion abre el dialogo de login con un mensaje explicativo.
 document.getElementById("tsAddTakeoffBtn")?.addEventListener("click", () => {
   const u = window.PCAuth?.user;
-  if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
+  if (!u || u.isAnonymous) {
+    openAuthDialog(t("auth.reason_takeoff_actions") || "Regístrate o haz login para poder añadir o sugerir cambios en despegues.");
+    return;
+  }
   openTakeoffSubmit({});
 });
 
@@ -5840,6 +5857,24 @@ function renderTakeoffPanel() {
   renderForecastMiniCompass();
 }
 
+// v0.216: abre el dialogo de autenticacion reutilizando el handler del boton
+// de usuario de la topbar (#userBtn). Si se le pasa `reason`, lo muestra en
+// el modal (#authReason) como contexto para el usuario antes de loguearse.
+function openAuthDialog(reason) {
+  const r = document.getElementById("authReason");
+  if (r) {
+    if (reason) {
+      r.textContent = reason;
+      r.hidden = false;
+    } else {
+      r.textContent = "";
+      r.hidden = true;
+    }
+  }
+  const btn = document.getElementById("userBtn");
+  if (btn) btn.click();
+}
+
 function renderCurrentTakeoffActions() {
   const host = document.getElementById("tsCurrentActions");
   if (!host) return;
@@ -5873,8 +5908,7 @@ function renderCurrentTakeoffActions() {
     star.textContent = fav ? "★" : "☆";
     star.addEventListener("click", async () => {
       if (!isLogged) {
-        const btn = document.getElementById("userBtn");
-        if (btn) btn.click();
+        openAuthDialog(t("auth.reason_takeoff_actions") || "Regístrate o haz login para poder añadir o sugerir cambios en despegues.");
         return;
       }
       try {
@@ -5916,8 +5950,7 @@ function renderCurrentTakeoffActions() {
     bell.textContent = fav?.alertsEnabled ? "🔔" : "🔕";
     bell.addEventListener("click", async () => {
       if (!isLogged) {
-        const btn = document.getElementById("userBtn");
-        if (btn) btn.click();
+        openAuthDialog(t("auth.reason_takeoff_actions") || "Regístrate o haz login para poder añadir o sugerir cambios en despegues.");
         return;
       }
       try { await window.PCAuth.updateFavorite(fav.id, { alertsEnabled: !fav.alertsEnabled }); }
@@ -5939,9 +5972,7 @@ function renderCurrentTakeoffActions() {
     label: currentTakeoffOriginId ? t("to.suggest") : t("to.propose"),
     run: () => {
       if (!isLogged) {
-        // Abrir el dialogo de login reutilizando el handler de #userBtn.
-        const btn = document.getElementById("userBtn");
-        if (btn) btn.click();
+        openAuthDialog(t("auth.reason_takeoff_actions") || "Regístrate o haz login para poder añadir o sugerir cambios en despegues.");
         return;
       }
       if (currentTakeoffOriginId) {
@@ -6021,6 +6052,7 @@ function renderCurrentTakeoffActions() {
       <span class="ts-compass-ico" aria-hidden="true">🧭</span>
       <input type="checkbox" id="tsCompassToggle" ${orientationEnabled ? "checked" : ""} />
       <span class="ts-switch" aria-hidden="true"></span>
+      <span class="ts-compass-label">${escapeHtml(t("act.orient_label") || "Modo brújula")}</span>
     `;
     inlineHost.appendChild(compassLabel);
     const compassInput = compassLabel.querySelector("#tsCompassToggle");
@@ -6963,16 +6995,15 @@ window.addEventListener("pcuserchange", (e) => {
   if (adminReviewBtn) adminReviewBtn.hidden = !isAdmin;
   const fbConsoleBtn = document.getElementById("firebaseConsoleBtn");
   if (fbConsoleBtn) fbConsoleBtn.hidden = !isAdmin;
-  // v147: "Anadir despegue" se muestra siempre, pero queda deshabilitado para
-  // usuarios anonimos o sin sesion. El click handler tambien lo bloquea por
-  // si acaso. v0.186: tooltip explicativo.
+  // v147: "Anadir despegue" se muestra siempre. v0.216: ya no se deshabilita
+  // para invitados; el handler abre el dialogo de login si no hay sesion.
   const addTakeoffBtn = document.getElementById("tsAddTakeoffBtn");
   if (addTakeoffBtn) {
     addTakeoffBtn.hidden = false;
+    addTakeoffBtn.disabled = false;
     const guest = !user || user.isAnonymous;
-    addTakeoffBtn.disabled = guest;
     addTakeoffBtn.title = guest
-      ? (t("to.guest_add_tip") || "Regístrate para poder añadir y sugerir cambios en despegues")
+      ? (t("auth.reason_takeoff_actions") || "Regístrate o haz login para poder añadir o sugerir cambios en despegues.")
       : t("menu.add_takeoff_tip");
   }
   updateAdminPendingBadge();

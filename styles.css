@@ -178,6 +178,17 @@ header.topbar .ts-current {
   box-shadow: 0 12px 40px rgba(0,0,0,0.5);
 }
 .auth-dialog h2 { margin: 0 0 14px; font-size: 1.2rem; }
+/* v0.216: motivo contextual sobre por que se ha abierto el modal. */
+.auth-reason {
+  margin: 0 0 14px;
+  padding: 8px 10px;
+  background: rgba(127,127,127,0.10);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
 .auth-close {
   position: absolute; top: 8px; right: 10px;
   background: transparent; border: 0; color: var(--muted);
@@ -2652,6 +2663,13 @@ section.card.collapsed > h2 { margin-bottom: 0; }
 .ts-actions-inline .ts-compass-toggle .ts-compass-ico {
   font-size: 0.95rem;
   margin-right: 2px;
+}
+/* v0.216: etiqueta de texto "Modo brujula" junto al icono del toggle. */
+.ts-actions-inline .ts-compass-toggle .ts-compass-label {
+  font-size: 0.78rem;
+  color: var(--text);
+  margin-left: 4px;
+  white-space: nowrap;
 }
 
 /* === v0.192: boton de accion uniforme (Sugerir, Sondeo, Windy, etc.) === */

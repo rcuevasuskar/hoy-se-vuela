@@ -373,6 +373,10 @@
       <button id="authClose" class="auth-close" title="Cerrar">✕</button>
       <h2 id="authTitle" data-i18n="auth.title">Cuenta</h2>
 
+      <!-- v0.216: motivo contextual mostrado al abrir el modal desde un boton
+           que requiere sesion (anadir/sugerir despegue, favoritos, alertas). -->
+      <p id="authReason" class="auth-reason" hidden></p>
+
       <div class="auth-tabs">
         <button data-auth-tab="login" data-i18n="auth.tab_login">Entrar</button>
         <button data-auth-tab="register" data-i18n="auth.tab_register">Registrarse</button>
