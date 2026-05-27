@@ -457,6 +457,19 @@ header.topbar .ts-current {
 .to-alt-row { display: flex; gap: 6px; align-items: stretch; }
 .to-alt-row > input { flex: 1; min-width: 0; }
 .to-alt-row > button { flex: 0 0 auto; }
+/* v206: aviso amarillo cuando se mueve la posicion con estacion seleccionada */
+.to-warn {
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  font-size: .75rem;
+  color: #8a6d00;
+  background: #fff3bf;
+  border: 1px solid #f1c40f;
+  border-radius: 6px;
+}
+:root[data-theme="dark"] .to-warn {
+  color: #ffe27a; background: #3a2f00; border-color: #8a6d00;
+}
 /* v180: select nativo para la estacion de referencia. */
 .to-field-block > select.to-station-select {
   width: 100%; box-sizing: border-box;

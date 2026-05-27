@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.205";
+const APP_VERSION = "v0.206";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -218,6 +218,7 @@ const I18N = {
     "to.geocode_empty": "Sin resultados",
     "to.ref_station_label": "Estación integrada cercana",
     "to.ref_hint": "Estaciones integradas (Pioupiou, Holfuy, AEMET) a menos de 30 km del punto elegido.",
+    "to.ref_moved_warn": "Has movido la ubicación del despegue. Revisa si la estación de referencia sigue siendo adecuada.",
     "to.ref_none": "— Ninguna —",
     "to.ref_legend": "Estación de referencia (opcional)",
     "to.ref_block_hint": "Elige una opción o déjalas todas en blanco para usar la previsión de Windy del punto del mapa.",
@@ -579,6 +580,7 @@ const I18N = {
     "to.geocode_empty": "No results",
     "to.ref_station_label": "Nearby integrated station",
     "to.ref_hint": "Integrated stations (Pioupiou, Holfuy, AEMET) within 30 km of the chosen point.",
+    "to.ref_moved_warn": "You have moved the takeoff location. Check whether the reference station is still appropriate.",
     "to.ref_none": "— None —",
     "to.ref_legend": "Reference station (optional)",
     "to.ref_block_hint": "Pick one option or leave all blank to use the Windy forecast for the chosen point.",
@@ -924,6 +926,7 @@ const I18N = {
     "to.geocode_empty": "Keine Ergebnisse",
     "to.ref_station_label": "Integrierte Station in der Nähe",
     "to.ref_hint": "Integrierte Stationen (Pioupiou, Holfuy, AEMET) im Umkreis von 30 km um den gewählten Punkt.",
+    "to.ref_moved_warn": "Du hast den Startplatz verschoben. Prüfe, ob die Referenzstation noch passend ist.",
     "to.ref_none": "— Keine —",
     "to.ref_legend": "Referenzstation (optional)",
     "to.ref_block_hint": "Wähle eine Option oder lass alle leer, um die Windy-Vorhersage für den Punkt zu nutzen.",
@@ -1265,6 +1268,7 @@ const I18N = {
     "to.geocode_empty": "Aucun résultat",
     "to.ref_station_label": "Station intégrée à proximité",
     "to.ref_hint": "Stations intégrées (Pioupiou, Holfuy, AEMET) à moins de 30 km du point choisi.",
+    "to.ref_moved_warn": "Tu as déplacé l'emplacement du déco. Vérifie si la station de référence est toujours appropriée.",
     "to.ref_none": "— Aucune —",
     "to.ref_legend": "Station de référence (optionnelle)",
     "to.ref_block_hint": "Choisis une option ou laisse tout vide pour utiliser la prévision Windy du point.",
@@ -1606,6 +1610,7 @@ const I18N = {
     "to.geocode_empty": "Emaitzarik ez",
     "to.ref_station_label": "Inguruko estazio integratua",
     "to.ref_hint": "Estazio integratuak (Pioupiou, Holfuy, AEMET) aukeratutako puntutik 30 km-ra.",
+    "to.ref_moved_warn": "Irteguiaren kokapena aldatu duzu. Egiaztatu erreferentziazko estazioa egokia ote den oraindik.",
     "to.ref_none": "— Bat ere ez —",
     "to.ref_legend": "Erreferentziazko estazioa (aukerakoa)",
     "to.ref_block_hint": "Aukeratu aukera bat edo utzi denak hutsik, mapako puntuaren Windy iragarpena erabiltzeko.",
@@ -1901,6 +1906,7 @@ const I18N = {
     "to.geocode_empty": "Sense resultats",
     "to.ref_station_label": "Estació integrada propera",
     "to.ref_hint": "Estacions integrades (Pioupiou, Holfuy, AEMET) a menys de 30 km del punt escollit.",
+    "to.ref_moved_warn": "Has mogut la ubicació de l'enlairament. Revisa si l'estació de referència continua sent adequada.",
     "to.ref_none": "— Cap —",
     "to.ref_legend": "Estació de referència (opcional)",
     "to.ref_block_hint": "Tria una opció o deixa-les totes en blanc per usar la previsió de Windy del punt del mapa.",
@@ -7004,6 +7010,10 @@ function openTakeoffSubmit(prefill) {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   _toClearStationRef?.();
+  // v206: oculta el aviso "revisa la estacion" al abrir un dialogo nuevo.
+  const __warn = document.getElementById("toStationMoveWarn");
+  if (__warn) __warn.hidden = true;
+  _toManualLatPrev = null; _toManualLonPrev = null;
   // Restaura título y botón por si veníamos de modo sugerencia (será sobreescrito por openTakeoffSuggest si aplica)
   if (!prefill || !prefill._suggesting) {
     _suggestTargetId = null;
@@ -7233,14 +7243,22 @@ document.getElementById("toMapPickerConfirm")?.addEventListener("click", () => {
   const ll = _toPickMarker.getLatLng();
   const latEl = document.getElementById("toLat");
   const lonEl = document.getElementById("toLon");
+  // v206: capturamos las coords previas para detectar si el usuario ha
+  // movido la posicion del despegue de forma significativa. Si la habia una
+  // estacion seleccionada, la mantenemos pero avisamos para que la revise.
+  const prevLat = parseFloat(latEl?.value);
+  const prevLon = parseFloat(lonEl?.value);
   if (latEl) latEl.value = ll.lat.toFixed(5);
   if (lonEl) lonEl.value = ll.lng.toFixed(5);
   // v205: si tenemos elevacion calculada, la escribimos en el campo altitud
   // (sobreescribiendo el valor anterior — el usuario eligio un punto nuevo).
   const altEl = document.getElementById("toAlt");
   if (altEl && _toPickLastAlt != null) altEl.value = String(_toPickLastAlt);
-  try { _toClearStationRef?.(); } catch (_) {}
-  try { _toLoadStationsForCoords?.(); } catch (_) {}
+  // v206: ya NO limpiamos la estacion; la mantenemos y recargamos el
+  // desplegable conservando la seleccion (si sigue en rango, se mantiene; si
+  // queda fuera, _toLoadStationsForCoords la anade como "fuera de 30 km").
+  try { _toLoadStationsForCoords?.({ keepValue: true }); } catch (_) {}
+  _toMaybeWarnStationMove(prevLat, prevLon, ll.lat, ll.lng);
   closeTakeoffMapPicker();
 });
 
@@ -7299,6 +7317,50 @@ document.getElementById("toAltFetchBtn")?.addEventListener("click", async () => 
   const m = await _toFetchElevation(lat, lon);
   altEl.value = (m == null ? prev : String(m));
 });
+
+// v206: aviso "revisa la estacion" cuando el usuario mueve las coordenadas
+// del despegue (en el mapa o a mano) y habia una estacion seleccionada. Se
+// considera "movimiento significativo" cualquier cambio > 50 m. Se oculta
+// automaticamente cuando el usuario toca el desplegable de estacion.
+function _toMaybeWarnStationMove(prevLat, prevLon, newLat, newLon) {
+  const warn = document.getElementById("toStationMoveWarn");
+  const sel = document.getElementById("toStationId");
+  if (!warn || !sel) return;
+  if (!sel.value) { warn.hidden = true; return; }
+  if (!Number.isFinite(prevLat) || !Number.isFinite(prevLon)
+      || !Number.isFinite(newLat) || !Number.isFinite(newLon)) {
+    warn.hidden = true; return;
+  }
+  const movedKm = haversineKm(prevLat, prevLon, newLat, newLon);
+  warn.hidden = !(movedKm > 0.05);
+}
+document.getElementById("toStationId")?.addEventListener("change", () => {
+  const warn = document.getElementById("toStationMoveWarn");
+  if (warn) warn.hidden = true;
+});
+// Cuando el usuario edita lat/lon a mano, tambien recargamos el desplegable
+// (manteniendo la seleccion) y disparamos el aviso si toca.
+let _toManualLatPrev = null, _toManualLonPrev = null;
+function _toBindManualCoordChange(id, isLat) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener("focus", () => {
+    const v = parseFloat(el.value);
+    if (isLat) _toManualLatPrev = v; else _toManualLonPrev = v;
+  });
+  el.addEventListener("change", () => {
+    const lat = parseFloat(document.getElementById("toLat")?.value);
+    const lon = parseFloat(document.getElementById("toLon")?.value);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const prevLat = Number.isFinite(_toManualLatPrev) ? _toManualLatPrev : lat;
+    const prevLon = Number.isFinite(_toManualLonPrev) ? _toManualLonPrev : lon;
+    try { _toLoadStationsForCoords?.({ keepValue: true }); } catch (_) {}
+    _toMaybeWarnStationMove(prevLat, prevLon, lat, lon);
+    if (isLat) _toManualLatPrev = lat; else _toManualLonPrev = lon;
+  });
+}
+_toBindManualCoordChange("toLat", true);
+_toBindManualCoordChange("toLon", false);
 document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
   const msg = document.getElementById("toSubmitMsg");
   msg.style.color = "";
