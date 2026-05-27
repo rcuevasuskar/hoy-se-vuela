@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.206";
+const APP_VERSION = "v0.207";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -7248,6 +7248,9 @@ document.getElementById("toMapPickerConfirm")?.addEventListener("click", () => {
   // estacion seleccionada, la mantenemos pero avisamos para que la revise.
   const prevLat = parseFloat(latEl?.value);
   const prevLon = parseFloat(lonEl?.value);
+  // v206.1: capturar el id de la estacion ANTES de recargar (la recarga
+  // limpia el <select> sincronamente y solo lo repuebla tras un fetch async).
+  const prevStationId = document.getElementById("toStationId")?.value || "";
   if (latEl) latEl.value = ll.lat.toFixed(5);
   if (lonEl) lonEl.value = ll.lng.toFixed(5);
   // v205: si tenemos elevacion calculada, la escribimos en el campo altitud
@@ -7258,7 +7261,7 @@ document.getElementById("toMapPickerConfirm")?.addEventListener("click", () => {
   // desplegable conservando la seleccion (si sigue en rango, se mantiene; si
   // queda fuera, _toLoadStationsForCoords la anade como "fuera de 30 km").
   try { _toLoadStationsForCoords?.({ keepValue: true }); } catch (_) {}
-  _toMaybeWarnStationMove(prevLat, prevLon, ll.lat, ll.lng);
+  _toMaybeWarnStationMove(prevLat, prevLon, ll.lat, ll.lng, prevStationId);
   closeTakeoffMapPicker();
 });
 
@@ -7322,11 +7325,13 @@ document.getElementById("toAltFetchBtn")?.addEventListener("click", async () => 
 // del despegue (en el mapa o a mano) y habia una estacion seleccionada. Se
 // considera "movimiento significativo" cualquier cambio > 50 m. Se oculta
 // automaticamente cuando el usuario toca el desplegable de estacion.
-function _toMaybeWarnStationMove(prevLat, prevLon, newLat, newLon) {
+// v206.1: el id de estacion se pasa como parametro porque
+// _toLoadStationsForCoords vacia el <select> sincronamente y, si leemos
+// sel.value despues, ya esta vacio. Hay que capturarlo ANTES.
+function _toMaybeWarnStationMove(prevLat, prevLon, newLat, newLon, prevStationId) {
   const warn = document.getElementById("toStationMoveWarn");
-  const sel = document.getElementById("toStationId");
-  if (!warn || !sel) return;
-  if (!sel.value) { warn.hidden = true; return; }
+  if (!warn) return;
+  if (!prevStationId) { warn.hidden = true; return; }
   if (!Number.isFinite(prevLat) || !Number.isFinite(prevLon)
       || !Number.isFinite(newLat) || !Number.isFinite(newLon)) {
     warn.hidden = true; return;
@@ -7354,8 +7359,9 @@ function _toBindManualCoordChange(id, isLat) {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     const prevLat = Number.isFinite(_toManualLatPrev) ? _toManualLatPrev : lat;
     const prevLon = Number.isFinite(_toManualLonPrev) ? _toManualLonPrev : lon;
+    const prevStationId = document.getElementById("toStationId")?.value || "";
     try { _toLoadStationsForCoords?.({ keepValue: true }); } catch (_) {}
-    _toMaybeWarnStationMove(prevLat, prevLon, lat, lon);
+    _toMaybeWarnStationMove(prevLat, prevLon, lat, lon, prevStationId);
     if (isLat) _toManualLatPrev = lat; else _toManualLonPrev = lon;
   });
 }
