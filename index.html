@@ -448,7 +448,7 @@
         <div class="to-geocode-row">
           <input id="toGeocodeInput" type="text" placeholder="Ej: Pegalajar, Jaén" data-i18n-placeholder="to.geocode_ph" />
           <button id="toGeocodeBtn" class="auth-secondary" type="button" data-i18n="to.geocode_search">🔎 Buscar</button>
-          <button id="toPickOnMapBtn" class="auth-secondary" type="button" title="Usar coordenadas actuales del mapa" data-i18n-title="to.pick_map" aria-label="Usar coordenadas actuales del mapa">📍</button>
+          <button id="toPickOnMapBtn" class="auth-secondary" type="button" title="Elegir en el mapa" data-i18n-title="to.pick_map" aria-label="Elegir en el mapa">🗺️</button>
         </div>
         <div id="toGeocodeResults" class="to-geocode-results" hidden></div>
       </label>
@@ -495,7 +495,29 @@
     </div>
   </div>
 
-  <!-- Modal: criterios personales (v104) -->
+  <!-- Modal: elegir coordenadas en un mapa (v203) -->
+  <div id="toMapPickerModal" class="auth-modal" hidden>
+    <div class="auth-dialog auth-dialog-wide" role="dialog" aria-modal="true" aria-labelledby="toMapPickerTitle">
+      <button id="toMapPickerClose" class="auth-close" title="Cerrar">✕</button>
+      <h2 id="toMapPickerTitle" data-i18n="to.pick_map_title">Elige las coordenadas en el mapa</h2>
+      <p class="to-hint" data-i18n="to.pick_map_hint">Toca el mapa para situar el despegue, o arrastra el marcador. Usa la capa Satélite o Topo para identificar mejor la ladera.</p>
+      <div class="to-map-layer-row">
+        <label><input type="radio" name="toMapLayer" value="sat" checked /> <span data-i18n="to.pick_map_layer_sat">Satélite</span></label>
+        <label><input type="radio" name="toMapLayer" value="topo" /> <span data-i18n="to.pick_map_layer_topo">Topo</span></label>
+        <label><input type="radio" name="toMapLayer" value="street" /> <span data-i18n="to.pick_map_layer_street">Calles</span></label>
+      </div>
+      <div id="toPickMap" class="to-pick-map"></div>
+      <p class="to-hint to-pick-map-coords">
+        <span data-i18n="to.lat_label">Latitud</span>: <strong id="toPickLatLbl">—</strong>
+        &nbsp;·&nbsp;
+        <span data-i18n="to.lon_label">Longitud</span>: <strong id="toPickLonLbl">—</strong>
+      </p>
+      <div class="to-actions">
+        <button id="toMapPickerCancel" class="auth-secondary" type="button" data-i18n="to.cancel">Cancelar</button>
+        <button id="toMapPickerConfirm" class="auth-primary" type="button" data-i18n="to.pick_map_confirm">Usar estas coordenadas</button>
+      </div>
+    </div>
+  </div>
   <div id="criteriaOverrideModal" class="auth-modal" hidden>
     <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="coTitle">
       <button id="coClose" class="auth-close" title="Cerrar">✕</button>

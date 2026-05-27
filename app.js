@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.202";
+const APP_VERSION = "v0.203";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -218,7 +218,13 @@ const I18N = {
     "to.find_stations": "📡 Buscar",
     "to.ref_need_coords": "Primero rellena la latitud y la longitud.",
     "to.ref_empty": "No hay estaciones integradas a menos de 30 km.",
-    "to.pick_map": "📍 Usar coordenadas actuales del mapa",
+    "to.pick_map": "�️ Elegir en el mapa",
+    "to.pick_map_title": "Elige las coordenadas en el mapa",
+    "to.pick_map_hint": "Toca el mapa para situar el despegue, o arrastra el marcador. Usa la capa Satélite o Topo para identificar mejor la ladera.",
+    "to.pick_map_confirm": "Usar estas coordenadas",
+    "to.pick_map_layer_sat": "Satélite",
+    "to.pick_map_layer_topo": "Topo",
+    "to.pick_map_layer_street": "Calles",
     "to.submit": "Enviar para revisión",
     "to.cancel": "Cancelar",
     "to.submit_ok": "¡Enviado! Recibirás una respuesta tras la revisión.",
@@ -564,7 +570,13 @@ const I18N = {
     "to.find_stations": "📡 Find",
     "to.ref_need_coords": "Fill latitude and longitude first.",
     "to.ref_empty": "No integrated stations within 30 km.",
-    "to.pick_map": "📍 Use current map coordinates",
+    "to.pick_map": "�️ Pick on the map",
+    "to.pick_map_title": "Pick the coordinates on the map",
+    "to.pick_map_hint": "Tap the map to place the takeoff, or drag the marker. Use the Satellite or Topo layer to identify the slope more easily.",
+    "to.pick_map_confirm": "Use these coordinates",
+    "to.pick_map_layer_sat": "Satellite",
+    "to.pick_map_layer_topo": "Topo",
+    "to.pick_map_layer_street": "Streets",
     "to.submit": "Submit for review",
     "to.cancel": "Cancel",
     "to.submit_ok": "Sent! You'll get a reply after review.",
@@ -894,7 +906,13 @@ const I18N = {
     "to.find_stations": "📡 Suchen",
     "to.ref_need_coords": "Bitte zuerst Breiten- und Längengrad ausfüllen.",
     "to.ref_empty": "Keine integrierten Stationen innerhalb von 30 km.",
-    "to.pick_map": "📍 Aktuelle Kartenkoordinaten verwenden",
+    "to.pick_map": "�️ Auf der Karte auswählen",
+    "to.pick_map_title": "Wähle die Koordinaten auf der Karte",
+    "to.pick_map_hint": "Tippe auf die Karte, um den Startplatz zu platzieren, oder ziehe den Marker. Nutze Satellit oder Topo, um den Hang besser zu erkennen.",
+    "to.pick_map_confirm": "Diese Koordinaten verwenden",
+    "to.pick_map_layer_sat": "Satellit",
+    "to.pick_map_layer_topo": "Topo",
+    "to.pick_map_layer_street": "Straßen",
     "to.submit": "Zur Prüfung senden",
     "to.cancel": "Abbrechen",
     "to.submit_ok": "Gesendet! Antwort nach Prüfung.",
@@ -1220,7 +1238,13 @@ const I18N = {
     "to.find_stations": "📡 Rechercher",
     "to.ref_need_coords": "Remplis d'abord la latitude et la longitude.",
     "to.ref_empty": "Aucune station intégrée à moins de 30 km.",
-    "to.pick_map": "📍 Utiliser les coordonnées de la carte",
+    "to.pick_map": "�️ Choisir sur la carte",
+    "to.pick_map_title": "Choisis les coordonnées sur la carte",
+    "to.pick_map_hint": "Touche la carte pour placer le déco, ou déplace le marqueur. Utilise la couche Satellite ou Topo pour mieux repérer le versant.",
+    "to.pick_map_confirm": "Utiliser ces coordonnées",
+    "to.pick_map_layer_sat": "Satellite",
+    "to.pick_map_layer_topo": "Topo",
+    "to.pick_map_layer_street": "Rues",
     "to.submit": "Envoyer pour validation",
     "to.cancel": "Annuler",
     "to.submit_ok": "Envoyé ! Tu auras une réponse après validation.",
@@ -1546,7 +1570,13 @@ const I18N = {
     "to.find_stations": "📡 Bilatu",
     "to.ref_need_coords": "Lehenik latitudea eta longitudea bete.",
     "to.ref_empty": "Ez dago estazio integraturik 30 km-ra.",
-    "to.pick_map": "📍 Erabili maparen koordenatuak",
+    "to.pick_map": "�️ Aukeratu mapan",
+    "to.pick_map_title": "Aukeratu koordenatuak mapan",
+    "to.pick_map_hint": "Sakatu mapan irteguia kokatzeko edo arrastatu markatzailea. Erabili Satelite edo Topo geruza malda hobeto identifikatzeko.",
+    "to.pick_map_confirm": "Erabili koordenatu hauek",
+    "to.pick_map_layer_sat": "Satelite",
+    "to.pick_map_layer_topo": "Topo",
+    "to.pick_map_layer_street": "Kaleak",
     "to.submit": "Bidali berrikusteko",
     "to.cancel": "Utzi",
     "to.submit_ok": "Bidalita! Berrikusi ondoren erantzungo dizugu.",
@@ -1826,7 +1856,13 @@ const I18N = {
     "to.find_stations": "📡 Cercar",
     "to.ref_need_coords": "Omple primer la latitud i la longitud.",
     "to.ref_empty": "No hi ha estacions integrades a menys de 30 km.",
-    "to.pick_map": "📍 Utilitza les coordenades del mapa",
+    "to.pick_map": "�️ Tria al mapa",
+    "to.pick_map_title": "Tria les coordenades al mapa",
+    "to.pick_map_hint": "Toca el mapa per situar l'enlairament, o arrossega el marcador. Fes servir la capa Satèl·lit o Topo per identificar millor el vessant.",
+    "to.pick_map_confirm": "Usa aquestes coordenades",
+    "to.pick_map_layer_sat": "Satèl·lit",
+    "to.pick_map_layer_topo": "Topo",
+    "to.pick_map_layer_street": "Carrers",
     "to.submit": "Envia per revisar",
     "to.cancel": "Cancel·la",
     "to.submit_ok": "Enviat! Rebràs resposta després de la revisió.",
@@ -6986,16 +7022,115 @@ function closeTakeoffSubmit() {
 
 document.getElementById("toSubmitClose")?.addEventListener("click", closeTakeoffSubmit);
 document.getElementById("toCancelBtn")?.addEventListener("click", closeTakeoffSubmit);
-// El modal de alta/edición de despegue solo se cierra mediante el botón ✕ o
-// el botón Cancelar. No se cierra al hacer click fuera, ni con Escape, ni
-// con el botón atrás del móvil, para evitar perder cambios accidentalmente.
+// v203: el boton 🗺️ abre un sub-modal con un mapa Leaflet donde el usuario
+// puede tocar/arrastrar para situar el despegue (mejor que escribir lat/lon
+// a mano para sitios en ladera o montana).
 document.getElementById("toPickOnMapBtn")?.addEventListener("click", () => {
-  const c = userLocation || { lat: currentTakeoff.lat, lon: currentTakeoff.lon };
-  document.getElementById("toLat").value = c.lat.toFixed(5);
-  document.getElementById("toLon").value = c.lon.toFixed(5);
-  // v180: recarga el desplegable de estaciones para las nuevas coords.
-  _toClearStationRef();
-  _toLoadStationsForCoords();
+  openTakeoffMapPicker();
+});
+
+// ---------------------------------------------------------------------------
+// v203: selector de coordenadas en mapa (sub-modal del dialogo de despegue)
+// ---------------------------------------------------------------------------
+let _toPickMap = null;
+let _toPickMarker = null;
+let _toPickLayers = null; // { sat, topo, street }
+let _toPickCurrentLayerKey = "sat";
+
+function _toPickBuildLayers() {
+  // Capa satelite: Esri World Imagery (sin token, uso permitido con atribucion).
+  // Capa topo: OpenTopoMap. Capa calles: OSM.
+  const sat = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom: 19, attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics" }
+  );
+  const topo = L.tileLayer(
+    "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    { maxZoom: 17, attribution: "© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)" }
+  );
+  const street = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    { maxZoom: 19, attribution: "© OpenStreetMap" }
+  );
+  return { sat, topo, street };
+}
+
+function _toPickSetLayer(key) {
+  if (!_toPickMap || !_toPickLayers) return;
+  const next = _toPickLayers[key];
+  if (!next) return;
+  Object.keys(_toPickLayers).forEach(k => {
+    if (k !== key && _toPickMap.hasLayer(_toPickLayers[k])) _toPickMap.removeLayer(_toPickLayers[k]);
+  });
+  if (!_toPickMap.hasLayer(next)) next.addTo(_toPickMap);
+  _toPickCurrentLayerKey = key;
+}
+
+function _toPickUpdateLabels(latlng) {
+  const lat = document.getElementById("toPickLatLbl");
+  const lon = document.getElementById("toPickLonLbl");
+  if (lat) lat.textContent = latlng.lat.toFixed(5);
+  if (lon) lon.textContent = latlng.lng.toFixed(5);
+}
+
+function openTakeoffMapPicker() {
+  const modal = document.getElementById("toMapPickerModal");
+  if (!modal) return;
+  const lat0p = parseFloat(document.getElementById("toLat")?.value);
+  const lon0p = parseFloat(document.getElementById("toLon")?.value);
+  let lat0, lon0, zoom0;
+  if (Number.isFinite(lat0p) && Number.isFinite(lon0p)) {
+    lat0 = lat0p; lon0 = lon0p; zoom0 = 14;
+  } else if (userLocation && Number.isFinite(userLocation.lat) && Number.isFinite(userLocation.lon)) {
+    lat0 = userLocation.lat; lon0 = userLocation.lon; zoom0 = 13;
+  } else {
+    lat0 = currentTakeoff.lat; lon0 = currentTakeoff.lon; zoom0 = 12;
+  }
+  modal.hidden = false;
+  if (!_toPickMap) {
+    _toPickLayers = _toPickBuildLayers();
+    _toPickMap = L.map("toPickMap", { zoomControl: true }).setView([lat0, lon0], zoom0);
+    _toPickSetLayer(_toPickCurrentLayerKey);
+    _toPickMarker = L.marker([lat0, lon0], { draggable: true }).addTo(_toPickMap);
+    _toPickUpdateLabels(_toPickMarker.getLatLng());
+    _toPickMap.on("click", (e) => {
+      _toPickMarker.setLatLng(e.latlng);
+      _toPickUpdateLabels(e.latlng);
+    });
+    _toPickMarker.on("drag", () => _toPickUpdateLabels(_toPickMarker.getLatLng()));
+    _toPickMarker.on("dragend", () => _toPickUpdateLabels(_toPickMarker.getLatLng()));
+    document.querySelectorAll('input[name="toMapLayer"]').forEach(r => {
+      r.addEventListener("change", () => { if (r.checked) _toPickSetLayer(r.value); });
+    });
+  } else {
+    _toPickMap.setView([lat0, lon0], zoom0);
+    if (_toPickMarker) _toPickMarker.setLatLng([lat0, lon0]);
+    _toPickUpdateLabels({ lat: lat0, lng: lon0 });
+  }
+  document.querySelectorAll('input[name="toMapLayer"]').forEach(r => {
+    r.checked = (r.value === _toPickCurrentLayerKey);
+  });
+  // Leaflet necesita recalcular tamano al pasar el contenedor de hidden a visible.
+  setTimeout(() => { try { _toPickMap.invalidateSize(); } catch (_) {} }, 60);
+}
+
+function closeTakeoffMapPicker() {
+  const modal = document.getElementById("toMapPickerModal");
+  if (modal) modal.hidden = true;
+}
+
+document.getElementById("toMapPickerClose")?.addEventListener("click", closeTakeoffMapPicker);
+document.getElementById("toMapPickerCancel")?.addEventListener("click", closeTakeoffMapPicker);
+document.getElementById("toMapPickerConfirm")?.addEventListener("click", () => {
+  if (!_toPickMarker) { closeTakeoffMapPicker(); return; }
+  const ll = _toPickMarker.getLatLng();
+  const latEl = document.getElementById("toLat");
+  const lonEl = document.getElementById("toLon");
+  if (latEl) latEl.value = ll.lat.toFixed(5);
+  if (lonEl) lonEl.value = ll.lng.toFixed(5);
+  try { _toClearStationRef?.(); } catch (_) {}
+  try { _toLoadStationsForCoords?.(); } catch (_) {}
+  closeTakeoffMapPicker();
 });
 document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
   const msg = document.getElementById("toSubmitMsg");

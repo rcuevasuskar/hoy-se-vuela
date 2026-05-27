@@ -61,6 +61,7 @@ La app es **colaborativa**: cualquier usuario registrado puede aportar y mejorar
 - **Proponer un despegue nuevo** con el botón **+** del buscador (útil cuando una estación aún no está registrada en la comunidad).
 - **Sugerir cambios** sobre un despegue ya existente con el botón **✎** junto al título del despegue actual.
 - Información editable: **nombre, coordenadas, altitud, estación enlazada (Pioupiou/Holfuy/AEMET), orientaciones aptas, rangos de viento (mín., máx. y rachas), club, web y notas libres** del despegue.
+- Para situar las **coordenadas** dispones de tres opciones: escribir lat/lon a mano, **buscar un lugar** por nombre (🔎) o **elegir el punto en un mapa** (🗺️). El selector en mapa abre un sub‑diálogo con capas **Satélite**, **Topo** y **Calles** — muy útil para identificar la ladera o cresta exacta del despegue. Toca el mapa o arrastra el marcador y pulsa *Usar estas coordenadas* para confirmar.
 - Definir **criterios direccionales** marcando cada una de las 16 direcciones como *ideal / volable / mala* sobre una rosa de los vientos. Estos criterios son los que pintan los sectores de la brújula principal, del mini‑mapa del gráfico y de las tarjetas de estaciones cercanas.
 - Un administrador revisa y aprueba/rechaza la propuesta.
 - Una vez aprobado, todos los usuarios lo verán en el buscador (con el badge de Comunidad) y podrán usarlo como despegue actual con sus propios criterios.

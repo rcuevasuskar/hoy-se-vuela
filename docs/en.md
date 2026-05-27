@@ -61,6 +61,7 @@ The app is **collaborative**: any signed-in user can contribute and improve the 
 - **Propose a new takeoff** with the **+** button in the search box (useful when a station isn't yet registered in the community).
 - **Suggest changes** for an existing takeoff with the **✎** button next to the current takeoff title.
 - Editable fields: **name, coordinates, altitude, linked station (Pioupiou/Holfuy/AEMET), flyable orientations, wind ranges (min, max, gusts), club, web and free-form notes**.
+- To set the **coordinates** you have three options: type lat/lon manually, **search a place** by name (🔎) or **pick the point on a map** (🗺️). The map picker opens a sub‑dialog with **Satellite**, **Topo** and **Streets** layers — very useful to identify the exact slope or ridge of the takeoff. Tap the map or drag the marker and press *Use these coordinates* to confirm.
 - Define **directional criteria** by tagging each of the 16 directions as *ideal / flyable / bad* on a wind rose. These criteria drive the colored sectors of the main compass, the mini wind-rose on the forecast chart and the nearby-station cards.
 - An admin reviews and approves/rejects.
 - Once approved everyone sees it in the search list (with the Community badge) and can use it as the active takeoff with its own criteria.

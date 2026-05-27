@@ -428,6 +428,19 @@ header.topbar .ts-current {
 .to-geocode-row { display: flex; gap: 6px; align-items: stretch; }
 .to-geocode-row input { flex: 1; min-width: 0; }
 .to-geocode-row > button { flex: 0 0 auto; }
+/* v203: selector de coordenadas en mapa */
+#toMapPickerModal .auth-dialog { display: flex; flex-direction: column; gap: 8px; }
+.to-map-layer-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: .8rem; color: var(--text); }
+.to-map-layer-row label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.to-pick-map {
+  width: 100%;
+  height: clamp(260px, 55vh, 460px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+.to-pick-map-coords { margin: 2px 0 0; text-align: center; }
 /* v180: select nativo para la estacion de referencia. */
 .to-field-block > select.to-station-select {
   width: 100%; box-sizing: border-box;
