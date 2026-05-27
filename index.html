@@ -179,6 +179,17 @@
         <div class="ts-actions-inline" id="tsActionsInline" hidden></div>
       </div>
 
+      <!-- v0.211: panel desplegable con el mapa en vivo de XContest. -->
+      <section class="live-xc-panel" id="liveXcPanel" hidden>
+        <div class="live-xc-head">
+          <span class="live-xc-title">🪂 <span id="liveXcTitle">Vuelos en directo · XContest</span></span>
+          <a id="liveXcOpen" class="live-xc-link" href="https://live.xcontest.org/" target="_blank" rel="noopener">Abrir ↗</a>
+          <button type="button" class="live-xc-close" id="liveXcClose" title="Cerrar" aria-label="Cerrar">×</button>
+        </div>
+        <div class="live-xc-note" id="liveXcNote"></div>
+        <div class="live-xc-frame" id="liveXcFrame"></div>
+      </section>
+
       <div class="wind-history" id="windHistory" hidden>
         <div class="wh-header">
           <span class="wh-title" id="whTitle">Últimas 2 h (km/h)</span>
