@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.211";
+const APP_VERSION = "v0.212";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5714,11 +5714,6 @@ function applyCurrentTakeoffLabel() {
   renderCurrentTakeoffActions();
   renderTakeoffPanel();
   updatePanelForLabels();
-  // v0.211: si el panel de Live XC esta visible, actualizalo al nuevo despegue.
-  try {
-    const xp = document.getElementById("liveXcPanel");
-    if (xp && !xp.hidden) renderLiveXcPanel();
-  } catch {}
 }
 
 // v102: muestra en cada panel qué despegue / estación se está usando
@@ -5852,7 +5847,7 @@ function renderCurrentTakeoffActions() {
   resolveCurrentTakeoffOrigin();
   host.innerHTML = "";
   const u = window.PCAuth?.user;
-  if (!u || u.isAnonymous) return;
+  const isLogged = !!(u && !u.isAnonymous);
 
   // Localiza el favorito que corresponde al despegue actual.
   const favs = window.PCAuth?.favorites || [];
@@ -5866,8 +5861,9 @@ function renderCurrentTakeoffActions() {
   }
   const favoritable = !!(currentTakeoffOriginId || (currentStation?.provider === "pioupiou") || (currentStation?.provider === "ffvl"));
 
-  // ⭐ favorito
-  if (favoritable) {
+  // ⭐ favorito. v0.212: siempre visible si el despegue es "favoritable"; si
+  // el usuario no esta logueado, al clicar se abre el dialogo de login.
+  if (favoritable && isLogged) {
     const star = document.createElement("button");
     star.type = "button"; star.className = "ts-icon-btn" + (fav ? " is-active" : "");
     star.title = fav ? t("fav.remove") : t("fav.add");
@@ -5899,7 +5895,7 @@ function renderCurrentTakeoffActions() {
   // favoritos del usuario se ordenan por distancia a su posicion actual y el
   // despegue por defecto al abrir la app es el favorito mas cercano.
   // 🔔 alertas (solo si ya es favorito)
-  if (fav) {
+  if (fav && isLogged) {
     // 🔔 alertas
     const bell = document.createElement("button");
     bell.type = "button"; bell.className = "ts-icon-btn" + (fav.alertsEnabled ? " is-alert" : "");
@@ -5918,11 +5914,18 @@ function renderCurrentTakeoffActions() {
   // se mantienen inline como botones rapidos.
   const actions = []; // { icon, label, run, isActive }
 
-  // ✎ sugerir cambios / proponer alta.
+  // ✎ sugerir cambios / proponer alta. v0.212: visible siempre; si el
+  // usuario no esta logueado, al clicar se abre el dialogo de login.
   actions.push({
     icon: "✎",
     label: currentTakeoffOriginId ? t("to.suggest") : t("to.propose"),
     run: () => {
+      if (!isLogged) {
+        // Abrir el dialogo de login reutilizando el handler de #userBtn.
+        const btn = document.getElementById("userBtn");
+        if (btn) btn.click();
+        return;
+      }
       if (currentTakeoffOriginId) {
         openTakeoffSuggest(currentTakeoffOriginId);
       } else {
@@ -5971,12 +5974,12 @@ function renderCurrentTakeoffActions() {
   if (doc2?.volandooUrl && /^https?:/i.test(doc2.volandooUrl)) {
     actions.push({ icon: "🪶", label: "Volandoo", href: doc2.volandooUrl });
   }
-  // v0.211: panel con el mapa en vivo de XContest (lazy-loaded en iframe).
+  // v0.212: enlace externo al mapa en vivo de XContest (sin iframe; XContest
+  // no admite centrar el mapa por URL desde un embed cross-origin).
   actions.push({
     icon: "🪂",
     label: "Live XC",
-    run: () => toggleLiveXcPanel(),
-    isActive: !!(document.getElementById("liveXcPanel") && !document.getElementById("liveXcPanel").hidden),
+    href: "https://live.xcontest.org/",
   });
   // v0.188: la brujula ya no es un chip; se renderiza como toggle (interruptor)
   // a la izquierda del todo de la barra de acciones, dentro del footer.
@@ -6028,82 +6031,6 @@ function renderCurrentTakeoffActions() {
     }
   }
 }
-
-// v0.211: panel desplegable con el mapa en vivo de XContest.
-// El iframe se inyecta perezosamente (solo al abrir el panel por primera
-// vez) para no penalizar la carga inicial. Al cambiar de despegue se
-// actualiza el texto del titulo y se recarga el iframe si esta visible.
-function toggleLiveXcPanel(forceState) {
-  const panel = document.getElementById("liveXcPanel");
-  if (!panel) return;
-  const willOpen = (typeof forceState === "boolean") ? forceState : panel.hidden;
-  panel.hidden = !willOpen;
-  if (willOpen) {
-    renderLiveXcPanel();
-    // Scroll suave hacia el panel para que se vea tras abrirlo.
-    try { panel.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch {}
-  }
-  // Refresca el estado activo del chip.
-  try { renderCurrentTakeoffActions(); } catch {}
-}
-
-function renderLiveXcPanel() {
-  const panel = document.getElementById("liveXcPanel");
-  if (!panel || panel.hidden) return;
-  const frameHost = document.getElementById("liveXcFrame");
-  const titleEl = document.getElementById("liveXcTitle");
-  const openA = document.getElementById("liveXcOpen");
-  const noteEl = document.getElementById("liveXcNote");
-  const lat = Number(currentTakeoff?.lat);
-  const lon = Number(currentTakeoff?.lon);
-  const hasCoords = Number.isFinite(lat) && Number.isFinite(lon);
-  const toName = currentStation?.shortName || currentStation?.name || currentTakeoff?.name || "";
-  if (titleEl) titleEl.textContent = toName
-    ? `Vuelos en directo · ${toName}`
-    : "Vuelos en directo · XContest";
-  // El enlace externo siempre apunta a live.xcontest.org (con hash informativo
-  // del despegue para que XContest lo respete si en algun momento soporta esos
-  // parametros; hoy se ignoran sin romper nada).
-  const ext = hasCoords
-    ? `https://live.xcontest.org/#lat=${lat.toFixed(4)}@lon=${lon.toFixed(4)}@zoom=11`
-    : "https://live.xcontest.org/";
-  if (openA) openA.href = ext;
-  if (noteEl) {
-    noteEl.innerHTML = hasCoords
-      ? `Centra el mapa en <strong>${escapeHtml(toName || "el despegue")}</strong> (${lat.toFixed(3)}, ${lon.toFixed(3)}). Si XContest pide tu ubicación, acéptala para ver pilotos cercanos; si no, usa el zoom del mapa.`
-      : `Mapa global de XContest. Selecciona un despegue para ver una posición de referencia.`;
-  }
-  if (frameHost) {
-    // Inyecta el iframe la primera vez o si cambio el despegue.
-    const currentSrc = frameHost.firstElementChild?.src || "";
-    if (currentSrc !== ext) {
-      frameHost.innerHTML = "";
-      const iframe = document.createElement("iframe");
-      iframe.src = ext;
-      iframe.loading = "lazy";
-      iframe.referrerPolicy = "no-referrer-when-downgrade";
-      iframe.allow = "geolocation; fullscreen";
-      iframe.title = "XContest Live";
-      frameHost.appendChild(iframe);
-    }
-  }
-}
-
-// v0.211: cableado del boton de cierre del panel Live XC (una sola vez).
-(function initLiveXcPanel() {
-  const wire = () => {
-    const btn = document.getElementById("liveXcClose");
-    if (btn && !btn.dataset.wired) {
-      btn.dataset.wired = "1";
-      btn.addEventListener("click", () => toggleLiveXcPanel(false));
-    }
-  };
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", wire, { once: true });
-  } else {
-    wire();
-  }
-})();
 
 function openTakeoffSuggest(originId) {
   const to = (window.PCAuth?.approvedTakeoffs || []).find(x => x.id === originId);
