@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.203";
+const APP_VERSION = "v0.204";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -214,7 +214,14 @@ const I18N = {
     "to.geocode_ph": "Ej: Pegalajar, Jaén",
     "to.geocode_search": "🔎 Buscar",
     "to.geocode_empty": "Sin resultados",
-    "to.ref_station_label": "Estación de referencia (opcional, dentro de 30 km)",
+    "to.ref_station_label": "Estación integrada cercana",
+    "to.ref_hint": "Estaciones integradas (Pioupiou, Holfuy, AEMET) a menos de 30 km del punto elegido.",
+    "to.ref_none": "— Ninguna —",
+    "to.ref_legend": "Estación de referencia (opcional)",
+    "to.ref_block_hint": "Elige una opción o déjalas todas en blanco para usar la previsión de Windy del punto del mapa.",
+    "to.coords_legend": "Coordenadas del despegue",
+    "to.coords_open_map": "🗺️ Elegir en el mapa",
+    "to.coords_manual_hint": "Si lo prefieres, puedes editar las coordenadas a mano.",
     "to.find_stations": "📡 Buscar",
     "to.ref_need_coords": "Primero rellena la latitud y la longitud.",
     "to.ref_empty": "No hay estaciones integradas a menos de 30 km.",
@@ -566,7 +573,14 @@ const I18N = {
     "to.geocode_ph": "e.g. Pegalajar, Jaén",
     "to.geocode_search": "🔎 Search",
     "to.geocode_empty": "No results",
-    "to.ref_station_label": "Reference station (optional, within 30 km)",
+    "to.ref_station_label": "Nearby integrated station",
+    "to.ref_hint": "Integrated stations (Pioupiou, Holfuy, AEMET) within 30 km of the chosen point.",
+    "to.ref_none": "— None —",
+    "to.ref_legend": "Reference station (optional)",
+    "to.ref_block_hint": "Pick one option or leave all blank to use the Windy forecast for the chosen point.",
+    "to.coords_legend": "Takeoff coordinates",
+    "to.coords_open_map": "🗺️ Pick on the map",
+    "to.coords_manual_hint": "If you prefer, you can edit the coordinates manually.",
     "to.find_stations": "📡 Find",
     "to.ref_need_coords": "Fill latitude and longitude first.",
     "to.ref_empty": "No integrated stations within 30 km.",
@@ -902,7 +916,14 @@ const I18N = {
     "to.geocode_ph": "z. B. Pegalajar, Jaén",
     "to.geocode_search": "🔎 Suchen",
     "to.geocode_empty": "Keine Ergebnisse",
-    "to.ref_station_label": "Referenzstation (optional, im Umkreis von 30 km)",
+    "to.ref_station_label": "Integrierte Station in der Nähe",
+    "to.ref_hint": "Integrierte Stationen (Pioupiou, Holfuy, AEMET) im Umkreis von 30 km um den gewählten Punkt.",
+    "to.ref_none": "— Keine —",
+    "to.ref_legend": "Referenzstation (optional)",
+    "to.ref_block_hint": "Wähle eine Option oder lass alle leer, um die Windy-Vorhersage für den Punkt zu nutzen.",
+    "to.coords_legend": "Koordinaten des Startplatzes",
+    "to.coords_open_map": "🗺️ Auf der Karte auswählen",
+    "to.coords_manual_hint": "Du kannst die Koordinaten auch manuell bearbeiten.",
     "to.find_stations": "📡 Suchen",
     "to.ref_need_coords": "Bitte zuerst Breiten- und Längengrad ausfüllen.",
     "to.ref_empty": "Keine integrierten Stationen innerhalb von 30 km.",
@@ -1234,7 +1255,14 @@ const I18N = {
     "to.geocode_ph": "Ex : Pegalajar, Jaén",
     "to.geocode_search": "🔎 Rechercher",
     "to.geocode_empty": "Aucun résultat",
-    "to.ref_station_label": "Station de référence (optionnelle, dans un rayon de 30 km)",
+    "to.ref_station_label": "Station intégrée à proximité",
+    "to.ref_hint": "Stations intégrées (Pioupiou, Holfuy, AEMET) à moins de 30 km du point choisi.",
+    "to.ref_none": "— Aucune —",
+    "to.ref_legend": "Station de référence (optionnelle)",
+    "to.ref_block_hint": "Choisis une option ou laisse tout vide pour utiliser la prévision Windy du point.",
+    "to.coords_legend": "Coordonnées du déco",
+    "to.coords_open_map": "🗺️ Choisir sur la carte",
+    "to.coords_manual_hint": "Tu peux aussi modifier les coordonnées à la main.",
     "to.find_stations": "📡 Rechercher",
     "to.ref_need_coords": "Remplis d'abord la latitude et la longitude.",
     "to.ref_empty": "Aucune station intégrée à moins de 30 km.",
@@ -1566,7 +1594,14 @@ const I18N = {
     "to.geocode_ph": "Adib: Pegalajar, Jaén",
     "to.geocode_search": "🔎 Bilatu",
     "to.geocode_empty": "Emaitzarik ez",
-    "to.ref_station_label": "Erreferentziazko estazioa (aukerakoa, 30 km-ra)",
+    "to.ref_station_label": "Inguruko estazio integratua",
+    "to.ref_hint": "Estazio integratuak (Pioupiou, Holfuy, AEMET) aukeratutako puntutik 30 km-ra.",
+    "to.ref_none": "— Bat ere ez —",
+    "to.ref_legend": "Erreferentziazko estazioa (aukerakoa)",
+    "to.ref_block_hint": "Aukeratu aukera bat edo utzi denak hutsik, mapako puntuaren Windy iragarpena erabiltzeko.",
+    "to.coords_legend": "Irteguiaren koordenatuak",
+    "to.coords_open_map": "🗺️ Aukeratu mapan",
+    "to.coords_manual_hint": "Nahi izanez gero, koordenatuak eskuz aldatu ditzakezu.",
     "to.find_stations": "📡 Bilatu",
     "to.ref_need_coords": "Lehenik latitudea eta longitudea bete.",
     "to.ref_empty": "Ez dago estazio integraturik 30 km-ra.",
@@ -1852,7 +1887,14 @@ const I18N = {
     "to.geocode_ph": "Ex: Pegalajar, Jaén",
     "to.geocode_search": "🔎 Cercar",
     "to.geocode_empty": "Sense resultats",
-    "to.ref_station_label": "Estació de referència (opcional, fins a 30 km)",
+    "to.ref_station_label": "Estació integrada propera",
+    "to.ref_hint": "Estacions integrades (Pioupiou, Holfuy, AEMET) a menys de 30 km del punt escollit.",
+    "to.ref_none": "— Cap —",
+    "to.ref_legend": "Estació de referència (opcional)",
+    "to.ref_block_hint": "Tria una opció o deixa-les totes en blanc per usar la previsió de Windy del punt del mapa.",
+    "to.coords_legend": "Coordenades de l'enlairament",
+    "to.coords_open_map": "🗺️ Tria al mapa",
+    "to.coords_manual_hint": "Si ho prefereixes, pots editar les coordenades a mà.",
     "to.find_stations": "📡 Cercar",
     "to.ref_need_coords": "Omple primer la latitud i la longitud.",
     "to.ref_empty": "No hi ha estacions integrades a menys de 30 km.",
@@ -6946,11 +6988,10 @@ function openTakeoffSubmit(prefill) {
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
   document.getElementById("toSubmitMsg").textContent = "";
-  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax","toWindyUrl","toVolandooUrl","toGeocodeInput"].forEach(id => {
+  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax","toWindyUrl","toVolandooUrl"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   _toClearStationRef?.();
-  const gres = document.getElementById("toGeocodeResults"); if (gres) { gres.hidden = true; gres.innerHTML = ""; }
   // Restaura título y botón por si veníamos de modo sugerencia (será sobreescrito por openTakeoffSuggest si aplica)
   if (!prefill || !prefill._suggesting) {
     _suggestTargetId = null;
@@ -7025,7 +7066,12 @@ document.getElementById("toCancelBtn")?.addEventListener("click", closeTakeoffSu
 // v203: el boton 🗺️ abre un sub-modal con un mapa Leaflet donde el usuario
 // puede tocar/arrastrar para situar el despegue (mejor que escribir lat/lon
 // a mano para sitios en ladera o montana).
+// v204: el boton se renombro a toOpenMapBtn y vive ahora dentro del bloque
+// "Coordenadas del despegue". Mantenemos toPickOnMapBtn por compatibilidad.
 document.getElementById("toPickOnMapBtn")?.addEventListener("click", () => {
+  openTakeoffMapPicker();
+});
+document.getElementById("toOpenMapBtn")?.addEventListener("click", () => {
   openTakeoffMapPicker();
 });
 
@@ -7035,7 +7081,7 @@ document.getElementById("toPickOnMapBtn")?.addEventListener("click", () => {
 let _toPickMap = null;
 let _toPickMarker = null;
 let _toPickLayers = null; // { sat, topo, street }
-let _toPickCurrentLayerKey = "sat";
+let _toPickCurrentLayerKey = "topo";
 
 function _toPickBuildLayers() {
   // Capa satelite: Esri World Imagery (sin token, uso permitido con atribucion).
@@ -7112,6 +7158,11 @@ function openTakeoffMapPicker() {
   });
   // Leaflet necesita recalcular tamano al pasar el contenedor de hidden a visible.
   setTimeout(() => { try { _toPickMap.invalidateSize(); } catch (_) {} }, 60);
+  // Limpia el geocoder integrado.
+  const gIn = document.getElementById("toPickGeocodeInput");
+  const gOut = document.getElementById("toPickGeocodeResults");
+  if (gIn) gIn.value = "";
+  if (gOut) { gOut.hidden = true; gOut.innerHTML = ""; }
 }
 
 function closeTakeoffMapPicker() {
@@ -7131,6 +7182,48 @@ document.getElementById("toMapPickerConfirm")?.addEventListener("click", () => {
   try { _toClearStationRef?.(); } catch (_) {}
   try { _toLoadStationsForCoords?.(); } catch (_) {}
   closeTakeoffMapPicker();
+});
+
+// v204: geocodificador integrado en el sub-modal del mapa. Al elegir un
+// resultado movemos el marcador y centramos el mapa (no escribimos en
+// toLat/toLon hasta que el usuario confirma con "Usar estas coordenadas").
+async function _toPickRunGeocode() {
+  const inp = document.getElementById("toPickGeocodeInput");
+  const out = document.getElementById("toPickGeocodeResults");
+  if (!inp || !out) return;
+  out.hidden = false;
+  out.innerHTML = `<div class="to-geocode-loading">${t("loading")}</div>`;
+  const items = await geocodeAddress(inp.value);
+  if (!items.length) {
+    out.innerHTML = `<div class="to-geocode-empty">${t("to.geocode_empty")}</div>`;
+    return;
+  }
+  out.innerHTML = "";
+  for (const it of items) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "to-geocode-item";
+    btn.innerHTML = `<b>${escapeHtml(it.display_name || "")}</b><br/><small>${Number(it.lat).toFixed(5)}, ${Number(it.lon).toFixed(5)}</small>`;
+    btn.addEventListener("click", () => {
+      const lat = Number(it.lat), lon = Number(it.lon);
+      if (_toPickMap && _toPickMarker) {
+        _toPickMarker.setLatLng([lat, lon]);
+        _toPickMap.setView([lat, lon], Math.max(_toPickMap.getZoom(), 14));
+        _toPickUpdateLabels({ lat, lng: lon });
+      }
+      // Sugerimos el nombre del despegue si aun esta vacio.
+      const nameEl = document.getElementById("toName");
+      if (nameEl && !nameEl.value) {
+        nameEl.value = String(it.display_name || "").split(",")[0].trim();
+      }
+      out.hidden = true;
+    });
+    out.appendChild(btn);
+  }
+}
+document.getElementById("toPickGeocodeBtn")?.addEventListener("click", _toPickRunGeocode);
+document.getElementById("toPickGeocodeInput")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); _toPickRunGeocode(); }
 });
 document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
   const msg = document.getElementById("toSubmitMsg");

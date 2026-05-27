@@ -443,47 +443,48 @@
         <input id="toAlt" type="number" step="1" placeholder="Altitud (m)" data-i18n-placeholder="to.alt_ph" />
       </label>
 
-      <!-- v147: buscador de direccion (OSM Nominatim) que rellena lat/lon -->
-      <label class="to-field-block"><span data-i18n="to.geocode_label">Buscar un lugar en el mapa</span>
-        <div class="to-geocode-row">
-          <input id="toGeocodeInput" type="text" placeholder="Ej: Pegalajar, Jaén" data-i18n-placeholder="to.geocode_ph" />
-          <button id="toGeocodeBtn" class="auth-secondary" type="button" data-i18n="to.geocode_search">🔎 Buscar</button>
-          <button id="toPickOnMapBtn" class="auth-secondary" type="button" title="Elegir en el mapa" data-i18n-title="to.pick_map" aria-label="Elegir en el mapa">🗺️</button>
+      <!-- v204: coordenadas — el buscador y la elección visual se han movido al
+           sub-modal del mapa (botón 🗺️). Aquí dejamos los campos lat/lon
+           editables a mano para usuarios avanzados, pero el flujo recomendado
+           es el botón. -->
+      <fieldset class="to-coords-block">
+        <legend data-i18n="to.coords_legend">Coordenadas del despegue</legend>
+        <button id="toOpenMapBtn" class="auth-primary to-coords-cta" type="button" data-i18n="to.coords_open_map">🗺️ Elegir en el mapa</button>
+        <div class="to-row">
+          <label class="to-field"><span data-i18n="to.lat_label">Latitud</span>
+            <input id="toLat" type="number" step="0.00001" placeholder="Latitud" data-i18n-placeholder="to.lat_ph" />
+          </label>
+          <label class="to-field"><span data-i18n="to.lon_label">Longitud</span>
+            <input id="toLon" type="number" step="0.00001" placeholder="Longitud" data-i18n-placeholder="to.lon_ph" />
+          </label>
         </div>
-        <div id="toGeocodeResults" class="to-geocode-results" hidden></div>
-      </label>
-
-      <div class="to-row">
-        <label class="to-field"><span data-i18n="to.lat_label">Latitud</span>
-          <input id="toLat" type="number" step="0.00001" placeholder="Latitud" data-i18n-placeholder="to.lat_ph" />
-        </label>
-        <label class="to-field"><span data-i18n="to.lon_label">Longitud</span>
-          <input id="toLon" type="number" step="0.00001" placeholder="Longitud" data-i18n-placeholder="to.lon_ph" />
-        </label>
-      </div>
+        <p class="to-hint" data-i18n="to.coords_manual_hint">Si lo prefieres, puedes editar las coordenadas a mano.</p>
+      </fieldset>
       <input id="toOrient" type="hidden" />
 
-      <!-- v180: estacion de referencia opcional. Se elige de un desplegable
-           con las estaciones cercanas (cualquier proveedor) ordenadas por
-           distancia. Si no se elige ninguna, el despegue cae a la URL de
-           Windy / Volandoo o a la estimacion de Windy para la ubicacion. -->
-      <label class="to-field-block"><span data-i18n="to.ref_station_label">Estación de referencia (opcional)</span>
-        <select id="toStationId" class="to-station-select">
-          <option value="" data-i18n="to.ref_none">Sin estación (Windy de la ubicación)</option>
-        </select>
-        <p class="to-hint" id="toStationsHint" data-i18n="to.ref_hint">Elige una estación cercana o deja “Sin estación” para usar las URLs de Windy/Volandoo o la estimación de Windy.</p>
-      </label>
+      <!-- v204: estación de referencia — agrupamos en un bloque las tres
+           opciones (desplegable de estación integrada, URL de Windy o de
+           Volandoo). Si no se elige nada, se cae a la previsión de Windy para
+           el punto del mapa. -->
+      <fieldset class="to-ref-block">
+        <legend data-i18n="to.ref_legend">Estación de referencia (opcional)</legend>
+        <p class="to-hint" data-i18n="to.ref_block_hint">Elige una opción o déjalas en blanco para usar la previsión de Windy del punto del mapa.</p>
+        <label class="to-field-block"><span data-i18n="to.ref_station_label">Estación integrada cercana</span>
+          <select id="toStationId" class="to-station-select">
+            <option value="" data-i18n="to.ref_none">— Ninguna —</option>
+          </select>
+          <p class="to-hint" id="toStationsHint" data-i18n="to.ref_hint">Estaciones integradas (Pioupiou, Holfuy, AEMET) a menos de 30 km del punto elegido.</p>
+        </label>
+        <label class="to-field-block"><span data-i18n="to.windy_label">URL de Windy (opcional)</span>
+          <input id="toWindyUrl" type="url" placeholder="https://www.windy.com/?…" data-i18n-placeholder="to.windy_ph" />
+        </label>
+        <label class="to-field-block"><span data-i18n="to.volandoo_label">URL de la estación en Volandoo (opcional)</span>
+          <input id="toVolandooUrl" type="url" placeholder="https://volandoo.com/weather/…" data-i18n-placeholder="to.volandoo_ph" />
+        </label>
+      </fieldset>
 
       <label class="to-field-block"><span data-i18n="to.notes_label">Notas (acceso, peligros…)</span>
         <textarea id="toNotes" rows="3" placeholder="Notas (acceso, peligros…)" data-i18n-placeholder="to.notes_ph"></textarea>
-      </label>
-
-      <!-- v146: enlaces externos opcionales (Windy / Volandoo / otros) -->
-      <label class="to-field-block"><span data-i18n="to.windy_label">URL de Windy (opcional)</span>
-        <input id="toWindyUrl" type="url" placeholder="https://www.windy.com/?…" data-i18n-placeholder="to.windy_ph" />
-      </label>
-      <label class="to-field-block"><span data-i18n="to.volandoo_label">URL de la estación en Volandoo (opcional)</span>
-        <input id="toVolandooUrl" type="url" placeholder="https://volandoo.com/weather/…" data-i18n-placeholder="to.volandoo_ph" />
       </label>
 
       <div class="to-actions">
@@ -501,9 +502,17 @@
       <button id="toMapPickerClose" class="auth-close" title="Cerrar">✕</button>
       <h2 id="toMapPickerTitle" data-i18n="to.pick_map_title">Elige las coordenadas en el mapa</h2>
       <p class="to-hint" data-i18n="to.pick_map_hint">Toca el mapa para situar el despegue, o arrastra el marcador. Usa la capa Satélite o Topo para identificar mejor la ladera.</p>
+      <!-- v204: buscador integrado en el sub-modal del mapa -->
+      <label class="to-field-block"><span data-i18n="to.geocode_label">Buscar un lugar en el mapa</span>
+        <div class="to-geocode-row">
+          <input id="toPickGeocodeInput" type="text" placeholder="Ej: Pegalajar, Jaén" data-i18n-placeholder="to.geocode_ph" />
+          <button id="toPickGeocodeBtn" class="auth-secondary" type="button" data-i18n="to.geocode_search">🔎 Buscar</button>
+        </div>
+        <div id="toPickGeocodeResults" class="to-geocode-results" hidden></div>
+      </label>
       <div class="to-map-layer-row">
-        <label><input type="radio" name="toMapLayer" value="sat" checked /> <span data-i18n="to.pick_map_layer_sat">Satélite</span></label>
-        <label><input type="radio" name="toMapLayer" value="topo" /> <span data-i18n="to.pick_map_layer_topo">Topo</span></label>
+        <label><input type="radio" name="toMapLayer" value="topo" checked /> <span data-i18n="to.pick_map_layer_topo">Topo</span></label>
+        <label><input type="radio" name="toMapLayer" value="sat" /> <span data-i18n="to.pick_map_layer_sat">Satélite</span></label>
         <label><input type="radio" name="toMapLayer" value="street" /> <span data-i18n="to.pick_map_layer_street">Calles</span></label>
       </div>
       <div id="toPickMap" class="to-pick-map"></div>

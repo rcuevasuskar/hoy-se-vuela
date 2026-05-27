@@ -441,6 +441,18 @@ header.topbar .ts-current {
   background: var(--panel-2);
 }
 .to-pick-map-coords { margin: 2px 0 0; text-align: center; }
+/* v204: bloques agrupados en el dialogo de despegue */
+.to-coords-block, .to-ref-block {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px 10px;
+  margin: 6px 0 2px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.to-coords-block > legend, .to-ref-block > legend {
+  padding: 0 6px; font-size: .8rem; color: var(--muted);
+}
+.to-coords-cta { align-self: stretch; }
 /* v180: select nativo para la estacion de referencia. */
 .to-field-block > select.to-station-select {
   width: 100%; box-sizing: border-box;
