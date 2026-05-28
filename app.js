@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.223";
+const APP_VERSION = "v0.224";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5908,11 +5908,11 @@ function renderCurrentTakeoffActions() {
   const favoritable = !!(currentTakeoffOriginId || (currentStation?.provider === "pioupiou") || (currentStation?.provider === "ffvl"));
 
   // v0.222: orden de iconos solicitado: 🔔 alerta, ★ favorito, 🧭 brujula.
-  // 🔔 alertas. v0.214: visible si el despegue es favoritable; logueado
-  // solo aparece si ya es favorito (sigue requiriendo fav para tener algo
-  // sobre lo que activar/desactivar alertas), sin login se muestra siempre
-  // y al clicar abre el dialogo de login.
-  if (favoritable && (fav || !isLogged)) {
+  // 🔔 alertas. v0.224: la campana solo aparece cuando el despegue actual
+  // ya esta marcado como favorito (sin fav no hay nada sobre lo que activar
+  // o desactivar alertas). Si el usuario no esta logueado o el despegue no
+  // es favorito, simplemente no se muestra.
+  if (favoritable && fav) {
     // 🔔 alertas
     const bell = document.createElement("button");
     bell.type = "button"; bell.className = "ts-icon-btn" + (fav?.alertsEnabled ? " is-alert" : "");
