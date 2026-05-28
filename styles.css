@@ -552,6 +552,17 @@ header.topbar .ts-current {
 }
 .ts-icon-btn:hover { background: rgba(255,255,255,0.08); color: var(--fg); }
 .ts-icon-btn.is-active { color: #f1c40f; }
+/* v0.220: el icono de brujula es un emoji y los emojis ignoran color. Para
+   distinguir on/off usamos opacidad+grayscale en OFF y un fondo + borde
+   acento en ON. */
+.ts-icon-btn.ts-compass-btn { filter: grayscale(0.85); opacity: 0.55; }
+.ts-icon-btn.ts-compass-btn.is-active {
+  filter: none;
+  opacity: 1;
+  background: rgba(78, 161, 255, 0.18);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  border-radius: 6px;
+}
 .ts-icon-btn.is-home { color: #ff9800; }
 .ts-icon-btn.is-alert { color: #4ea1ff; }
 

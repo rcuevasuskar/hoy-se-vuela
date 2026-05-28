@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.219";
+const APP_VERSION = "v0.220";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5973,7 +5973,7 @@ function renderCurrentTakeoffActions() {
     const compass = document.createElement("button");
     compass.type = "button";
     compass.id = "tsCompassToggle";
-    compass.className = "ts-icon-btn" + (orientationEnabled ? " is-active" : "");
+    compass.className = "ts-icon-btn ts-compass-btn" + (orientationEnabled ? " is-active" : "");
     compass.title = t("act.orient_toggle") || "Modo brújula";
     compass.setAttribute("aria-pressed", orientationEnabled ? "true" : "false");
     compass.textContent = "🧭";
