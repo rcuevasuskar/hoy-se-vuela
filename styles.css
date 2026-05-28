@@ -555,6 +555,14 @@ header.topbar .ts-current {
 /* v0.220: el icono de brujula es un emoji y los emojis ignoran color. Para
    distinguir on/off usamos opacidad+grayscale en OFF y un fondo + borde
    acento en ON. */
+/* v0.222: altura del despegue mostrada junto al titulo, en letra mas
+   pequena, sin negrita y entre parentesis (sin separador "·"). */
+.ts-current-alt {
+  font-weight: 400;
+  font-size: 0.78em;
+  opacity: 0.75;
+  margin-left: 0.15em;
+}
 .ts-icon-btn.ts-compass-btn { filter: grayscale(0.85); opacity: 0.55; }
 .ts-icon-btn.ts-compass-btn.is-active {
   filter: none;

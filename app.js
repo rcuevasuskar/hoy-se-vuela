@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.221";
+const APP_VERSION = "v0.222";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5724,11 +5724,16 @@ function refreshAllForCurrentTakeoff() {
 function applyCurrentTakeoffLabel() {
   const baseName = currentStation.shortName || currentStation.name || "";
   // v120: incluye la altura del despegue cuando esta disponible.
+  // v0.222: la altura se renderiza en letra mas pequena, no negrita y entre
+  // parentesis, sin el punto separador ("Cenes <span>(81 m)</span>").
   const doc = (typeof getCurrentTakeoffDoc === "function") ? getCurrentTakeoffDoc() : null;
   const altSrc = doc?.alt ?? currentTakeoff.alt ?? null;
-  const altLabel = Number.isFinite(+altSrc) ? ` · ${Math.round(+altSrc)} m` : "";
+  const altHtml = Number.isFinite(+altSrc)
+    ? ` <span class="ts-current-alt">(${Math.round(+altSrc)} m)</span>`
+    : "";
+  const altLabel = Number.isFinite(+altSrc) ? ` (${Math.round(+altSrc)} m)` : "";
   const el = document.getElementById("tsCurrentName");
-  if (el) el.textContent = baseName + altLabel;
+  if (el) el.innerHTML = escapeHtml(baseName) + altHtml;
   const guideEl = document.getElementById("guideTakeoffName");
   if (guideEl) guideEl.textContent = baseName + altLabel;
   // v125: el titulo del pronostico incluye el nombre del despegue.
@@ -5902,6 +5907,30 @@ function renderCurrentTakeoffActions() {
   }
   const favoritable = !!(currentTakeoffOriginId || (currentStation?.provider === "pioupiou") || (currentStation?.provider === "ffvl"));
 
+  // v0.222: orden de iconos solicitado: 🔔 alerta, ★ favorito, 🧭 brujula.
+  // 🔔 alertas. v0.214: visible si el despegue es favoritable; logueado
+  // solo aparece si ya es favorito (sigue requiriendo fav para tener algo
+  // sobre lo que activar/desactivar alertas), sin login se muestra siempre
+  // y al clicar abre el dialogo de login.
+  if (favoritable && (fav || !isLogged)) {
+    // 🔔 alertas
+    const bell = document.createElement("button");
+    bell.type = "button"; bell.className = "ts-icon-btn" + (fav?.alertsEnabled ? " is-alert" : "");
+    bell.title = !isLogged
+      ? t("fav.alert_on")
+      : (fav.alertsEnabled ? t("fav.alert_off") : t("fav.alert_on"));
+    bell.textContent = fav?.alertsEnabled ? "🔔" : "🔕";
+    bell.addEventListener("click", async () => {
+      if (!isLogged) {
+        openAuthDialog(t("auth.reason_takeoff_actions") || "Regístrate o haz login para poder añadir o sugerir cambios en despegues.");
+        return;
+      }
+      try { await window.PCAuth.updateFavorite(fav.id, { alertsEnabled: !fav.alertsEnabled }); }
+      catch (e) { console.warn("[bell cur]", e); }
+    });
+    host.appendChild(bell);
+  }
+
   // ⭐ favorito. v0.214: siempre visible si el despegue es "favoritable";
   // si el usuario no esta logueado, al clicar se abre el dialogo de login
   // (mismo patron que el chip ✎ sugerir).
@@ -5942,28 +5971,6 @@ function renderCurrentTakeoffActions() {
   // v184: la corona "despegue habitual" (homeFavId) se elimina; los
   // favoritos del usuario se ordenan por distancia a su posicion actual y el
   // despegue por defecto al abrir la app es el favorito mas cercano.
-  // 🔔 alertas. v0.214: visible si el despegue es favoritable; logueado
-  // solo aparece si ya es favorito (sigue requiriendo fav para tener algo
-  // sobre lo que activar/desactivar alertas), sin login se muestra siempre
-  // y al clicar abre el dialogo de login.
-  if (favoritable && (fav || !isLogged)) {
-    // 🔔 alertas
-    const bell = document.createElement("button");
-    bell.type = "button"; bell.className = "ts-icon-btn" + (fav?.alertsEnabled ? " is-alert" : "");
-    bell.title = !isLogged
-      ? t("fav.alert_on")
-      : (fav.alertsEnabled ? t("fav.alert_off") : t("fav.alert_on"));
-    bell.textContent = fav?.alertsEnabled ? "🔔" : "🔕";
-    bell.addEventListener("click", async () => {
-      if (!isLogged) {
-        openAuthDialog(t("auth.reason_takeoff_actions") || "Regístrate o haz login para poder añadir o sugerir cambios en despegues.");
-        return;
-      }
-      try { await window.PCAuth.updateFavorite(fav.id, { alertsEnabled: !fav.alertsEnabled }); }
-      catch (e) { console.warn("[bell cur]", e); }
-    });
-    host.appendChild(bell);
-  }
 
   // v0.219: 🧭 modo brújula. Se mueve aqui desde la barra de chips para
   // unificar visualmente con ★ favorito y 🔔 alertas: mismo estilo
