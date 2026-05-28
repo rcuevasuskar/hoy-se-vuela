@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.218";
+const APP_VERSION = "v0.219";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5965,6 +5965,31 @@ function renderCurrentTakeoffActions() {
     host.appendChild(bell);
   }
 
+  // v0.219: 🧭 modo brújula. Se mueve aqui desde la barra de chips para
+  // unificar visualmente con ★ favorito y 🔔 alertas: mismo estilo
+  // ts-icon-btn, mismo tamaño, comportamiento on/off (is-active cuando esta
+  // activado). No requiere login.
+  {
+    const compass = document.createElement("button");
+    compass.type = "button";
+    compass.id = "tsCompassToggle";
+    compass.className = "ts-icon-btn" + (orientationEnabled ? " is-active" : "");
+    compass.title = t("act.orient_toggle") || "Modo brújula";
+    compass.setAttribute("aria-pressed", orientationEnabled ? "true" : "false");
+    compass.textContent = "🧭";
+    compass.addEventListener("click", async () => {
+      if (!orientationEnabled) {
+        const ok = await enableDeviceOrientation();
+        if (!ok) return;
+      } else {
+        disableDeviceOrientation();
+      }
+      compass.classList.toggle("is-active", orientationEnabled);
+      compass.setAttribute("aria-pressed", orientationEnabled ? "true" : "false");
+    });
+    host.appendChild(compass);
+  }
+
   // v162: los iconos que disparan acciones (abren un dialogo o navegan a una
   // pagina externa) se agrupan en un menu desplegable "⋮" con etiqueta corta
   // (1-3 palabras) para liberar espacio en la cabecera. Los toggles (★ ♛ 🔔)
@@ -6052,8 +6077,8 @@ function renderCurrentTakeoffActions() {
     label: "Live tracking",
     run: (ev) => openLiveTrackingMenu(ev?.currentTarget),
   });
-  // v0.188: la brujula ya no es un chip; se renderiza como toggle (interruptor)
-  // a la izquierda del todo de la barra de acciones, dentro del footer.
+  // v0.219: la brujula ya no vive en .ts-actions-inline; se ha movido a la
+  // cabecera junto a ★ favorito y 🔔 alertas como ts-icon-btn on/off.
 
   // v167: las acciones (✎ Editar, 🌬️ Windy, 📈 Sondeo, 🪶 Volandoo) ya no van
   // en un menu desplegable de la cabecera; se renderizan inline en el footer
@@ -6063,26 +6088,6 @@ function renderCurrentTakeoffActions() {
   const inlineHost = document.getElementById("tsActionsInline");
   if (inlineHost) {
     inlineHost.innerHTML = "";
-    // v0.188: toggle de brujula leftmost, estilo "Sin limite".
-    const compassLabel = document.createElement("label");
-    compassLabel.className = "ts-no-radius ts-compass-toggle";
-    compassLabel.title = t("act.orient_toggle") || "Modo Brújula";
-    compassLabel.innerHTML = `
-      <span class="ts-compass-ico" aria-hidden="true">🧭</span>
-      <input type="checkbox" id="tsCompassToggle" ${orientationEnabled ? "checked" : ""} />
-      <span class="ts-switch" aria-hidden="true"></span>
-      <span class="ts-compass-label">${escapeHtml(t("act.orient_label") || "Modo brújula")}</span>
-    `;
-    inlineHost.appendChild(compassLabel);
-    const compassInput = compassLabel.querySelector("#tsCompassToggle");
-    compassInput?.addEventListener("change", async () => {
-      if (compassInput.checked) {
-        const ok = await enableDeviceOrientation();
-        if (!ok) compassInput.checked = false;
-      } else {
-        disableDeviceOrientation();
-      }
-    });
 
     if (actions.length) {
       actions.forEach((a) => {
@@ -6097,9 +6102,8 @@ function renderCurrentTakeoffActions() {
       });
       inlineHost.hidden = false;
     } else {
-      // v0.188: aunque no haya chips, mantenemos visible la barra para el
-      // toggle de brujula que siempre se inyecta al principio.
-      inlineHost.hidden = false;
+      // v0.219: sin chips ni toggle, la barra se oculta.
+      inlineHost.hidden = true;
     }
   }
 }
