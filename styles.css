@@ -560,7 +560,6 @@ header.topbar .ts-current {
   filter: none;
   opacity: 1;
   background: rgba(78, 161, 255, 0.18);
-  box-shadow: inset 0 0 0 1px var(--accent);
   border-radius: 6px;
 }
 .ts-icon-btn.is-home { color: #ff9800; }
