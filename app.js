@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.222";
+const APP_VERSION = "v0.223";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5729,9 +5729,9 @@ function applyCurrentTakeoffLabel() {
   const doc = (typeof getCurrentTakeoffDoc === "function") ? getCurrentTakeoffDoc() : null;
   const altSrc = doc?.alt ?? currentTakeoff.alt ?? null;
   const altHtml = Number.isFinite(+altSrc)
-    ? ` <span class="ts-current-alt">(${Math.round(+altSrc)} m)</span>`
+    ? ` <span class="ts-current-alt">(${Math.round(+altSrc)}m)</span>`
     : "";
-  const altLabel = Number.isFinite(+altSrc) ? ` (${Math.round(+altSrc)} m)` : "";
+  const altLabel = Number.isFinite(+altSrc) ? ` (${Math.round(+altSrc)}m)` : "";
   const el = document.getElementById("tsCurrentName");
   if (el) el.innerHTML = escapeHtml(baseName) + altHtml;
   const guideEl = document.getElementById("guideTakeoffName");
@@ -5936,7 +5936,7 @@ function renderCurrentTakeoffActions() {
   // (mismo patron que el chip ✎ sugerir).
   if (favoritable) {
     const star = document.createElement("button");
-    star.type = "button"; star.className = "ts-icon-btn" + (fav ? " is-active" : "");
+    star.type = "button"; star.className = "ts-icon-btn ts-fav-btn" + (fav ? " is-active" : "");
     star.title = !isLogged
       ? t("fav.add")
       : (fav ? t("fav.remove") : t("fav.add"));

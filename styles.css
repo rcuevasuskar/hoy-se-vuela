@@ -552,6 +552,9 @@ header.topbar .ts-current {
 }
 .ts-icon-btn:hover { background: rgba(255,255,255,0.08); color: var(--fg); }
 .ts-icon-btn.is-active { color: #f1c40f; }
+/* v0.223: la estrella es un caracter de texto (no emoji) y se ve mas
+   pequena que 🔔/🧭. Subimos su tamano para que visualmente coincida. */
+.ts-icon-btn.ts-fav-btn { font-size: 1.25rem; }
 /* v0.220: el icono de brujula es un emoji y los emojis ignoran color. Para
    distinguir on/off usamos opacidad+grayscale en OFF y un fondo + borde
    acento en ON. */
