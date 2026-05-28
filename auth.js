@@ -54,32 +54,68 @@ if (!isConfigured()) {
   function setUserLabel(user) {
     const label = $("userBtnLabel");
     const btn = $("userBtn");
-    // Avatares: cabecera del panel + bot\u00f3n principal del men\u00fa (+ legacy item).
-    const avatars = [
-      document.querySelector(".um-user-header .um-user-avatar"),
-      document.querySelector("#userMenuBtn .um-avatar"),
-      btn?.querySelector(".ts-user-avatar"),
-    ].filter(Boolean);
-    const setAvatar = (txt) => avatars.forEach(a => { a.textContent = txt; });
-    if (!label) return;
-    if (!user) {
-      label.textContent = t("auth.guest");
-      btn?.classList.remove("is-logged", "is-anon");
-      setAvatar("\ud83d\udc64");
-      return;
+    const menuBtn = $("userMenuBtn");
+    // Avatares conocidos: boton superior (topbar), cabecera del panel y, si
+    // existe legacy, el del item interno del menu.
+    const topAvatar = menuBtn?.querySelector(".um-avatar");
+    const headerAvatar = document.querySelector(".um-user-header .um-user-avatar");
+    const menuItemAvatar = btn?.querySelector(".ts-user-avatar");
+
+    // v0.218: distinguir claramente tres estados en el icono superior:
+    //   guest  -> silueta sobre fondo neutro, sin marca.
+    //   anon   -> silueta con punto amarillo (incognito).
+    //   logged -> foto de Google (si hay) o inicial sobre fondo acento, con
+    //             check verde abajo a la derecha.
+    const state = !user ? "guest" : (user.isAnonymous ? "anon" : "logged");
+    let photoURL = null, initial = null;
+    if (state === "logged") {
+      photoURL = user.photoURL || null;
+      const name = (user.displayName || user.email || "").trim();
+      initial = name ? name.charAt(0).toUpperCase() : "?";
     }
-    if (user.isAnonymous) {
-      label.textContent = t("auth.anon");
-      btn?.classList.remove("is-logged");
-      btn?.classList.add("is-anon");
-      setAvatar("\ud83d\udc64");
-      return;
+
+    if (menuBtn) {
+      menuBtn.classList.remove("is-guest", "is-anon", "is-logged");
+      menuBtn.classList.add("is-" + state);
     }
-    const name = user.displayName || user.email || t("auth.user");
-    label.textContent = name;
-    btn?.classList.add("is-logged");
-    btn?.classList.remove("is-anon");
-    setAvatar("\ud83d\udc64");
+
+    const renderAvatar = (el, opts) => {
+      if (!el) return;
+      el.classList.remove("av-guest", "av-anon", "av-logged", "av-photo", "av-initial");
+      el.classList.add("av-" + state);
+      el.innerHTML = "";
+      if (state === "logged" && photoURL && opts?.allowPhoto !== false) {
+        el.classList.add("av-photo");
+        const img = document.createElement("img");
+        img.src = photoURL;
+        img.alt = "";
+        img.referrerPolicy = "no-referrer";
+        img.addEventListener("error", () => {
+          el.classList.remove("av-photo");
+          el.classList.add("av-initial");
+          el.textContent = initial || "?";
+        });
+        el.appendChild(img);
+      } else if (state === "logged") {
+        el.classList.add("av-initial");
+        el.textContent = initial || "?";
+      } else {
+        el.textContent = "\ud83d\udc64";
+      }
+    };
+    renderAvatar(topAvatar);
+    renderAvatar(headerAvatar);
+    renderAvatar(menuItemAvatar, { allowPhoto: false });
+
+    if (label) {
+      if (state === "guest") label.textContent = t("auth.guest");
+      else if (state === "anon") label.textContent = t("auth.anon");
+      else label.textContent = user.displayName || user.email || t("auth.user");
+    }
+
+    // Mantener clases legacy en #userBtn por compatibilidad con otras reglas.
+    btn?.classList.toggle("is-logged", state === "logged");
+    btn?.classList.toggle("is-anon", state === "anon");
   }
 
   function openModal()  { $("authModal")?.removeAttribute("hidden"); }
