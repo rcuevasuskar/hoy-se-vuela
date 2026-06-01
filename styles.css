@@ -464,18 +464,45 @@ header.topbar .ts-current {
   padding: 0 6px; font-size: .8rem; color: var(--muted);
 }
 .to-coords-cta { align-self: stretch; }
-/* v220: selector de modo (radios) dentro del bloque de estacion de referencia */
+/* v220/v221: selector de modo del bloque "Estacion de referencia" como
+   toggle segmentado de dos botones (radios visualmente ocultos). */
 .to-ref-mode {
-  display: flex; flex-direction: column; gap: 4px;
-  margin: 0 0 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
 .to-ref-mode-opt {
-  display: flex; align-items: center; gap: 6px;
-  font-size: .82rem; color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 7px 10px;
+  font-size: .8rem; line-height: 1.2;
+  color: var(--muted);
+  border-radius: 7px;
   cursor: pointer;
+  user-select: none;
+  transition: background .15s ease, color .15s ease;
 }
-.to-ref-mode-opt input[type="radio"] { margin: 0; }
+.to-ref-mode-opt input[type="radio"] {
+  position: absolute; opacity: 0; pointer-events: none;
+}
+.to-ref-mode-opt:hover { color: var(--text); }
+.to-ref-mode-opt:has(input[type="radio"]:checked) {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+.to-ref-mode-opt:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .to-ref-pane { display: flex; flex-direction: column; gap: 4px; }
+.to-ref-pane[hidden] { display: none; }
 .to-ref-ok { color: var(--ideal); }
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
