@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.226";
+const APP_VERSION = "v0.227";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -6906,21 +6906,10 @@ function renderSearchRow(s, ctx) {
     }
 
     // Botón "+ Proponer" para resultados deshabilitados que no son comunidad.
-    // Para resultados comunitarios (con datos de despegue ya registrados) ofrecemos en su lugar
-    // un botón "✎ Sugerir cambios" que abre el formulario prellenado.
-    if (isCommunity) {
-      const edit = document.createElement("button");
-      edit.type = "button";
-      edit.className = "ts-result-propose";
-      edit.title = t("to.suggest_tip");
-      edit.textContent = "✎";
-      edit.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        const id = s.raw?.id;
-        if (id) openTakeoffSuggest(id);
-      });
-      icons.appendChild(edit);
-    } else if (!enabled) {
+    // v227: el boton "✎ Sugerir cambios" se ha quitado del buscador para
+    // simplificar la lista; se sigue pudiendo editar desde el panel del
+    // despegue activo (✎ junto al titulo).
+    if (!isCommunity && !enabled) {
       const prop = document.createElement("button");
       prop.type = "button";
       prop.className = "ts-result-propose";
