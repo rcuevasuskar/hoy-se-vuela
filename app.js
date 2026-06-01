@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.224";
+const APP_VERSION = "v0.225";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -222,6 +222,15 @@ const I18N = {
     "to.ref_none": "— Ninguna —",
     "to.ref_legend": "Estación de referencia (opcional)",
     "to.ref_block_hint": "Elige una opción o déjalas todas en blanco para usar la previsión de Windy del punto del mapa.",
+    "to.ref_mode_label": "Origen de la estación",
+    "to.ref_mode_station": "Estaciones integradas (Pioupiou, Holfuy, AEMET…)",
+    "to.ref_mode_url": "URL manual (Windy / Volandoo)",
+    "to.ref_url_label": "URL de la estación",
+    "to.ref_url_ph": "https://www.windy.com/… o https://volandoo.com/weather/…",
+    "to.ref_url_hint": "Pega la URL de Windy o Volandoo. Si el proveedor no está soportado, lo añadiremos en cuanto lo veamos.",
+    "to.ref_url_ok": "✔ {p} detectado.",
+    "to.ref_url_invalid": "La URL no es válida.",
+    "to.ref_url_unsupported": "Proveedor «{p}» todavía no soportado. Avísame y le doy soporte, o elige otra estación.",
     "to.coords_legend": "Coordenadas del despegue",
     "to.coords_open_map": "🗺️ Elegir en el mapa",
     "to.coords_manual_hint": "Si lo prefieres, puedes editar las coordenadas a mano.",
@@ -587,6 +596,15 @@ const I18N = {
     "to.ref_none": "— None —",
     "to.ref_legend": "Reference station (optional)",
     "to.ref_block_hint": "Pick one option or leave all blank to use the Windy forecast for the chosen point.",
+    "to.ref_mode_label": "Station source",
+    "to.ref_mode_station": "Integrated stations (Pioupiou, Holfuy, AEMET…)",
+    "to.ref_mode_url": "Manual URL (Windy / Volandoo)",
+    "to.ref_url_label": "Station URL",
+    "to.ref_url_ph": "https://www.windy.com/… or https://volandoo.com/weather/…",
+    "to.ref_url_hint": "Paste a Windy or Volandoo URL. If the provider is not supported, we'll add it as soon as we see it.",
+    "to.ref_url_ok": "✔ {p} detected.",
+    "to.ref_url_invalid": "The URL is not valid.",
+    "to.ref_url_unsupported": "Provider \"{p}\" not supported yet. Let me know and I'll add support, or pick another station.",
     "to.coords_legend": "Takeoff coordinates",
     "to.coords_open_map": "🗺️ Pick on the map",
     "to.coords_manual_hint": "If you prefer, you can edit the coordinates manually.",
@@ -936,6 +954,15 @@ const I18N = {
     "to.ref_none": "— Keine —",
     "to.ref_legend": "Referenzstation (optional)",
     "to.ref_block_hint": "Wähle eine Option oder lass alle leer, um die Windy-Vorhersage für den Punkt zu nutzen.",
+    "to.ref_mode_label": "Stationsquelle",
+    "to.ref_mode_station": "Integrierte Stationen (Pioupiou, Holfuy, AEMET…)",
+    "to.ref_mode_url": "Manuelle URL (Windy / Volandoo)",
+    "to.ref_url_label": "Stations-URL",
+    "to.ref_url_ph": "https://www.windy.com/… oder https://volandoo.com/weather/…",
+    "to.ref_url_hint": "Füge eine Windy- oder Volandoo-URL ein. Wenn der Anbieter nicht unterstützt wird, fügen wir ihn hinzu, sobald wir ihn sehen.",
+    "to.ref_url_ok": "✔ {p} erkannt.",
+    "to.ref_url_invalid": "Die URL ist ungültig.",
+    "to.ref_url_unsupported": "Anbieter „{p}\" noch nicht unterstützt. Sag Bescheid, dann ergänzen wir es, oder wähle eine andere Station.",
     "to.coords_legend": "Koordinaten des Startplatzes",
     "to.coords_open_map": "🗺️ Auf der Karte auswählen",
     "to.coords_manual_hint": "Du kannst die Koordinaten auch manuell bearbeiten.",
@@ -1281,6 +1308,15 @@ const I18N = {
     "to.ref_none": "— Aucune —",
     "to.ref_legend": "Station de référence (optionnelle)",
     "to.ref_block_hint": "Choisis une option ou laisse tout vide pour utiliser la prévision Windy du point.",
+    "to.ref_mode_label": "Source de la station",
+    "to.ref_mode_station": "Stations intégrées (Pioupiou, Holfuy, AEMET…)",
+    "to.ref_mode_url": "URL manuelle (Windy / Volandoo)",
+    "to.ref_url_label": "URL de la station",
+    "to.ref_url_ph": "https://www.windy.com/… ou https://volandoo.com/weather/…",
+    "to.ref_url_hint": "Colle une URL Windy ou Volandoo. Si le fournisseur n'est pas pris en charge, on l'ajoutera dès qu'on le verra.",
+    "to.ref_url_ok": "✔ {p} détecté.",
+    "to.ref_url_invalid": "L'URL n'est pas valide.",
+    "to.ref_url_unsupported": "Fournisseur « {p} » pas encore pris en charge. Préviens-moi et je l'ajoute, ou choisis une autre station.",
     "to.coords_legend": "Coordonnées du déco",
     "to.coords_open_map": "🗺️ Choisir sur la carte",
     "to.coords_manual_hint": "Tu peux aussi modifier les coordonnées à la main.",
@@ -1626,6 +1662,15 @@ const I18N = {
     "to.ref_none": "— Bat ere ez —",
     "to.ref_legend": "Erreferentziazko estazioa (aukerakoa)",
     "to.ref_block_hint": "Aukeratu aukera bat edo utzi denak hutsik, mapako puntuaren Windy iragarpena erabiltzeko.",
+    "to.ref_mode_label": "Estazioaren iturria",
+    "to.ref_mode_station": "Estazio integratuak (Pioupiou, Holfuy, AEMET…)",
+    "to.ref_mode_url": "URL eskuz (Windy / Volandoo)",
+    "to.ref_url_label": "Estazioaren URLa",
+    "to.ref_url_ph": "https://www.windy.com/… edo https://volandoo.com/weather/…",
+    "to.ref_url_hint": "Itsatsi Windy edo Volandoo URLa. Hornitzailea onartzen ez bada, ikusi bezain laster gehituko dugu.",
+    "to.ref_url_ok": "✔ {p} antzeman da.",
+    "to.ref_url_invalid": "URLa ez da baliozkoa.",
+    "to.ref_url_unsupported": "«{p}» hornitzailea ez da oraindik onartzen. Esan eta gehituko dut, edo aukeratu beste estazio bat.",
     "to.coords_legend": "Irteguiaren koordenatuak",
     "to.coords_open_map": "🗺️ Aukeratu mapan",
     "to.coords_manual_hint": "Nahi izanez gero, koordenatuak eskuz aldatu ditzakezu.",
@@ -1925,6 +1970,15 @@ const I18N = {
     "to.ref_none": "— Cap —",
     "to.ref_legend": "Estació de referència (opcional)",
     "to.ref_block_hint": "Tria una opció o deixa-les totes en blanc per usar la previsió de Windy del punt del mapa.",
+    "to.ref_mode_label": "Origen de l'estació",
+    "to.ref_mode_station": "Estacions integrades (Pioupiou, Holfuy, AEMET…)",
+    "to.ref_mode_url": "URL manual (Windy / Volandoo)",
+    "to.ref_url_label": "URL de l'estació",
+    "to.ref_url_ph": "https://www.windy.com/… o https://volandoo.com/weather/…",
+    "to.ref_url_hint": "Enganxa la URL de Windy o Volandoo. Si el proveïdor no està suportat, l'afegirem tan aviat com el veiem.",
+    "to.ref_url_ok": "✔ {p} detectat.",
+    "to.ref_url_invalid": "La URL no és vàlida.",
+    "to.ref_url_unsupported": "Proveïdor «{p}» encara no suportat. Avisa'm i li dono suport, o tria una altra estació.",
     "to.coords_legend": "Coordenades de l'enlairament",
     "to.coords_open_map": "🗺️ Tria al mapa",
     "to.coords_manual_hint": "Si ho prefereixes, pots editar les coordenades a mà.",
@@ -5528,6 +5582,65 @@ function _toClearStationRef() {
   const sel = document.getElementById("toStationId");
   if (sel && sel.tagName === "SELECT") { sel.value = ""; delete sel.dataset.pendingValue; }
 }
+
+// v220: modo del bloque "Estacion de referencia": "station" (dropdown
+// integrado) o "url" (input para pegar URL de Windy/Volandoo). Cambiar el
+// modo solo conmuta la UI; el guardado mapea al campo correcto.
+function _toGetRefMode() {
+  const r = document.querySelector('input[name="toRefMode"]:checked');
+  return r?.value || "station";
+}
+function _toSetRefMode(mode) {
+  const m = (mode === "url") ? "url" : "station";
+  document.querySelectorAll('input[name="toRefMode"]').forEach(r => { r.checked = (r.value === m); });
+  const sBlock = document.getElementById("toRefStationBlock");
+  const uBlock = document.getElementById("toRefUrlBlock");
+  if (sBlock) sBlock.hidden = (m !== "station");
+  if (uBlock) uBlock.hidden = (m !== "url");
+}
+function _toDetectExtProvider(url) {
+  const u = String(url || "").trim();
+  if (!u) return { provider: null, supported: false };
+  let host = "";
+  try { host = new URL(u).hostname.toLowerCase().replace(/^www\./, ""); }
+  catch (_) { return { provider: null, supported: false, invalid: true }; }
+  if (host.endsWith("windy.com")) return { provider: "windy", supported: true };
+  if (host.endsWith("volandoo.com")) return { provider: "volandoo", supported: true };
+  if (host.endsWith("holfuy.com")) return { provider: "holfuy", supported: false };
+  if (host.endsWith("pioupiou.fr")) return { provider: "pioupiou", supported: false };
+  if (host.endsWith("openwindmap.org")) return { provider: "openwindmap", supported: false };
+  return { provider: host, supported: false };
+}
+function _toUpdateExtUrlHint() {
+  const inp = document.getElementById("toExtUrl");
+  const info = document.getElementById("toExtUrlInfo");
+  if (!inp || !info) return;
+  const val = inp.value.trim();
+  if (!val) {
+    info.textContent = t("to.ref_url_hint");
+    info.className = "to-hint";
+    return;
+  }
+  const det = _toDetectExtProvider(val);
+  if (det.invalid) {
+    info.textContent = t("to.ref_url_invalid");
+    info.className = "to-warn";
+    return;
+  }
+  if (det.supported) {
+    const label = det.provider === "windy" ? "Windy" : "Volandoo";
+    info.textContent = t("to.ref_url_ok").replace("{p}", label);
+    info.className = "to-hint to-ref-ok";
+    return;
+  }
+  info.textContent = t("to.ref_url_unsupported").replace("{p}", det.provider || "?");
+  info.className = "to-warn";
+}
+document.addEventListener("change", (e) => {
+  const tgt = e.target;
+  if (tgt && tgt.name === "toRefMode") _toSetRefMode(tgt.value);
+});
+document.getElementById("toExtUrl")?.addEventListener("input", _toUpdateExtUrlHint);
 async function _toLoadStationsForCoords({ keepValue = false } = {}) {
   const sel = document.getElementById("toStationId");
   if (!sel || sel.tagName !== "SELECT") return;
@@ -6623,7 +6736,7 @@ function renderSearchRow(s, ctx) {
   if (!enabled) btn.disabled = true;
   let tail;
   if (isCommunity) {
-    tail = `<span class="ts-result-badge">${t("to.community_badge")}</span>`;
+    tail = "";
   } else if (isFfvl) {
     tail = `<span class="ts-result-provider ffvl">FFVL</span>`;
   } else if (isAemet) {
@@ -7182,10 +7295,12 @@ function openTakeoffSubmit(prefill) {
   const u = window.PCAuth?.user;
   if (!u || u.isAnonymous) { alert(t("to.submit_login")); return; }
   document.getElementById("toSubmitMsg").textContent = "";
-  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax","toWindyUrl","toVolandooUrl"].forEach(id => {
+  ["toName","toLat","toLon","toAlt","toOrient","toNotes","toWindMin","toWindMax","toGustMax","toWindyUrl","toVolandooUrl","toExtUrl"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   _toClearStationRef?.();
+  _toSetRefMode("station");
+  _toUpdateExtUrlHint();
   // v206: oculta el aviso "revisa la estacion" al abrir un dialogo nuevo.
   const __warn = document.getElementById("toStationMoveWarn");
   if (__warn) __warn.hidden = true;
@@ -7228,6 +7343,17 @@ function openTakeoffSubmit(prefill) {
     if (prefill.notes) document.getElementById("toNotes").value = String(prefill.notes);
     if (prefill.windyUrl) document.getElementById("toWindyUrl").value = String(prefill.windyUrl);
     if (prefill.volandooUrl) document.getElementById("toVolandooUrl").value = String(prefill.volandooUrl);
+    // v220: si el prefill trae una URL externa, mostramos el modo "url" con
+    // ese valor en el input visible. Si trae stationId, mostramos modo
+    // "station" (el dropdown se rellena async).
+    if (prefill.windyUrl || prefill.volandooUrl) {
+      _toSetRefMode("url");
+      const ext = document.getElementById("toExtUrl");
+      if (ext) ext.value = String(prefill.windyUrl || prefill.volandooUrl || "");
+      _toUpdateExtUrlHint();
+    } else {
+      _toSetRefMode("station");
+    }
     if (prefill.stationId != null && prefill.stationId !== "") {
       const idEl = document.getElementById("toStationId");
       if (idEl) {
@@ -7438,8 +7564,30 @@ document.getElementById("toMapPickerConfirm")?.addEventListener("click", () => {
   // queda fuera, _toLoadStationsForCoords la anade como "fuera de 30 km").
   try { _toLoadStationsForCoords?.({ keepValue: true }); } catch (_) {}
   _toMaybeWarnStationMove(prevLat, prevLon, ll.lat, ll.lng, prevStationId);
+  // v220: si el campo "Nombre" sigue vacio, sugerimos uno con reverse
+  // geocoding (Nominatim). No bloquea: si falla o ya hay nombre, se ignora.
+  _toMaybeSuggestNameFromCoords(ll.lat, ll.lng);
   closeTakeoffMapPicker();
 });
+
+// v220: reverse-geocode Nominatim para sugerir un nombre desde lat/lon.
+async function _toMaybeSuggestNameFromCoords(lat, lon) {
+  const nameEl = document.getElementById("toName");
+  if (!nameEl || nameEl.value.trim()) return;
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&zoom=14&addressdetails=1`;
+    const res = await fetch(url, { headers: { "Accept-Language": currentLang || "es" } });
+    if (!res.ok) return;
+    const data = await res.json();
+    const a = data?.address || {};
+    const candidate = data?.name
+      || a.peak || a.mountain || a.hill || a.viewpoint
+      || a.hamlet || a.village || a.town || a.suburb || a.locality
+      || a.city_district || a.city || a.county
+      || (data?.display_name ? String(data.display_name).split(",")[0].trim() : "");
+    if (candidate && !nameEl.value.trim()) nameEl.value = candidate;
+  } catch (e) { console.warn("[reverse-geocode]", e); }
+}
 
 // v204: geocodificador integrado en el sub-modal del mapa. Al elegir un
 // resultado movemos el marcador y centramos el mapa (no escribimos en
@@ -7589,6 +7737,32 @@ document.getElementById("toSubmitBtn")?.addEventListener("click", async () => {
       criteria,
       targetId: _suggestTargetId || null,
     };
+    // v220: el bloque "Estacion de referencia" tiene dos modos exclusivos:
+    //   - "station": usar el dropdown de estaciones integradas. URLs externas se ignoran.
+    //   - "url": pegar URL de Windy o Volandoo en toExtUrl; detectamos el
+    //     proveedor y la mapeamos al campo correcto del payload. stationId se
+    //     ignora. Si la URL no es soportada, mostramos un error y no enviamos.
+    const _refMode = _toGetRefMode();
+    if (_refMode === "url") {
+      const raw = (document.getElementById("toExtUrl")?.value || "").trim();
+      submittedPayload.stationId = null;
+      submittedPayload.windyUrl = null;
+      submittedPayload.volandooUrl = null;
+      if (raw) {
+        const det = _toDetectExtProvider(raw);
+        if (det.invalid) { msg.textContent = t("to.ref_url_invalid"); return; }
+        if (!det.supported) {
+          msg.textContent = t("to.ref_url_unsupported").replace("{p}", det.provider || "?");
+          return;
+        }
+        if (det.provider === "windy") submittedPayload.windyUrl = raw;
+        else if (det.provider === "volandoo") submittedPayload.volandooUrl = raw;
+      }
+    } else {
+      // Modo station: limpiamos las URLs externas para no mantener restos previos.
+      submittedPayload.windyUrl = null;
+      submittedPayload.volandooUrl = null;
+    }
     // v164: capturamos el criterio "viejo" del doc ANTES de enviar la
     // actualizacion para poder limpiar overrides personales que coincidan
     // exactamente con el (ver bloque de limpieza mas abajo).

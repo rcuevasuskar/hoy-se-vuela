@@ -8,7 +8,7 @@
   --accent-dark: #2d7ad9;
   --ideal: #2ecc71;
   --ok: #f1c40f;
-  --bad: #e74c3c;
+  --bad: #d7263d;
   --warn: #e67e22;
   --border: #263448;
   --body-overlay: linear-gradient(180deg, rgba(11,19,32,0.30) 0%, rgba(15,24,34,0.65) 100%);
@@ -26,7 +26,7 @@
   --accent-dark: #155bbb;
   --ideal: #1aa760;
   --ok: #c79100;
-  --bad: #d63031;
+  --bad: #b71540;
   --warn: #d97a17;
   --border: #d2dae5;
   --body-overlay: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(243,246,251,0.85) 100%);
@@ -46,7 +46,7 @@
     --accent-dark: #155bbb;
     --ideal: #1aa760;
     --ok: #c79100;
-    --bad: #d63031;
+    --bad: #b71540;
     --warn: #d97a17;
     --border: #d2dae5;
     --body-overlay: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(243,246,251,0.85) 100%);
@@ -464,6 +464,23 @@ header.topbar .ts-current {
   padding: 0 6px; font-size: .8rem; color: var(--muted);
 }
 .to-coords-cta { align-self: stretch; }
+/* v220: selector de modo (radios) dentro del bloque de estacion de referencia */
+.to-ref-mode {
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 0 0 4px;
+}
+.to-ref-mode-opt {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .82rem; color: var(--text);
+  cursor: pointer;
+}
+.to-ref-mode-opt input[type="radio"] { margin: 0; }
+.to-ref-pane { display: flex; flex-direction: column; gap: 4px; }
+.to-ref-ok { color: var(--ideal); }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
 /* v205: campo altitud con boton de calculo automatico */
 .to-alt-row { display: flex; gap: 6px; align-items: stretch; }
 .to-alt-row > input { flex: 1; min-width: 0; }
@@ -1188,8 +1205,11 @@ main {
 .sector.ok    { color: var(--ok); }
 /* v122: rojo pastel mas vivo para los sectores malos (antes salia parduzco por
    el filter saturate(65%) heredado de .sector). Usamos color directo y mas
-   opacidad, sin el filtro de desaturacion. */
-.sector.bad   { color: #ff8a8a; opacity: 0.6; filter: none; }
+   opacidad, sin el filtro de desaturacion.
+   v220: tono mas magenta/carmin para mejorar la distincion en daltonismos
+   rojo-verde (deutan/protan): el ambar y el verde estaban demasiado cerca
+   en tono del rojo anterior. */
+.sector.bad   { color: #ff5d7a; opacity: 0.65; filter: none; }
 
 .sector[style*="--start:337.5deg"] {
   background: conic-gradient(from -22.5deg, currentColor 0deg, currentColor 45deg, transparent 0);
