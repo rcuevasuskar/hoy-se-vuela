@@ -125,7 +125,7 @@ const I18N = {
     "cw.direction": "Dirección",
     "cw.gust": "Racha máx.",
     "read.max": "Racha máx.",
-    "read.min": "Mínima",
+    "read.techo": "Techo",
     "read.last": "Última lectura",
     "read.dir": "Dirección",
     "verdict.loading": "Cargando…",
@@ -454,7 +454,7 @@ const I18N = {
     "cp.high": "Altas",
     "cp.mid":  "Medias",
     "cp.low":  "Bajas",
-    "cp.base": "Base nube",
+    "cp.base": "Techo",
     "cp.stab": "Inestabilidad",
     "cp.none": "—",
     "cp.stab.stable": "Estable",
@@ -499,7 +499,7 @@ const I18N = {
     "cw.direction": "Direction",
     "cw.gust": "Max gust",
     "read.max": "Max gust",
-    "read.min": "Min",
+    "read.techo": "Ceiling",
     "read.last": "Last reading",
     "read.dir": "Direction",
     "verdict.loading": "Loading…",
@@ -813,7 +813,7 @@ const I18N = {
     "cp.high": "High",
     "cp.mid":  "Mid",
     "cp.low":  "Low",
-    "cp.base": "Cloud base",
+    "cp.base": "Ceiling",
     "cp.stab": "Instability",
     "cp.none": "—",
     "cp.stab.stable": "Stable",
@@ -857,7 +857,7 @@ const I18N = {
     "cw.direction": "Richtung",
     "cw.gust": "Max. Böe",
     "read.max": "Max. Böe",
-    "read.min": "Minimum",
+    "read.techo": "Decke",
     "read.last": "Letzte Messung",
     "read.dir": "Richtung",
     "verdict.loading": "Lädt…",
@@ -1167,7 +1167,7 @@ const I18N = {
     "cp.high": "Hoch",
     "cp.mid":  "Mittel",
     "cp.low":  "Tief",
-    "cp.base": "Wolkenbasis",
+    "cp.base": "Decke",
     "cp.stab": "Instabilität",
     "cp.none": "—",
     "cp.stab.stable": "Stabil",
@@ -1211,7 +1211,7 @@ const I18N = {
     "cw.direction": "Direction",
     "cw.gust": "Rafale max",
     "read.max": "Rafale max.",
-    "read.min": "Minimum",
+    "read.techo": "Plafond",
     "read.last": "Dernière mesure",
     "read.dir": "Direction",
     "verdict.loading": "Chargement…",
@@ -1521,7 +1521,7 @@ const I18N = {
     "cp.high": "Hauts",
     "cp.mid":  "Moyens",
     "cp.low":  "Bas",
-    "cp.base": "Base nuage",
+    "cp.base": "Plafond",
     "cp.stab": "Instabilité",
     "cp.none": "—",
     "cp.stab.stable": "Stable",
@@ -1565,7 +1565,7 @@ const I18N = {
     "cw.direction": "Norabidea",
     "cw.gust": "Gehi. bol.",
     "read.max": "Bolada max.",
-    "read.min": "Minimoa",
+    "read.techo": "Sabaia",
     "read.last": "Azken neurketa",
     "read.dir": "Norabidea",
     "verdict.loading": "Kargatzen…",
@@ -1873,7 +1873,7 @@ const I18N = {
     "cw.direction": "Direcció",
     "cw.gust": "Ratxa màx.",
     "read.max": "Ratxa màx.",
-    "read.min": "Mínima",
+    "read.techo": "Sostre",
     "read.last": "Última lectura",
     "read.dir": "Direcció",
     "verdict.loading": "Carregant…",
@@ -3527,7 +3527,7 @@ function renderLive(live) {
   if (!live || !hasAnyWind) {
     latestLive = null;
     previousAvg = null;
-    setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—");
+    setText("windAvg", "—"); setText("windMax", "—");
     setText("lastUpdate", "—");
     renderLiveSource(null);
     renderWindBarVertical(null, null);
@@ -3559,7 +3559,6 @@ function renderLive(live) {
 
   setText("windAvg", fmtNum(avg));
   setText("windMax", fmtNum(max));
-  setText("windMin", fmtNum(min));
   setText("lastUpdate", fmtTime(date));
   renderLiveSource(live.source || null);
   renderWindBarVertical(avg, max);
@@ -3708,7 +3707,7 @@ function renderCloudPanel(cw) {
   const card = document.getElementById("cloudCard");
   if (!box) return;
   const cl = classifyClouds(cw);
-  if (!cl) { box.hidden = true; if (card) card.hidden = true; return; }
+  if (!cl) { box.hidden = true; if (card) card.hidden = true; setText("windTecho", "—"); return; }
   box.hidden = false;
   if (card) card.hidden = false;
 
@@ -3725,6 +3724,8 @@ function renderCloudPanel(cw) {
   setLayer("Low",  cl.low,  cl.lowType  ? `cp.type.low.${cl.lowType}`   : null);
 
   document.getElementById("cpBase").textContent = cl.baseM != null ? `~${cl.baseM} m` : "—";
+  // v0.230: replica el techo en el indicador principal junto a la brujula.
+  setText("windTecho", cl.baseM != null ? `~${cl.baseM}` : "—");
   document.getElementById("cpStab").textContent = t(`cp.stab.${cl.stab}`);
   document.getElementById("cpStab").dataset.level = cl.stab;
   document.getElementById("cpSummary").textContent = t(cl.sumKey);
@@ -5825,7 +5826,7 @@ function refreshAllForCurrentTakeoff() {
   // Reset estado en memoria
   previousAvg = null;
   latestLive = null;
-  setText("windAvg", "—"); setText("windMax", "—"); setText("windMin", "—"); setText("lastUpdate", "—");
+  setText("windAvg", "—"); setText("windMax", "—"); setText("windTecho", "—"); setText("lastUpdate", "—");
   renderLiveSource(null);
   renderWindBarVertical(null, null);
   refreshObservations();
