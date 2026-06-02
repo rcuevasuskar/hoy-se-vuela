@@ -429,6 +429,8 @@ const I18N = {
     "wh.titleFmt": "Últimas {h} h (km/h)",
     "wh.legend": "flecha = hacia dónde sopla · altura = velocidad",
     "ts.coming_soon": "No añadido",
+    "ts.no_live": "sin viento",
+    "ts.no_live_tip": "Este despegue no tiene datos de viento en tiempo real (solo pronóstico).",
     "verdict.rain_suffix": "Probabilidad de precipitación significativa.",
     "verdict.speed.calm": "Viento muy flojo, prácticamente en calma.",
     "verdict.speed.low": "Viento por debajo del rango ideal (<5 km/h).",
@@ -787,6 +789,8 @@ const I18N = {
     "wh.titleFmt": "Last {h} h (km/h)",
     "wh.legend": "arrow = where the wind blows to · height = speed",
     "ts.coming_soon": "Not added",
+    "ts.no_live": "no live wind",
+    "ts.no_live_tip": "No real-time wind data for this takeoff (forecast only).",
     "verdict.rain_suffix": "Significant precipitation probability.",
     "verdict.speed.calm": "Wind is very light, almost calm.",
     "verdict.speed.low": "Wind below the ideal range (<5 km/h).",
@@ -1141,6 +1145,8 @@ const I18N = {
     "wh.titleFmt": "Letzte {h} h (km/h)",
     "wh.legend": "Pfeil = Windrichtung (wohin) · Höhe = Geschwindigkeit",
     "ts.coming_soon": "Nicht hinzugefügt",
+    "ts.no_live": "kein Live-Wind",
+    "ts.no_live_tip": "Keine Echtzeit-Winddaten für diesen Startplatz (nur Vorhersage).",
     "verdict.rain_suffix": "Erhebliche Niederschlagswahrscheinlichkeit.",
     "verdict.speed.calm": "Wind sehr schwach, fast Windstille.",
     "verdict.speed.low": "Wind unter dem Idealbereich (<5 km/h).",
@@ -1495,6 +1501,8 @@ const I18N = {
     "wh.titleFmt": "{h} dernières heures (km/h)",
     "wh.legend": "flèche = vers où souffle le vent · hauteur = vitesse",
     "ts.coming_soon": "Non ajouté",
+    "ts.no_live": "pas de vent live",
+    "ts.no_live_tip": "Pas de données de vent en temps réel pour ce décollage (prévision uniquement).",
     "verdict.rain_suffix": "Probabilité significative de précipitations.",
     "verdict.speed.calm": "Vent très faible, presque calme.",
     "verdict.speed.low": "Vent en dessous de la plage idéale (<5 km/h).",
@@ -1849,6 +1857,8 @@ const I18N = {
     "wh.titleFmt": "Azken {h} h (km/h)",
     "wh.legend": "gezia = norantz dabilen haizea · altuera = abiadura",
     "ts.coming_soon": "Gehitu gabe",
+    "ts.no_live": "haize daturik ez",
+    "ts.no_live_tip": "Hegaldi-leku honek ez du denbora errealeko haize daturik (iragarpena bakarrik).",
     "verdict.rain_suffix": "Prezipitazio probabilitate esanguratsua.",
     "verdict.speed.calm": "Haize oso ahula, ia geldia.",
     "verdict.speed.low": "Haizea tarte aproposaren azpitik (<5 km/h).",
@@ -2157,6 +2167,8 @@ const I18N = {
     "wh.titleFmt": "Últimes {h} h (km/h)",
     "wh.legend": "fletxa = cap a on bufa · altura = velocitat",
     "ts.coming_soon": "No afegit",
+    "ts.no_live": "sense vent",
+    "ts.no_live_tip": "Aquest enlairament no té dades de vent en temps real (només pronòstic).",
     "verdict.rain_suffix": "Probabilitat significativa de precipitació.",
     "verdict.speed.calm": "Vent molt fluix, pràcticament en calma.",
     "verdict.speed.low": "Vent per sota del rang ideal (<5 km/h).",
@@ -6719,6 +6731,11 @@ function renderSearchRow(s, ctx) {
   const isFfvl = s.provider === "ffvl";
   const isAemet = s.provider === "aemet";
   const isHolfuy = s.provider === "holfuy";
+  // v0.233: comunitario sin fuente live (ni volandooUrl ni estacion vinculada)
+  // -> distintivo gris para indicar "sin datos de viento en directo".
+  const hasLiveWind = isCommunity
+    ? !!(s.raw?.volandooUrl || s._linkedStation)
+    : true;
   // v228: los despegues comunitarios siempre son seleccionables aunque no
   // tengan estacion meteo vinculada (se carga el despegue como pseudo-station
   // y se puede editar). Antes: enabled = !!s._linkedStation -> deshabilitados.
@@ -6734,13 +6751,14 @@ function renderSearchRow(s, ctx) {
     + (s.id === currentStationId ? " selected" : "")
     + (enabled ? "" : " disabled")
     + (isCommunity ? " community" : "")
+    + (isCommunity && !hasLiveWind ? " no-live" : "")
     + (isFfvl ? " ffvl" : "")
     + (isAemet ? " aemet" : "")
     + (isHolfuy ? " holfuy" : "");
   if (!enabled) btn.disabled = true;
   let tail;
   if (isCommunity) {
-    tail = "";
+    tail = hasLiveWind ? "" : `<span class="ts-result-nolive" title="${escapeHtml(t("ts.no_live_tip"))}">${t("ts.no_live")}</span>`;
   } else if (isFfvl) {
     tail = `<span class="ts-result-provider ffvl">FFVL</span>`;
   } else if (isAemet) {

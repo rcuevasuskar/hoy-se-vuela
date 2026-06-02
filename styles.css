@@ -987,6 +987,20 @@ header.topbar .ts-current {
   color: var(--warn);
   flex-shrink: 0;
 }
+.ts-result .ts-result-nolive {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  color: var(--muted);
+  border: 1px solid rgba(255,255,255,0.12);
+  flex-shrink: 0;
+  text-transform: lowercase;
+}
+.ts-result.no-live .ts-result-name,
+.ts-result.no-live .ts-result-alt,
+.ts-result.no-live .ts-result-dist { color: var(--muted); }
+.ts-result.no-live { opacity: .85; }
 .ts-result .ts-result-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ts-result .ts-result-alt { color: var(--muted); font-weight: 400; font-size: 0.85em; }
 .ts-result .ts-result-dist { color: var(--muted); font-size: 0.75rem; flex-shrink: 0; }
