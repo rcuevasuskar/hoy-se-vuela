@@ -4512,7 +4512,7 @@ function renderForecastLegend() {
   const host = document.getElementById("forecastLegend");
   if (!host || !forecastChart) return;
   const datasets = forecastChart.data.datasets;
-  host.innerHTML = `<div class="fc-legend-title">${t("fc.show")}</div>`;
+  host.innerHTML = "";
   datasets.forEach((ds, i) => {
     const visible = forecastChart.isDatasetVisible(i);
     const color = ds.borderColor || ds.backgroundColor || "#888";

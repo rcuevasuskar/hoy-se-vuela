@@ -1800,12 +1800,37 @@ main {
 }
 
 /* Forecast legend (custom HTML, checkboxes — más claro que la nativa) */
-.fc-legend {
+.fc-legend-details {
   margin-top: 10px;
-  padding: 10px 12px;
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 10px;
+  overflow: hidden;
+}
+.fc-legend-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 12px;
+  font-size: .8rem;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fc-legend-summary::-webkit-details-marker { display: none; }
+.fc-legend-summary::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform .15s ease;
+  color: var(--muted);
+  font-size: .9rem;
+}
+.fc-legend-details[open] > .fc-legend-summary::before { transform: rotate(90deg); }
+.fc-legend {
+  padding: 0 12px 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
