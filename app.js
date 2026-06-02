@@ -105,7 +105,8 @@ function saveSelectedStation(s) {
   } catch {}
 }
 
-const TAKEOFF_HASH_PREFIX = "#/to/";
+const TAKEOFF_HASH_PREFIX = "#/";
+const TAKEOFF_HASH_LEGACY_PREFIX = "#/to/";
 
 function slugifyTakeoffName(name) {
   return String(name || "")
@@ -118,8 +119,14 @@ function slugifyTakeoffName(name) {
 
 function _readTakeoffSlugFromHash() {
   const h = String(window.location.hash || "").trim();
-  if (!h.startsWith(TAKEOFF_HASH_PREFIX)) return null;
-  const raw = h.slice(TAKEOFF_HASH_PREFIX.length);
+  let raw = null;
+  if (h.startsWith(TAKEOFF_HASH_LEGACY_PREFIX)) {
+    raw = h.slice(TAKEOFF_HASH_LEGACY_PREFIX.length);
+  } else if (h.startsWith(TAKEOFF_HASH_PREFIX)) {
+    raw = h.slice(TAKEOFF_HASH_PREFIX.length);
+  } else {
+    return null;
+  }
   if (!raw) return null;
   try {
     return decodeURIComponent(raw).trim().toLowerCase();
@@ -8406,7 +8413,7 @@ async function _selectCommunityTakeoff(to) {
 
 async function resolveDefaultTakeoff() {
   if (_userPickedStation) return;
-  // (0) Deep-link compartible en hash: #/to/nombre-del-despegue
+  // (0) Deep-link compartible en hash: #/nombre-del-despegue
   try {
     if (await _trySelectTakeoffFromHash({ markUserPicked: true })) return;
   } catch (e) {
