@@ -8348,6 +8348,7 @@ setTimeout(requestInitialGeolocation, 800);
 //   5) Cenes (DEFAULT_STATION).
 let _userPickedStation = false;
 let _defaultResolvedOnce = false;
+let _defaultResolveSeq = 0;
 
 function _favToStation(f) {
   if (f.source === "pioupiou") {
@@ -8395,8 +8396,10 @@ async function _findRecentNearbyStation(lat, lon, LINK_KM = 30) {
   }
 }
 
-async function _selectCommunityTakeoff(to) {
+async function _selectCommunityTakeoff(to, shouldAbort) {
+  if (typeof shouldAbort === "function" && shouldAbort()) return false;
   const best = await _findRecentNearbyStation(to.lat, to.lon);
+  if (typeof shouldAbort === "function" && shouldAbort()) return false;
   if (best) {
     selectStation(
       { id: best.id, provider: best.provider, name: to.name, shortName: to.shortName || to.name, lat: to.lat, lon: to.lon },
@@ -8409,16 +8412,21 @@ async function _selectCommunityTakeoff(to) {
       { criteria: to.criteria || null, originId: to.id }
     );
   }
+  return true;
 }
 
 async function resolveDefaultTakeoff() {
   if (_userPickedStation) return;
+  const mySeq = ++_defaultResolveSeq;
+  const shouldAbort = () => _userPickedStation || mySeq !== _defaultResolveSeq;
   // (0) Deep-link compartible en hash: #/nombre-del-despegue
   try {
+    if (shouldAbort()) return;
     if (await _trySelectTakeoffFromHash({ markUserPicked: true })) return;
   } catch (e) {
     console.warn("resolveDefaultTakeoff hash:", e);
   }
+  if (shouldAbort()) return;
   // (1) Sesion anterior: restauramos el despegue concreto.
   const savedTakeoffId = loadSavedTakeoffId();
   if (savedTakeoffId) {
@@ -8426,12 +8434,15 @@ async function resolveDefaultTakeoff() {
     const to = list.find(t => t.id === savedTakeoffId);
     if (to) {
       try {
-        await _selectCommunityTakeoff(to);
-        _defaultResolvedOnce = true;
-        return;
+        if (await _selectCommunityTakeoff(to, shouldAbort)) {
+          _defaultResolvedOnce = true;
+          return;
+        }
+        if (shouldAbort()) return;
       } catch (e) { console.warn("resolveDefaultTakeoff saved takeoff:", e); }
     }
   }
+  if (shouldAbort()) return;
   const favs = window.PCAuth?.favorites || [];
   // (2) Favorito mas cercano a la posicion del usuario.
   if (userLocation && favs.length) {
@@ -8450,14 +8461,22 @@ async function resolveDefaultTakeoff() {
           id: bestFav.refId, name: bestFav.name, lat: bestFav.lat, lon: bestFav.lon,
           criteria: bestFav.criteria || null,
         };
-        await _selectCommunityTakeoff(to);
+        if (await _selectCommunityTakeoff(to, shouldAbort)) {
+          _defaultResolvedOnce = true;
+          return;
+        }
+        if (shouldAbort()) return;
+      }
+      const conv = _favToStation(bestFav);
+      if (conv) {
+        if (shouldAbort()) return;
+        selectStation(conv.station, conv.opts);
         _defaultResolvedOnce = true;
         return;
       }
-      const conv = _favToStation(bestFav);
-      if (conv) { selectStation(conv.station, conv.opts); _defaultResolvedOnce = true; return; }
     }
   }
+  if (shouldAbort()) return;
   // (3) Despegue comunitario mas cercano a la geolocalizacion.
   if (userLocation) {
     const tlist = window.PCAuth?.approvedTakeoffs || [];
@@ -8469,12 +8488,15 @@ async function resolveDefaultTakeoff() {
     }
     if (bestT) {
       try {
-        await _selectCommunityTakeoff(bestT);
-        _defaultResolvedOnce = true;
-        return;
+        if (await _selectCommunityTakeoff(bestT, shouldAbort)) {
+          _defaultResolvedOnce = true;
+          return;
+        }
+        if (shouldAbort()) return;
       } catch (e) { console.warn("resolveDefaultTakeoff nearest takeoff:", e); }
     }
   }
+  if (shouldAbort()) return;
   // (4) Sin geolocalizacion pero con favoritos: cualquiera (el primero).
   if (!userLocation && favs.length) {
     const chosen = favs[0];
@@ -8484,15 +8506,23 @@ async function resolveDefaultTakeoff() {
         id: chosen.refId, name: chosen.name, lat: chosen.lat, lon: chosen.lon,
         criteria: chosen.criteria || null,
       };
-      await _selectCommunityTakeoff(to);
+      if (await _selectCommunityTakeoff(to, shouldAbort)) {
+        _defaultResolvedOnce = true;
+        return;
+      }
+      if (shouldAbort()) return;
+    }
+    const conv = _favToStation(chosen);
+    if (conv) {
+      if (shouldAbort()) return;
+      selectStation(conv.station, conv.opts);
       _defaultResolvedOnce = true;
       return;
     }
-    const conv = _favToStation(chosen);
-    if (conv) { selectStation(conv.station, conv.opts); _defaultResolvedOnce = true; return; }
   }
   // (5) Cenes (solo si aun no se resolvio en esta sesion)
   if (!_defaultResolvedOnce) {
+    if (shouldAbort()) return;
     selectStation({ ...DEFAULT_STATION });
     _defaultResolvedOnce = true;
   }
