@@ -6976,7 +6976,7 @@ function renderSearchRow(s, ctx) {
       }
       // v119: limpia el input y cierra el panel al seleccionar un resultado.
       if (typeof window.closeTsPanel === "function") {
-        window.closeTsPanel({ clearInput: true });
+        window.closeTsPanel({ clearInput: true, skipHistoryBack: true });
       } else {
         document.getElementById("tsPanel").hidden = true;
       }
@@ -7098,12 +7098,20 @@ function initTakeoffSelector() {
   let searchTimer = null;
   // v119: helper para cerrar el panel y limpiar el input. Usado al seleccionar
   // un resultado y por los listeners de Esc / click fuera / boton atras (popstate).
-  const closeTsPanel = ({ clearInput = false } = {}) => {
+  const closeTsPanel = ({ clearInput = false, skipHistoryBack = false } = {}) => {
     if (panel && !panel.hidden) panel.hidden = true;
     if (clearInput && searchEl) searchEl.value = "";
     // Si abrimos el panel con pushState, hacemos pop para limpiar el historial.
     if (window.history.state && window.history.state.tsPanel) {
-      window.history.back();
+      if (skipHistoryBack) {
+        try {
+          const nextState = { ...(window.history.state || {}) };
+          delete nextState.tsPanel;
+          window.history.replaceState(nextState, "");
+        } catch (_e) {}
+      } else {
+        window.history.back();
+      }
     }
   };
   window.closeTsPanel = closeTsPanel;
