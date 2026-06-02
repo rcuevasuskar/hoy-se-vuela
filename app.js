@@ -131,6 +131,9 @@ const I18N = {
     "verdict.loading": "Cargando…",
     "verdict.unavailable.title": "Datos de viento no disponibles",
     "verdict.unavailable.detail": "La estación no reporta lecturas ahora mismo. La previsión sí está disponible más abajo.",
+    "live.forecast_title": "Sin estación · valores de pronóstico",
+    "live.forecast_detail": "Este despegue no tiene estación en tiempo real. Los valores que ves vienen del modelo Open-Meteo (pronóstico).",
+    "live.forecast_tag": "pronóstico",
     "verdict.ideal.title": "Condiciones ideales ✅",
     "verdict.ideal.detail": "Buena dirección y velocidad en el rango óptimo.",
     "verdict.ok.title": "Volable ⚠️",
@@ -507,6 +510,9 @@ const I18N = {
     "verdict.loading": "Loading…",
     "verdict.unavailable.title": "Wind data unavailable",
     "verdict.unavailable.detail": "The station has no current readings. Forecast is still available below.",
+    "live.forecast_title": "No station · forecast values",
+    "live.forecast_detail": "This takeoff has no real-time station. The values shown come from the Open-Meteo model (forecast).",
+    "live.forecast_tag": "forecast",
     "verdict.ideal.title": "Ideal conditions ✅",
     "verdict.ideal.detail": "Good direction and speed within the optimal range.",
     "verdict.ok.title": "Flyable ⚠️",
@@ -867,6 +873,9 @@ const I18N = {
     "verdict.loading": "Lädt…",
     "verdict.unavailable.title": "Winddaten nicht verfügbar",
     "verdict.unavailable.detail": "Die Station meldet derzeit keine Werte. Die Vorhersage ist weiter unten verfügbar.",
+    "live.forecast_title": "Keine Station · Vorhersagewerte",
+    "live.forecast_detail": "Für diesen Startplatz gibt es keine Echtzeitstation. Die angezeigten Werte stammen aus dem Open-Meteo-Modell (Vorhersage).",
+    "live.forecast_tag": "Vorhersage",
     "verdict.ideal.title": "Ideale Bedingungen ✅",
     "verdict.ideal.detail": "Gute Richtung und Geschwindigkeit im optimalen Bereich.",
     "verdict.ok.title": "Fliegbar ⚠️",
@@ -1223,6 +1232,9 @@ const I18N = {
     "verdict.loading": "Chargement…",
     "verdict.unavailable.title": "Données de vent indisponibles",
     "verdict.unavailable.detail": "La station ne renvoie aucune mesure. La prévision reste disponible ci-dessous.",
+    "live.forecast_title": "Pas de station · valeurs de prévision",
+    "live.forecast_detail": "Ce décollage n'a pas de station en temps réel. Les valeurs affichées proviennent du modèle Open-Meteo (prévision).",
+    "live.forecast_tag": "prévision",
     "verdict.ideal.title": "Conditions idéales ✅",
     "verdict.ideal.detail": "Bonne direction et vitesse dans la plage optimale.",
     "verdict.ok.title": "Volable ⚠️",
@@ -1579,6 +1591,9 @@ const I18N = {
     "verdict.loading": "Kargatzen…",
     "verdict.unavailable.title": "Haize datuak ez daude eskuragarri",
     "verdict.unavailable.detail": "Estazioak ez du irakurketarik orain. Iragarpena eskuragarri dago behean.",
+    "live.forecast_title": "Estaziorik gabe · iragarpen balioak",
+    "live.forecast_detail": "Hegaldi-leku honek ez du denbora errealeko estaziorik. Erakusten diren balioak Open-Meteo ereduarenak dira (iragarpena).",
+    "live.forecast_tag": "iragarpena",
     "verdict.ideal.title": "Baldintza ezin hobeak ✅",
     "verdict.ideal.detail": "Norabide ona eta abiadura tarte optimoan.",
     "verdict.ok.title": "Hegagarria ⚠️",
@@ -1889,6 +1904,9 @@ const I18N = {
     "verdict.loading": "Carregant…",
     "verdict.unavailable.title": "Dades de vent no disponibles",
     "verdict.unavailable.detail": "L'estació no té lectures ara mateix. La previsió segueix disponible més avall.",
+    "live.forecast_title": "Sense estació · valors de pronòstic",
+    "live.forecast_detail": "Aquest enlairament no té estació en temps real. Els valors mostrats venen del model Open-Meteo (pronòstic).",
+    "live.forecast_tag": "pronòstic",
     "verdict.ideal.title": "Condicions ideals ✅",
     "verdict.ideal.detail": "Bona direcció i velocitat dins el rang òptim.",
     "verdict.ok.title": "Volable ⚠️",
@@ -2412,6 +2430,23 @@ async function getLive() {
   // v100: estaciones no-Pioupiou (AEMET / Holfuy) usan su propio fetch y
   // devolvemos un objeto con el mismo shape `{ measurements: {...} }`.
   const prov = currentStation?.provider;
+  // v0.235: despegue comunitario sin estacion vinculada ni volandooUrl:
+  // caemos a Open-Meteo (current_weather) y marcamos la fuente como pronostico
+  // para que la UI indique claramente que no son datos en vivo.
+  if (prov === "community") {
+    const lat = currentTakeoff?.lat ?? currentStation?.lat;
+    const lon = currentTakeoff?.lon ?? currentStation?.lon;
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      try {
+        const r = await fetchOpenMeteoCurrent(lat, lon);
+        if (r && r.measurements && r.measurements.wind_speed_avg != null) {
+          r.source = { name: "Open-Meteo", url: "https://open-meteo.com/", forecast: true };
+          return r;
+        }
+      } catch (e) { console.warn("[live] community/open-meteo:", e); }
+    }
+    return null;
+  }
   if (prov === "aemet" || prov === "holfuy") {
     const list = prov === "aemet"
       ? await getAllAemetStations()
@@ -3515,7 +3550,7 @@ function renderLiveSource(src) {
   const el = document.getElementById("lastUpdateSource");
   if (!el) return;
   if (!src || !src.name) { el.textContent = ""; return; }
-  const label = String(src.name);
+  const label = String(src.name) + (src.forecast ? " · " + t("live.forecast_tag") : "");
   if (src.url) {
     el.innerHTML = ' · <a href="' + src.url.replace(/"/g, "&quot;") + '" target="_blank" rel="noopener">' +
                    label.replace(/</g, "&lt;") + '</a>';
@@ -3618,11 +3653,12 @@ function renderLive(live) {
   else if (risk === "rain" && verdict !== "bad") verdict = "warn";
 
   const light = document.getElementById("verdictLight");
-  light.className = "verdict-light " + verdict;
+  const isForecast = !!live.source?.forecast;
+  light.className = "verdict-light " + (isForecast ? "forecast" : verdict);
   const vt = verdictText(verdict);
-  setText("verdictTitle", vt.title);
-  let detail = vt.detail;
-  if (verdict !== "unknown") {
+  setText("verdictTitle", isForecast ? t("live.forecast_title") : vt.title);
+  let detail = isForecast ? t("live.forecast_detail") : vt.detail;
+  if (!isForecast && verdict !== "unknown") {
     detail += " " + t("verdict.suffix", { name: dirInfo.name, avg: fmtNum(avg), max: fmtNum(max) });
     const reasonKey = speedReasonKey(avg, max);
     if (reasonKey) detail += " " + t(reasonKey);
@@ -6758,7 +6794,9 @@ function renderSearchRow(s, ctx) {
   if (!enabled) btn.disabled = true;
   let tail;
   if (isCommunity) {
-    tail = hasLiveWind ? "" : `<span class="ts-result-nolive" title="${escapeHtml(t("ts.no_live_tip"))}">${t("ts.no_live")}</span>`;
+    // v0.235: ya no mostramos badge "sin viento"; el color/atenuacion ya
+    // indican la ausencia de datos live.
+    tail = "";
   } else if (isFfvl) {
     tail = `<span class="ts-result-provider ffvl">FFVL</span>`;
   } else if (isAemet) {
