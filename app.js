@@ -6786,6 +6786,11 @@ function renderSearchRow(s, ctx) {
     //    y, en su defecto, la estación integrada vinculada (AEMET/Holfuy).
     if (isCommunity) {
       let snap = null;
+      // v0.234: si el despegue se considera "sin viento live" (sin volandooUrl
+      // y sin estacion vinculada), no calculamos verdict -> borde gris.
+      if (!hasLiveWind) {
+        snap = null;
+      } else {
       const vUrl = s.raw?.volandooUrl;
       if (vUrl) {
         const vsnap = _volandooSnapCached(vUrl);
@@ -6805,6 +6810,7 @@ function renderSearchRow(s, ctx) {
       if (!snap && Number.isFinite(s.lat) && Number.isFinite(s.lon)) {
         const om = _omNowSnapCached(s.lat, s.lon);
         if (om && (om.avg != null || om.dir != null)) snap = om;
+      }
       }
       if (snap) {
         const crit = s.raw?.criteria || currentTakeoffCriteria || null;
