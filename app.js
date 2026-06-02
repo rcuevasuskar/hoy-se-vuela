@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.235";
+const APP_VERSION = "v0.236";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -103,6 +103,64 @@ function saveSelectedStation(s) {
     if (currentTakeoff?.id) localStorage.setItem("selectedTakeoffId", currentTakeoff.id);
     else localStorage.removeItem("selectedTakeoffId");
   } catch {}
+}
+
+const TAKEOFF_HASH_PREFIX = "#/to/";
+
+function slugifyTakeoffName(name) {
+  return String(name || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function _readTakeoffSlugFromHash() {
+  const h = String(window.location.hash || "").trim();
+  if (!h.startsWith(TAKEOFF_HASH_PREFIX)) return null;
+  const raw = h.slice(TAKEOFF_HASH_PREFIX.length);
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw).trim().toLowerCase();
+  } catch {
+    return raw.trim().toLowerCase();
+  }
+}
+
+function _syncTakeoffHashFromCurrent() {
+  try {
+    const url = new URL(window.location.href);
+    const slug = slugifyTakeoffName(currentTakeoff?.name || "");
+    if (currentTakeoff?.id && slug) {
+      const nextHash = TAKEOFF_HASH_PREFIX + encodeURIComponent(slug);
+      if (url.hash !== nextHash) {
+        url.hash = nextHash;
+        window.history.replaceState(window.history.state, "", url.toString());
+      }
+      return;
+    }
+    // Si no hay despegue comunitario seleccionado, limpiamos hash compartible.
+    if (url.hash) {
+      url.hash = "";
+      window.history.replaceState(window.history.state, "", url.toString());
+    }
+  } catch (e) {
+    console.warn("_syncTakeoffHashFromCurrent:", e);
+  }
+}
+
+async function _trySelectTakeoffFromHash(opts) {
+  const slug = _readTakeoffSlugFromHash();
+  if (!slug) return false;
+  const list = window.PCAuth?.approvedTakeoffs || [];
+  if (!list.length) return false;
+  const to = list.find(t => slugifyTakeoffName(t?.name || "") === slug);
+  if (!to) return false;
+  await _selectCommunityTakeoff(to);
+  if (opts && opts.markUserPicked) _userPickedStation = true;
+  _defaultResolvedOnce = true;
+  return true;
 }
 
 const REFRESH_MS = 60_000;
@@ -6565,6 +6623,7 @@ function selectStation(station, opts) {
   }
   setCurrent({ takeoff, station });
   saveSelectedStation(station);
+  _syncTakeoffHashFromCurrent();
   applyCurrentTakeoffLabel();
   refreshAllForCurrentTakeoff();
 }
@@ -7427,7 +7486,13 @@ function openTakeoffSubmit(prefill) {
     if (lat) lat.value = c.lat.toFixed(5);
     if (lon) lon.value = c.lon.toFixed(5);
   }
-  document.getElementById("takeoffSubmitModal").hidden = false;
+  const submitModal = document.getElementById("takeoffSubmitModal");
+  if (submitModal) {
+    submitModal.hidden = false;
+    submitModal.scrollTop = 0;
+    const dialog = submitModal.querySelector(".auth-dialog");
+    if (dialog) dialog.scrollTop = 0;
+  }
   // v180: carga las estaciones cercanas en el desplegable, preservando la
   // seleccion si veniamos de un prefill con stationId.
   _toLoadStationsForCoords({ keepValue: true });
@@ -8232,6 +8297,12 @@ function _hookTakeoffStreams() {
 }
 _hookTakeoffStreams();
 
+window.addEventListener("hashchange", () => {
+  _trySelectTakeoffFromHash({ markUserPicked: true }).catch((e) => {
+    console.warn("hashchange takeoff:", e);
+  });
+});
+
 // v147: al abrir la app, pedimos permiso de geolocalizacion siempre. Si el
 // usuario ya lo concedio antes el navegador no muestra prompt y devuelve la
 // posicion al instante; si lo denego antes lo seguira denegando sin molestar.
@@ -8335,6 +8406,12 @@ async function _selectCommunityTakeoff(to) {
 
 async function resolveDefaultTakeoff() {
   if (_userPickedStation) return;
+  // (0) Deep-link compartible en hash: #/to/nombre-del-despegue
+  try {
+    if (await _trySelectTakeoffFromHash({ markUserPicked: true })) return;
+  } catch (e) {
+    console.warn("resolveDefaultTakeoff hash:", e);
+  }
   // (1) Sesion anterior: restauramos el despegue concreto.
   const savedTakeoffId = loadSavedTakeoffId();
   if (savedTakeoffId) {
