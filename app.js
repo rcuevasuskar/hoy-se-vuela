@@ -3725,7 +3725,7 @@ function renderCloudPanel(cw) {
 
   document.getElementById("cpBase").textContent = cl.baseM != null ? `~${cl.baseM} m` : "—";
   // v0.230: replica el techo en el indicador principal junto a la brujula.
-  setText("windTecho", cl.baseM != null ? `~${cl.baseM}` : "—");
+  setText("windTecho", cl.baseM != null ? String(cl.baseM) : "—");
   document.getElementById("cpStab").textContent = t(`cp.stab.${cl.stab}`);
   document.getElementById("cpStab").dataset.level = cl.stab;
   document.getElementById("cpSummary").textContent = t(cl.sumKey);
