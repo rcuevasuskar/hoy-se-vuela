@@ -155,7 +155,7 @@ const I18N = {
     "chart.dir": "Dirección",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronóstico (Open-Meteo)",
-    "fc.title_for": "Pronóstico para {name}",
+    "fc.title_for": "Pronóstico meteo",
 
     "fc.today": "Hoy",
     "fc.night": "Noche",
@@ -529,7 +529,7 @@ const I18N = {
     "chart.dir": "Direction",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Forecast (Open-Meteo)",
-    "fc.title_for": "Forecast for {name}",
+    "fc.title_for": "Weather forecast",
 
     "fc.today": "Today",
     "fc.night": "Night",
@@ -887,7 +887,7 @@ const I18N = {
     "chart.dir": "Richtung",
     "chart.dir_tooltip": "Richt.: {name} ({deg}°)",
     "fc.title": "Vorhersage (Open-Meteo)",
-    "fc.title_for": "Vorhersage für {name}",
+    "fc.title_for": "Wettervorhersage",
 
     "fc.today": "Heute",
     "fc.night": "Nacht",
@@ -1241,7 +1241,7 @@ const I18N = {
     "chart.dir": "Direction",
     "chart.dir_tooltip": "Dir : {name} ({deg}°)",
     "fc.title": "Prévision (Open-Meteo)",
-    "fc.title_for": "Prévision pour {name}",
+    "fc.title_for": "Prévisions météo",
 
     "fc.today": "Aujourd'hui",
     "fc.night": "Nuit",
@@ -1595,7 +1595,7 @@ const I18N = {
     "chart.dir": "Norabidea",
     "chart.dir_tooltip": "Norab.: {name} ({deg}°)",
     "fc.title": "Iragarpena (Open-Meteo)",
-    "fc.title_for": "{name} iragarpena",
+    "fc.title_for": "Eguraldi iragarpena",
 
     "fc.today": "Gaur",
     "fc.night": "Gaua",
@@ -1903,7 +1903,7 @@ const I18N = {
     "chart.dir": "Direcció",
     "chart.dir_tooltip": "Dir: {name} ({deg}°)",
     "fc.title": "Pronòstic (Open-Meteo)",
-    "fc.title_for": "Pronòstic per a {name}",
+    "fc.title_for": "Pronòstic meteo",
 
     "fc.today": "Avui",
     "fc.night": "Nit",
@@ -6718,7 +6718,10 @@ function renderSearchRow(s, ctx) {
   const isFfvl = s.provider === "ffvl";
   const isAemet = s.provider === "aemet";
   const isHolfuy = s.provider === "holfuy";
-  const enabled = isCommunity ? !!s._linkedStation
+  // v228: los despegues comunitarios siempre son seleccionables aunque no
+  // tengan estacion meteo vinculada (se carga el despegue como pseudo-station
+  // y se puede editar). Antes: enabled = !!s._linkedStation -> deshabilitados.
+  const enabled = isCommunity ? true
                   : isFfvl ? false
                   // v112: AEMET/Holfuy aparecen "proximamente" igual que Pioupiou hasta
                   // que un admin cree/edite un despegue comunitario que las referencie.
