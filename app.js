@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.241";
+const APP_VERSION = "v0.242";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -6140,12 +6140,67 @@ function buildShareText() {
 // las ultimas horas (#windHistory) si esta visible; NO incluye el pronostico,
 // que vive en otra tarjeta aparte. Si html2canvas aun no ha cargado (p.ej. sin
 // red la primera vez) devuelve null y se comparte solo el texto.
+// v0.242: (1) ocultamos en la captura los elementos interactivos no utiles en
+// una imagen (iconos de la cabecera del panel, chips de acciones) y los paneles
+// bajo el grafico de ultimas horas (veredicto, meteo, mejor ventana). (2) La
+// brujula del DOM usa conic-gradient + mask, que html2canvas NO sabe pintar, asi
+// que en el clon sustituimos los sectores por un donut SVG (arcos por color) y
+// dibujamos la flecha de direccion, garantizando que se vean.
+function _shareSectorSVG() {
+  const SECT = { ideal: "rgba(46,204,113,0.62)", ok: "rgba(241,196,15,0.64)", bad: "rgba(255,93,122,0.62)" };
+  const ARROW = { ideal: "#2ecc71", ok: "#f1c40f", warn: "#e67e22", bad: "#d7263d", unknown: "#6b7891" };
+  const pt = (r, deg) => {
+    const a = (deg - 90) * Math.PI / 180;
+    return [50 + r * Math.cos(a), 50 + r * Math.sin(a)];
+  };
+  const donut = (ri, ro, a0, a1) => {
+    const [x0o, y0o] = pt(ro, a0), [x1o, y1o] = pt(ro, a1);
+    const [x1i, y1i] = pt(ri, a1), [x0i, y0i] = pt(ri, a0);
+    return `M${x0o.toFixed(2)} ${y0o.toFixed(2)} A${ro} ${ro} 0 0 1 ${x1o.toFixed(2)} ${y1o.toFixed(2)} `
+         + `L${x1i.toFixed(2)} ${y1i.toFixed(2)} A${ri} ${ri} 0 0 0 ${x0i.toFixed(2)} ${y0i.toFixed(2)} Z`;
+  };
+  // Calidades por sector: leemos del DOM vivo; si no, de los criterios actuales.
+  let quals = Array.from(document.querySelectorAll("#sectorsHost .sector")).map(el =>
+    el.classList.contains("ideal") ? "ideal" : el.classList.contains("ok") ? "ok"
+      : el.classList.contains("bad") ? "bad" : "ok");
+  if (quals.length !== 16) {
+    const arr = (currentTakeoffCriteria?.qualityByIndex && currentTakeoffCriteria.qualityByIndex.some(Boolean))
+      ? currentTakeoffCriteria.qualityByIndex.map(q => q || "ok")
+      : Array(16).fill("ok");
+    quals = arr;
+  }
+  const rIn = 30, rOut = 47;
+  let paths = "";
+  for (let i = 0; i < 16; i++) {
+    const q = quals[i] || "ok";
+    const start = i * 22.5 - 11.25;
+    paths += `<path d="${donut(rIn, rOut, start, start + 22.5)}" fill="${SECT[q] || SECT.ok}"/>`;
+  }
+  // Flecha de direccion: bearing de procedencia del viento (dataset del wedge).
+  const wedge = document.getElementById("windWedge");
+  const dirRaw = wedge?.dataset?.dir;
+  const dir = (dirRaw != null && dirRaw !== "") ? parseFloat(dirRaw) : null;
+  const dq = wedge?.dataset?.quality || "unknown";
+  let arrow = "";
+  if (dir != null && !isNaN(dir)) {
+    const col = ARROW[dq] || ARROW.unknown;
+    const [tx, ty] = pt(rIn - 4, dir);
+    const [lx, ly] = pt(rOut - 1, dir - 7);
+    const [rx, ry] = pt(rOut - 1, dir + 7);
+    arrow = `<polygon points="${tx.toFixed(2)},${ty.toFixed(2)} ${lx.toFixed(2)},${ly.toFixed(2)} ${rx.toFixed(2)},${ry.toFixed(2)}" `
+          + `fill="${col}" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>`;
+  }
+  return `<svg viewBox="0 0 100 100" width="100%" height="100%" style="position:absolute;inset:0;"`
+       + ` xmlns="http://www.w3.org/2000/svg">${paths}${arrow}</svg>`;
+}
+
 async function captureStatusCard() {
   const el = document.getElementById("statusCard");
   if (!el || typeof html2canvas !== "function") return null;
   const cs = getComputedStyle(document.documentElement);
   const bg = (cs.getPropertyValue("--bg") || "").trim() || "#0f1822";
   const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+  const sectorSVG = _shareSectorSVG();
   return await html2canvas(el, {
     backgroundColor: bg,
     scale,
@@ -6154,6 +6209,17 @@ async function captureStatusCard() {
     scrollX: 0,
     scrollY: -window.scrollY,
     windowWidth: document.documentElement.clientWidth,
+    onclone: (doc) => {
+      // Ocultar elementos interactivos / no utiles en una imagen estatica.
+      ["#tsCurrentActions", "#tsActionsInline", "#verdict", "#weatherStrip", "#bestWindow"]
+        .forEach(sel => { const e = doc.querySelector(sel); if (e) e.style.display = "none"; });
+      // Sustituir los sectores conic-gradient (no soportados) por un donut SVG.
+      const sh = doc.getElementById("sectorsHost");
+      if (sh) sh.innerHTML = sectorSVG;
+      // Ocultamos el wedge original: la flecha ya va dentro del SVG.
+      const w = doc.getElementById("windWedge");
+      if (w) w.style.display = "none";
+    },
   });
 }
 
@@ -6329,13 +6395,20 @@ function renderCurrentTakeoffActions() {
   // v0.240: 📤 compartir el parte de viento actual (imagen + texto) por
   // WhatsApp/Telegram/etc. via Web Share. No requiere login. Se coloca junto a
   // ★ favorito, 🔔 alertas y 🧭 brujula como boton rapido ts-icon-btn.
+  // v0.242: icono de compartir tipico (nodos: un vertice y dos bolitas) via SVG.
   {
     const share = document.createElement("button");
     share.type = "button";
     share.className = "ts-icon-btn ts-share-btn";
     share.title = shareStr("title");
     share.setAttribute("aria-label", shareStr("title"));
-    share.textContent = "📤";
+    share.innerHTML = `<svg class="ts-share-ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <circle cx="18" cy="5" r="2.8" fill="currentColor"/>
+      <circle cx="6" cy="12" r="2.8" fill="currentColor"/>
+      <circle cx="18" cy="19" r="2.8" fill="currentColor"/>
+      <line x1="8.2" y1="10.8" x2="15.8" y2="6.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <line x1="8.2" y1="13.2" x2="15.8" y2="17.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
     share.addEventListener("click", () => {
       shareCurrentForecast().catch((err) => console.warn("[share]", err));
     });

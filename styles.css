@@ -619,6 +619,9 @@ header.topbar .ts-current {
 }
 .ts-icon-btn.is-home { color: #ff9800; }
 .ts-icon-btn.is-alert { color: #4ea1ff; }
+/* v0.242: icono de compartir en SVG (nodos). Alineado con el resto de iconos. */
+.ts-icon-btn.ts-share-btn { display: inline-flex; align-items: center; justify-content: center; }
+.ts-icon-btn.ts-share-btn .ts-share-ic { display: block; vertical-align: middle; }
 
 /* v168: Acciones inline en el footer, en la misma linea que "Ultima lectura".
    v170: acciones a la izquierda, última lectura a la derecha (se envuelve

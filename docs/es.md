@@ -35,7 +35,7 @@ Al abrir la app verás de un vistazo el estado del despegue actualmente seleccio
   - **★ / ☆** marcar/desmarcar favorito.
   - **👑 / ♛** marcar como "hogar" (aparece primero y arranca por defecto).
   - **🔔 / 🔕** activar/desactivar alertas de condiciones ideales.
-  - **📤 Compartir**: genera una captura fiel del panel de estado tal y como se ve en la app (brújula, anemómetros, lecturas y el gráfico de las últimas horas si se muestra) junto a un texto bien formateado, listo para enviar por WhatsApp, Telegram, etc. En el móvil usa el menú nativo para compartir; en escritorio copia el texto al portapapeles y descarga la imagen.
+  - **� Compartir**: genera una imagen limpia del panel de estado (brújula con los arcos de dirección por color y la flecha de viento, anemómetros, lecturas y el gráfico de las últimas horas si se muestra) junto a un texto bien formateado, listo para enviar por WhatsApp, Telegram, etc. En la imagen se ocultan los elementos interactivos (iconos y botones de acción) y los paneles inferiores. En el móvil usa el menú nativo para compartir; en escritorio copia el texto al portapapeles y descarga la imagen.
   - **+** proponer un despegue nuevo (estaciones sin registrar en la comunidad).
   - **✎** editar / sugerir cambios sobre un despegue ya registrado en la comunidad.
 

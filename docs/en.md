@@ -35,7 +35,7 @@ At a glance you see the state of the currently selected takeoff:
   - **★ / ☆** add/remove favorite.
   - **👑 / ♛** set as "home" (appears first and loads by default).
   - **🔔 / 🔕** enable/disable ideal-condition alerts.
-  - **📤 Share**: builds a faithful capture of the status panel as shown in the app (compass, anemometers, readings and the last-hours chart if visible) plus a nicely formatted text, ready to send via WhatsApp, Telegram, etc. On mobile it uses the native share sheet; on desktop it copies the text to the clipboard and downloads the image.
+  - **� Share**: builds a clean image of the status panel (compass with the color-coded direction arcs and the wind arrow, anemometers, readings and the last-hours chart if visible) plus a nicely formatted text, ready to send via WhatsApp, Telegram, etc. Interactive elements (icons and action buttons) and the lower panels are hidden in the image. On mobile it uses the native share sheet; on desktop it copies the text to the clipboard and downloads the image.
   - **+** propose a new takeoff (stations not yet registered in the community).
   - **✎** edit / suggest changes for a community takeoff.
 
