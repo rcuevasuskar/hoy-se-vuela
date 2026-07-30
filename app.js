@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.242";
+const APP_VERSION = "v0.243";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -5420,9 +5420,14 @@ function renderWindHistory(arch) {
       // wind_heading = de DÓNDE viene el viento.
       // La flecha debe apuntar HACIA DÓNDE va = heading + 180.
       // SVG con flecha apuntando hacia arriba (norte) por defecto → rotamos.
+      // Importante: rotamos DENTRO del SVG (transform en <g>) y no con CSS
+      // transform en el elemento, porque html2canvas no aplica bien el CSS
+      // transform de un <svg> inline y las flechas salian giradas en la captura.
       const rot = (c.dir + 180) % 360;
-      arrowEl.innerHTML = `<svg viewBox="0 0 10 10" style="transform: rotate(${rot}deg);">
-        <path d="M5 1 L8 7 L5 5.5 L2 7 Z" fill="currentColor"/>
+      arrowEl.innerHTML = `<svg viewBox="0 0 10 10">
+        <g transform="rotate(${rot} 5 5)">
+          <path d="M5 1 L8 7 L5 5.5 L2 7 Z" fill="currentColor"/>
+        </g>
       </svg>`;
     }
     arrows.appendChild(arrowEl);
@@ -6211,7 +6216,7 @@ async function captureStatusCard() {
     windowWidth: document.documentElement.clientWidth,
     onclone: (doc) => {
       // Ocultar elementos interactivos / no utiles en una imagen estatica.
-      ["#tsCurrentActions", "#tsActionsInline", "#verdict", "#weatherStrip", "#bestWindow"]
+      ["#tsCurrentActions", "#tsActionsInline", "#verdict", "#weatherStrip", "#bestWindow", "#whRange"]
         .forEach(sel => { const e = doc.querySelector(sel); if (e) e.style.display = "none"; });
       // Sustituir los sectores conic-gradient (no soportados) por un donut SVG.
       const sh = doc.getElementById("sectorsHost");
