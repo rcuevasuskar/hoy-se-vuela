@@ -1,6 +1,6 @@
 // === Configuración ===
 // v118: version visible al final de la app (mantener sincronizada con sw.js CACHE).
-const APP_VERSION = "v0.239";
+const APP_VERSION = "v0.240";
 // v165: feature flag para el override personal de criterios (🛠). Desactivado
 // por defecto: el codigo se mantiene intacto para poder reactivarlo poniendo
 // esta constante a true en el futuro. Mientras esta a false: el boton del
@@ -6048,6 +6048,448 @@ function openAuthDialog(reason) {
   if (btn) btn.click();
 }
 
+// ============================================================================
+// v0.240: Compartir el parte de viento actual (imagen + texto) via Web Share.
+// La imagen es un canvas dibujado a medida (sin dependencias, funciona offline)
+// con la brujula, los anemometros, las lecturas y una tira de proximas horas.
+// El texto va bien formateado para WhatsApp / Telegram. El idioma sigue al
+// i18n activo mediante SHARE_STR + las claves i18n ya existentes (read.*, card.*).
+// ============================================================================
+const SHARE_APP_URL = "https://rcuevasuskar.github.io/hoy-se-vuela/";
+const SHARE_STR = {
+  es: { title: "Parte de viento", hours: "Próximas horas", best: "Mejor ventana",
+        updated: "Actualizado", copied: "Copiado al portapapeles ✅",
+        no_data: "Sin datos de viento para compartir", error: "No se pudo compartir",
+        via: "vía Hoy se vuela" },
+  en: { title: "Wind report", hours: "Next hours", best: "Best window",
+        updated: "Updated", copied: "Copied to clipboard ✅",
+        no_data: "No wind data to share", error: "Couldn't share",
+        via: "via Hoy se vuela" },
+  de: { title: "Windbericht", hours: "Nächste Stunden", best: "Bestes Fenster",
+        updated: "Aktualisiert", copied: "In die Zwischenablage kopiert ✅",
+        no_data: "Keine Winddaten zum Teilen", error: "Teilen fehlgeschlagen",
+        via: "via Hoy se vuela" },
+  fr: { title: "Bulletin de vent", hours: "Prochaines heures", best: "Meilleure fenêtre",
+        updated: "Mis à jour", copied: "Copié dans le presse-papiers ✅",
+        no_data: "Aucune donnée de vent à partager", error: "Partage impossible",
+        via: "via Hoy se vuela" },
+  eu: { title: "Haize-txostena", hours: "Hurrengo orduak", best: "Leiho onena",
+        updated: "Eguneratua", copied: "Arbelera kopiatuta ✅",
+        no_data: "Ez dago haize-daturik partekatzeko", error: "Ezin izan da partekatu",
+        via: "Hoy se vuela bidez" },
+  ca: { title: "Butlletí de vent", hours: "Pròximes hores", best: "Millor finestra",
+        updated: "Actualitzat", copied: "Copiat al porta-retalls ✅",
+        no_data: "Sense dades de vent per compartir", error: "No s'ha pogut compartir",
+        via: "via Hoy se vuela" },
+};
+function shareStr(k) {
+  const d = SHARE_STR[currentLang] || SHARE_STR.es;
+  return d[k] != null ? d[k] : SHARE_STR.es[k];
+}
+
+function _shareQualColor(q) {
+  if (q === "ideal") return "#2ecc71";
+  if (q === "ok")    return "#f1c40f";
+  if (q === "warn")  return "#e67e22";
+  if (q === "bad")   return "#d7263d";
+  return "#8aa0bb";
+}
+function _shareVerdictEmoji(v) {
+  if (v === "ideal") return "🟢";
+  if (v === "ok")    return "🟡";
+  if (v === "warn")  return "🟠";
+  if (v === "bad")   return "🔴";
+  return "⚪";
+}
+function _shareHexA(hex, a) {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map(c => c + c).join("") : h;
+  const n = parseInt(full, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+function _shareRoundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
+// Combina el veredicto de una hora (direccion + velocidad + riesgo meteo) igual
+// que hace renderBestWindow, para colorear la tira de proximas horas.
+function _shareHourVerdict(dir, spd, gust, slot) {
+  const dirInfo = classifyDirection(dir);
+  const spdQ = classifySpeed(spd, gust);
+  let v = combineVerdict(dirInfo.quality, spdQ);
+  const risk = weatherRisk(slot);
+  if (risk === "storm") v = "bad";
+  else if (risk === "rain" && v !== "bad") v = "warn";
+  return { v, name: dirInfo.name };
+}
+
+// Selecciona hasta `max` horas proximas del pronostico dentro del dia de
+// referencia (amanecer..atardecer). Devuelve [{ts, dir, spd, gust, v, name}].
+function shareUpcomingHours(max = 7) {
+  const fc = latestForecast;
+  if (!fc?.hourly?.time) return [];
+  const h = fc.hourly;
+  const ref = referenceDayInfo(fc);
+  const dayEnd = ref.scanTo.getTime();
+  const now = Date.now();
+  const out = [];
+  for (let i = 0; i < h.time.length; i++) {
+    const ts = new Date(h.time[i]).getTime();
+    if (ts < now - 30 * 60 * 1000) continue;
+    if (ts > dayEnd) break;
+    const dir = h.wind_direction_10m?.[i];
+    const spd = h.wind_speed_10m?.[i];
+    const gust = h.wind_gusts_10m?.[i];
+    const slot = { code: h.weather_code?.[i], cloud: h.cloud_cover?.[i],
+                   precip: h.precipitation_probability?.[i], cape: h.cape?.[i] };
+    const { v, name } = _shareHourVerdict(dir, spd, gust, slot);
+    out.push({ ts, dir, spd, gust, v, name });
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+// Texto bien formateado para WhatsApp / Telegram. Usa negritas con *…* (WhatsApp).
+function buildShareText() {
+  const m = latestLive?.measurements || {};
+  const dir = m.wind_heading, avg = m.wind_speed_avg, max = m.wind_speed_max;
+  const dirInfo = classifyDirection(dir);
+  const spdQ = classifySpeed(avg, max);
+  let v = combineVerdict(dirInfo.quality, spdQ);
+  const risk = weatherRisk(currentWeather());
+  if (risk === "storm") v = "bad";
+  else if (risk === "rain" && v !== "bad") v = "warn";
+  const vt = verdictText(v);
+  const name = currentStation?.name || currentTakeoff?.name || shareStr("title");
+  const when = fmtTime(m.date || latestLive?.status?.date);
+  const techoEl = document.getElementById("windTecho");
+  const techo = techoEl ? techoEl.textContent.trim() : "—";
+
+  const L = [];
+  L.push(`🪂 *${name}*`);
+  L.push(`🕒 ${shareStr("updated")}: ${when}`);
+  L.push("");
+  L.push(`${_shareVerdictEmoji(v)} *${vt.title}*`);
+  L.push("");
+  L.push(`💨 ${t("read.avg")}: *${fmtNum(avg)} km/h*`);
+  L.push(`🌬️ ${t("read.max")}: *${fmtNum(max)} km/h*`);
+  if (dir != null) L.push(`🧭 ${t("read.dir")}: *${dirInfo.name}* (${Math.round(dir)}°)`);
+  if (techo && techo !== "—") L.push(`☁️ ${t("read.techo")}: *${techo} m*`);
+
+  const bwEl = document.getElementById("bestWindowText");
+  const bwBox = document.getElementById("bestWindow");
+  const bw = bwEl ? bwEl.textContent.trim() : "";
+  if (bw && bw !== "—" && bwBox && !bwBox.hidden) {
+    L.push("");
+    L.push(`⏱️ ${shareStr("best")}: ${bw}`);
+  }
+
+  const hrs = shareUpcomingHours(7);
+  if (hrs.length) {
+    const locale = t("locale");
+    L.push("");
+    L.push(`📊 *${shareStr("hours")}:*`);
+    hrs.forEach(hr => {
+      const hh = new Date(hr.ts).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+      L.push(`${_shareVerdictEmoji(hr.v)} ${hh}  ${hr.name}  ${fmtNum(hr.spd, 0)}/${fmtNum(hr.gust, 0)} km/h`);
+    });
+  }
+
+  L.push("");
+  L.push(`${shareStr("via")} · ${SHARE_APP_URL}`);
+  return L.join("\n");
+}
+
+// Dibuja la tarjeta (canvas) con brujula, anemometros, lecturas y horas.
+function buildShareCanvas() {
+  const W = 1080, H = 1180;
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+  const COL = { text: "#e8eef7", muted: "#8aa0bb", border: "#263448", accent: "#4ea1ff" };
+
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#0b1320"); bg.addColorStop(1, "#0f1822");
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  const m = latestLive?.measurements || {};
+  const dir = m.wind_heading, avg = m.wind_speed_avg, max = m.wind_speed_max;
+  const dirInfo = classifyDirection(dir);
+  const spdQ = classifySpeed(avg, max);
+  let v = combineVerdict(dirInfo.quality, spdQ);
+  const risk = weatherRisk(currentWeather());
+  if (risk === "storm") v = "bad";
+  else if (risk === "rain" && v !== "bad") v = "warn";
+
+  const P = 56;
+  ctx.textBaseline = "alphabetic";
+
+  // --- Cabecera: nombre + fecha + pill de veredicto ---
+  const vt = verdictText(v);
+  const pillTxt = `${_shareVerdictEmoji(v)} ${vt.title}`;
+  ctx.font = `700 30px ${FONT}`;
+  const ptw = ctx.measureText(pillTxt).width;
+  const pillW = ptw + 46, pillH = 58, pillX = W - P - pillW, pillY = 44;
+
+  const name = currentStation?.name || currentTakeoff?.name || shareStr("title");
+  ctx.font = `700 52px ${FONT}`;
+  ctx.textAlign = "left"; ctx.fillStyle = COL.text;
+  let nm = name;
+  const maxNameW = pillX - P - 24;
+  if (ctx.measureText(nm).width > maxNameW) {
+    while (nm.length > 4 && ctx.measureText(nm + "…").width > maxNameW) nm = nm.slice(0, -1);
+    nm = nm.trimEnd() + "…";
+  }
+  ctx.fillText(nm, P, 92);
+  ctx.fillStyle = COL.muted; ctx.font = `400 27px ${FONT}`;
+  ctx.fillText(`🕒 ${shareStr("updated")}: ${fmtTime(m.date || latestLive?.status?.date)}`, P, 134);
+
+  const pc = _shareQualColor(v);
+  _shareRoundRect(ctx, pillX, pillY, pillW, pillH, 29);
+  ctx.fillStyle = _shareHexA(pc, 0.18); ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = pc; ctx.stroke();
+  ctx.fillStyle = COL.text; ctx.font = `700 30px ${FONT}`;
+  ctx.textAlign = "left"; ctx.fillText(pillTxt, pillX + 23, pillY + 39);
+
+  // --- Brujula (centro) + anemometros (laterales) ---
+  const cx = W / 2, cy = 420, R = 168, rIn = R - 42;
+  const critArr = (currentTakeoffCriteria?.qualityByIndex && currentTakeoffCriteria.qualityByIndex.some(Boolean))
+    ? currentTakeoffCriteria.qualityByIndex.map(q => q || "ok")
+    : Array(16).fill("ok");
+  for (let i = 0; i < 16; i++) {
+    const b = i * 22.5;
+    const a0 = (b - 11.25 - 90) * Math.PI / 180;
+    const a1 = (b + 11.25 - 90) * Math.PI / 180;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, a0, a1, false);
+    ctx.arc(cx, cy, rIn, a1, a0, true);
+    ctx.closePath();
+    ctx.fillStyle = _shareHexA(_shareQualColor(critArr[i]), 0.9);
+    ctx.fill();
+    ctx.strokeStyle = _shareHexA("#0f1822", 0.6); ctx.lineWidth = 2; ctx.stroke();
+  }
+  // Cardinales
+  ctx.fillStyle = COL.text; ctx.font = `700 30px ${FONT}`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const lr = R + 34;
+  ctx.fillText(t("card.n"), cx, cy - lr);
+  ctx.fillText(t("card.s"), cx, cy + lr);
+  ctx.fillText(t("card.e"), cx + lr, cy);
+  ctx.fillText(t("card.w"), cx - lr, cy);
+  // Flecha de viento (apunta hacia el centro desde el origen del viento)
+  if (dir != null) {
+    const rad = (((dir % 360) + 360) % 360) * Math.PI / 180;
+    const pol = (r) => [cx + r * Math.sin(rad), cy - r * Math.cos(rad)];
+    const [tx, ty] = pol(rIn - 48);
+    const [bx, by] = pol(rIn - 6);
+    const tanx = Math.cos(rad), tany = Math.sin(rad), hw = 26;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(bx + hw * tanx, by + hw * tany);
+    ctx.lineTo(bx - hw * tanx, by - hw * tany);
+    ctx.closePath();
+    ctx.fillStyle = _shareQualColor(dirInfo.quality); ctx.fill();
+  }
+  // Centro con la media
+  ctx.beginPath(); ctx.arc(cx, cy, rIn - 56, 0, 2 * Math.PI);
+  ctx.fillStyle = "#101a27"; ctx.fill();
+  ctx.strokeStyle = COL.border; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = COL.text; ctx.font = `700 62px ${FONT}`;
+  ctx.fillText(avg != null ? String(Math.round(avg)) : "—", cx, cy - 6);
+  ctx.fillStyle = COL.muted; ctx.font = `400 22px ${FONT}`;
+  ctx.fillText("km/h", cx, cy + 42);
+  ctx.textBaseline = "alphabetic";
+
+  // Anemometros verticales (izq: velocidad media, der: racha maxima)
+  const c = currentTakeoffCriteria || {};
+  const wmin = Number.isFinite(c.windMin) ? c.windMin : 5;
+  const wmax = Number.isFinite(c.windMax) ? c.windMax : 15;
+  const gmax = Number.isFinite(c.gustMax) ? c.gustMax : 30;
+  const scaleMax = Math.max(gmax + 6, (max || 0) + 4, (avg || 0) + 4, 28);
+  const barW = 54, barH = 288, barTop = 250, barBot = barTop + barH;
+  const drawBar = (x, value, kind, label) => {
+    const map = (val) => barBot - Math.max(0, Math.min(1, val / scaleMax)) * barH;
+    ctx.save();
+    _shareRoundRect(ctx, x, barTop, barW, barH, 14); ctx.clip();
+    ctx.fillStyle = "#0d1520"; ctx.fillRect(x, barTop, barW, barH);
+    const seg = (lo, hi, color) => { ctx.fillStyle = color; const y1 = map(hi), y2 = map(lo); ctx.fillRect(x, y1, barW, y2 - y1); };
+    if (kind === "speed") {
+      seg(0, wmin, "#3a4a5e"); seg(wmin, wmax, "#2ecc71");
+      seg(wmax, gmax * 0.83, "#f1c40f"); seg(gmax * 0.83, scaleMax, "#d7263d");
+    } else {
+      seg(0, gmax * 0.83, "#2ecc71"); seg(gmax * 0.83, gmax, "#f1c40f");
+      seg(gmax, scaleMax, "#d7263d");
+    }
+    // Atenua la parte por encima del valor actual para simular el llenado
+    if (value != null && !isNaN(value)) {
+      ctx.fillStyle = _shareHexA("#0d1520", 0.72);
+      ctx.fillRect(x, barTop, barW, Math.max(0, map(value) - barTop));
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x - 4, map(value) - 2, barW + 8, 4);
+    }
+    ctx.restore();
+    _shareRoundRect(ctx, x, barTop, barW, barH, 14);
+    ctx.strokeStyle = COL.border; ctx.lineWidth = 2; ctx.stroke();
+    ctx.textAlign = "center";
+    ctx.fillStyle = COL.text; ctx.font = `700 44px ${FONT}`;
+    ctx.fillText(fmtNum(value, 0), x + barW / 2, barBot + 52);
+    ctx.fillStyle = COL.muted; ctx.font = `400 24px ${FONT}`;
+    ctx.fillText(label, x + barW / 2, barBot + 86);
+  };
+  drawBar(96, avg, "speed", t("cw.speed"));
+  drawBar(W - 96 - barW, max, "gust", t("cw.gust"));
+
+  // --- Lecturas (4 celdas) ---
+  const techoEl = document.getElementById("windTecho");
+  const techo = techoEl ? techoEl.textContent.trim() : "—";
+  const cells = [
+    { label: t("read.avg"),   val: fmtNum(avg, 0), unit: "km/h" },
+    { label: t("read.max"),   val: fmtNum(max, 0), unit: "km/h" },
+    { label: t("read.dir"),   val: dir != null ? dirInfo.name : "—", unit: dir != null ? `${Math.round(dir)}°` : "" },
+    { label: t("read.techo"), val: (techo && techo !== "—") ? techo : "—", unit: (techo && techo !== "—") ? "m" : "" },
+  ];
+  const rowY = 720, cellW = (W - 2 * P) / 4;
+  cells.forEach((cell, i) => {
+    const cxc = P + cellW * i + cellW / 2;
+    ctx.textAlign = "center";
+    ctx.fillStyle = COL.muted; ctx.font = `400 24px ${FONT}`;
+    ctx.fillText(cell.label, cxc, rowY);
+    ctx.fillStyle = COL.text; ctx.font = `700 44px ${FONT}`;
+    ctx.fillText(cell.val, cxc, rowY + 54);
+    if (cell.unit) {
+      ctx.fillStyle = COL.muted; ctx.font = `400 22px ${FONT}`;
+      ctx.fillText(cell.unit, cxc, rowY + 86);
+    }
+  });
+
+  // Separador
+  ctx.strokeStyle = COL.border; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(P, 848); ctx.lineTo(W - P, 848); ctx.stroke();
+
+  // --- Tira de proximas horas ---
+  ctx.textAlign = "left"; ctx.fillStyle = COL.text; ctx.font = `700 30px ${FONT}`;
+  ctx.fillText(`📊 ${shareStr("hours")}`, P, 902);
+
+  const hrs = shareUpcomingHours(7);
+  if (hrs.length) {
+    const locale = t("locale");
+    const gap = 14, n = hrs.length;
+    const cardW = (W - 2 * P - (n - 1) * gap) / n;
+    const cardTop = 930, cardH = 188;
+    hrs.forEach((hr, i) => {
+      const x = P + i * (cardW + gap);
+      const col = _shareQualColor(hr.v);
+      _shareRoundRect(ctx, x, cardTop, cardW, cardH, 16);
+      ctx.fillStyle = _shareHexA(col, 0.16); ctx.fill();
+      ctx.strokeStyle = _shareHexA(col, 0.7); ctx.lineWidth = 2; ctx.stroke();
+      const mx = x + cardW / 2;
+      ctx.textAlign = "center";
+      const hh = new Date(hr.ts).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+      ctx.fillStyle = COL.text; ctx.font = `700 28px ${FONT}`;
+      ctx.fillText(hh, mx, cardTop + 40);
+      // Flecha de flujo (a donde sopla = dir + 180)
+      const ay = cardTop + 88;
+      if (hr.dir != null) {
+        const rad = ((((hr.dir + 180) % 360) + 360) % 360) * Math.PI / 180;
+        const rr = 22, tanx = Math.cos(rad), tany = Math.sin(rad);
+        const tipx = mx + rr * Math.sin(rad), tipy = ay - rr * Math.cos(rad);
+        const bx = mx - rr * 0.7 * Math.sin(rad), by = ay + rr * 0.7 * Math.cos(rad);
+        ctx.beginPath();
+        ctx.moveTo(tipx, tipy);
+        ctx.lineTo(bx + 12 * tanx, by + 12 * tany);
+        ctx.lineTo(bx - 12 * tanx, by - 12 * tany);
+        ctx.closePath();
+        ctx.fillStyle = col; ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.arc(mx, ay, 6, 0, 2 * Math.PI); ctx.fillStyle = col; ctx.fill();
+      }
+      ctx.fillStyle = COL.text; ctx.font = `700 34px ${FONT}`;
+      ctx.fillText(fmtNum(hr.spd, 0), mx, cardTop + 150);
+      ctx.fillStyle = COL.muted; ctx.font = `400 23px ${FONT}`;
+      ctx.fillText(`↕${fmtNum(hr.gust, 0)}`, mx, cardTop + 178);
+    });
+  } else {
+    ctx.fillStyle = COL.muted; ctx.font = `400 26px ${FONT}`;
+    ctx.textAlign = "left";
+    ctx.fillText("—", P, 980);
+  }
+
+  // --- Pie ---
+  ctx.fillStyle = COL.muted; ctx.font = `400 24px ${FONT}`;
+  ctx.textAlign = "left";
+  ctx.fillText(`🪂 Hoy se vuela · ${APP_VERSION}`, P, H - 42);
+  ctx.fillStyle = COL.accent; ctx.textAlign = "right";
+  ctx.fillText(SHARE_APP_URL.replace(/^https?:\/\//, "").replace(/\/$/, ""), W - P, H - 42);
+
+  return canvas;
+}
+
+function _shareDownloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function shareToast(msg, isError) {
+  let el = document.getElementById("pcShareToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "pcShareToast";
+    el.className = "pc-toast";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.toggle("is-error", !!isError);
+  el.classList.add("show");
+  clearTimeout(el._pcT);
+  el._pcT = setTimeout(() => el.classList.remove("show"), 3200);
+}
+
+// Orquesta el compartir: intenta Web Share con imagen; si no, texto + descarga
+// de imagen; y como ultimo recurso (escritorio) copia el texto y descarga PNG.
+async function shareCurrentForecast() {
+  if (!latestLive || !latestLive.measurements) { shareToast(shareStr("no_data"), true); return; }
+  let blob = null, file = null;
+  try {
+    const canvas = buildShareCanvas();
+    blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+  } catch (e) { console.warn("[share canvas]", e); }
+  const text = buildShareText();
+  const title = `${shareStr("title")} · ${currentStation?.name || ""}`.trim().replace(/·\s*$/, "").trim();
+  if (blob) { try { file = new File([blob], "parte-viento.png", { type: "image/png" }); } catch {} }
+
+  // 1) Web Share con imagen (movil)
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], text, title }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; console.warn("[share files]", e); }
+  }
+  // 2) Web Share solo texto + descarga de la imagen
+  if (navigator.share) {
+    try {
+      await navigator.share({ text, title });
+      if (blob) _shareDownloadBlob(blob, "parte-viento.png");
+      return;
+    } catch (e) { if (e && e.name === "AbortError") return; console.warn("[share text]", e); }
+  }
+  // 3) Escritorio: copiar texto + descargar imagen
+  let copied = false;
+  try { await navigator.clipboard.writeText(text); copied = true; } catch (e) { console.warn("[share clip]", e); }
+  if (blob) _shareDownloadBlob(blob, "parte-viento.png");
+  shareToast(copied ? shareStr("copied") : shareStr("error"), !copied);
+}
+
 function renderCurrentTakeoffActions() {
   const host = document.getElementById("tsCurrentActions");
   if (!host) return;
@@ -6157,6 +6599,22 @@ function renderCurrentTakeoffActions() {
       compass.setAttribute("aria-pressed", orientationEnabled ? "true" : "false");
     });
     host.appendChild(compass);
+  }
+
+  // v0.240: 📤 compartir el parte de viento actual (imagen + texto) por
+  // WhatsApp/Telegram/etc. via Web Share. No requiere login. Se coloca junto a
+  // ★ favorito, 🔔 alertas y 🧭 brujula como boton rapido ts-icon-btn.
+  {
+    const share = document.createElement("button");
+    share.type = "button";
+    share.className = "ts-icon-btn ts-share-btn";
+    share.title = shareStr("title");
+    share.setAttribute("aria-label", shareStr("title"));
+    share.textContent = "📤";
+    share.addEventListener("click", () => {
+      shareCurrentForecast().catch((err) => console.warn("[share]", err));
+    });
+    host.appendChild(share);
   }
 
   // v162: los iconos que disparan acciones (abren un dialogo o navegan a una

@@ -27,7 +27,7 @@ At a glance you see the state of the currently selected takeoff:
 
 ## 2. Takeoff selector (header)
 
-- **Current takeoff**: name and quick-action icons (favorite, home, alerts, suggest changes).
+- **Current takeoff**: name and quick-action icons (favorite, home, alerts, compass, share, suggest changes).
 - **Search box**: type to filter; favorites first, then the rest sorted by distance.
 - **📍 Locate button**: uses geolocation so distances are measured from your real position.
 - **Radius**: search radius (10–300 km).
@@ -35,6 +35,7 @@ At a glance you see the state of the currently selected takeoff:
   - **★ / ☆** add/remove favorite.
   - **👑 / ♛** set as "home" (appears first and loads by default).
   - **🔔 / 🔕** enable/disable ideal-condition alerts.
+  - **📤 Share**: builds an image of the current wind report (compass, anemometers, readings and a strip with the next hours) plus a nicely formatted text, ready to send via WhatsApp, Telegram, etc. On mobile it uses the native share sheet; on desktop it copies the text to the clipboard and downloads the image.
   - **+** propose a new takeoff (stations not yet registered in the community).
   - **✎** edit / suggest changes for a community takeoff.
 

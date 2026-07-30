@@ -27,7 +27,7 @@ Al abrir la app verás de un vistazo el estado del despegue actualmente seleccio
 
 ## 2. Selector de despegue (cabecera)
 
-- **Despegue actual**: nombre del despegue cargado. Junto a él se muestran iconos de acción (favorito, hogar, alertas, sugerir cambios).
+- **Despegue actual**: nombre del despegue cargado. Junto a él se muestran iconos de acción (favorito, hogar, alertas, brújula, compartir, sugerir cambios).
 - **Buscador**: escribe parte del nombre para filtrar; muestra primero tus favoritos y luego el resto ordenados por distancia.
 - **Botón 📍 Localizar**: usa la geolocalización del dispositivo para que las distancias se calculen desde tu posición actual.
 - **Radio**: ajusta el radio de búsqueda (10–300 km).
@@ -35,6 +35,7 @@ Al abrir la app verás de un vistazo el estado del despegue actualmente seleccio
   - **★ / ☆** marcar/desmarcar favorito.
   - **👑 / ♛** marcar como "hogar" (aparece primero y arranca por defecto).
   - **🔔 / 🔕** activar/desactivar alertas de condiciones ideales.
+  - **📤 Compartir**: genera una imagen del parte de viento actual (brújula, anemómetros, lecturas y una tira con las próximas horas) junto a un texto bien formateado, listo para enviar por WhatsApp, Telegram, etc. En el móvil usa el menú nativo para compartir; en escritorio copia el texto al portapapeles y descarga la imagen.
   - **+** proponer un despegue nuevo (estaciones sin registrar en la comunidad).
   - **✎** editar / sugerir cambios sobre un despegue ya registrado en la comunidad.
 
